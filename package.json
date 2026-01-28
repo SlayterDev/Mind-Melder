@@ -1,0 +1,26 @@
+{
+  "name": "mind-melder",
+  "version": "1.0.0",
+  "description": "Quick Capture & AI Organizer - Self-hosted productivity tool",
+  "private": true,
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "dev": "pnpm --filter api dev & pnpm --filter web dev",
+    "build": "pnpm --filter \"./packages/*\" build && pnpm --filter \"./apps/*\" build",
+    "lint": "eslint .",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:generate": "pnpm --filter database generate",
+    "db:migrate": "pnpm --filter database migrate",
+    "db:push": "pnpm --filter database push",
+    "db:studio": "pnpm --filter database studio",
+    "db:test": "pnpm --filter database test"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.3.3"
+  }
+}

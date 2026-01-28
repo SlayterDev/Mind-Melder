@@ -1,0 +1,26 @@
+{
+  "name": "database",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate": "drizzle-kit generate:pg",
+    "migrate": "tsx src/migrate.ts",
+    "push": "drizzle-kit push:pg",
+    "studio": "drizzle-kit studio",
+    "test": "tsx src/test-connection.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.29.3",
+    "postgres": "^3.4.3",
+    "dotenv": "^16.4.1"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.20.13",
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3"
+  }
+}
