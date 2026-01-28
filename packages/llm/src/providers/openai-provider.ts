@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import type { Capture, Template } from 'types';
 import { BaseLLMProvider } from '../base-provider';
-import type { LLMProvider, OrganizedOutput, ProviderConfig } from '../types';
+import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types';
 
 export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
   private client: OpenAI;
@@ -63,5 +63,27 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
 
     const result = this.parseResponse<{ todos: { content: string; dueDate?: string }[] }>(content);
     return result.todos;
+  }
+
+  async generateTodaySheet(input: TodaySheetInput): Promise<TodaySheetOutput> {
+    const systemPrompt = this.buildSystemPrompt();
+    const userPrompt = this.buildTodaySheetPrompt(input);
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature: 0.5, // More deterministic than organize
+      response_format: { type: 'json_object' }, // Enforce JSON
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('Empty response from OpenAI');
+    }
+
+    return this.parseResponse<TodaySheetOutput>(content);
   }
 }

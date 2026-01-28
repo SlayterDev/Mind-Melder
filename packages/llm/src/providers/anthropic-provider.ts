@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { Capture, Template } from 'types';
 import { BaseLLMProvider } from '../base-provider';
-import type { LLMProvider, OrganizedOutput, ProviderConfig } from '../types';
+import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types';
 
 export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
   private client: Anthropic;
@@ -63,5 +63,30 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       content.text
     );
     return result.todos;
+  }
+
+  async generateTodaySheet(input: TodaySheetInput): Promise<TodaySheetOutput> {
+    const systemPrompt = this.buildSystemPrompt();
+    const userPrompt = this.buildTodaySheetPrompt(input);
+
+    const response = await this.client.messages.create({
+      model: this.model,
+      max_tokens: 4096,
+      temperature: 0.5, // More deterministic
+      system: systemPrompt,
+      messages: [
+        {
+          role: 'user',
+          content: userPrompt,
+        },
+      ],
+    });
+
+    const content = response.content[0];
+    if (content.type !== 'text') {
+      throw new Error('Unexpected response type from Anthropic');
+    }
+
+    return this.parseResponse<TodaySheetOutput>(content.text);
   }
 }

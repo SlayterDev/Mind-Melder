@@ -1,4 +1,4 @@
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, ne, asc, inArray } from 'drizzle-orm';
 import { todos, type Todo, type NewTodo } from '../schema/todos';
 import type { Database } from '../client';
 
@@ -57,5 +57,55 @@ export class TodosRepository {
 
   async delete(id: string): Promise<void> {
     await this.db.delete(todos).where(eq(todos.id, id));
+  }
+
+  /**
+   * Get all todos in today's sheet, ordered by section and order
+   */
+  async findInTodaySheet(userId: string): Promise<Todo[]> {
+    return this.db
+      .select()
+      .from(todos)
+      .where(
+        and(
+          eq(todos.userId, userId),
+          ne(todos.todaySheetSection, 'none')
+        )
+      )
+      .orderBy(asc(todos.todaySheetOrder));
+  }
+
+  /**
+   * Bulk update positions for drag-and-drop
+   */
+  async updatePositions(
+    updates: Array<{ id: string; section: string; order: number }>
+  ): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      for (const update of updates) {
+        await tx
+          .update(todos)
+          .set({
+            todaySheetSection: update.section as any, // Type assertion for enum
+            todaySheetOrder: update.order,
+            updatedAt: new Date()
+          })
+          .where(eq(todos.id, update.id));
+      }
+    });
+  }
+
+  /**
+   * Remove todos from today sheet (set section to 'none')
+   */
+  async removeFromTodaySheet(ids: string[]): Promise<void> {
+    await this.db
+      .update(todos)
+      .set({
+        todaySheetSection: 'none' as any,
+        todaySheetOrder: null,
+        updatedAt: new Date()
+      })
+      .where(inArray(todos.id, ids));
   }
 }

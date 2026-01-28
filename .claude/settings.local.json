@@ -21,7 +21,16 @@
       "Bash(pnpm --filter api dev)",
       "Bash(pnpm db:test:*)",
       "Bash(pnpm dev:*)",
-      "Bash(pnpm add:*)"
+      "Bash(pnpm add:*)",
+      "Bash(tree:*)",
+      "Bash(pnpm db:generate:*)",
+      "Bash(pnpm db:migrate:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/capture\" pnpm:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/capture\" pnpm exec tsx:*)",
+      "Bash(LLM_PROVIDER=openai pnpm exec tsx:*)",
+      "Bash(pnpm exec tsx:*)",
+      "Bash(node -e:*)",
+      "Bash(/Users/slayter/Developer/Mind-Melder/test-today-sheet-api.sh)"
     ]
   }
 }

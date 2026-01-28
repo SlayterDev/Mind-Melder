@@ -1,6 +1,6 @@
 import type { Capture, Template } from 'types';
 import { BaseLLMProvider } from '../base-provider';
-import type { LLMProvider, OrganizedOutput, ProviderConfig } from '../types';
+import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types';
 
 interface OllamaResponse {
   message: {
@@ -75,5 +75,36 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       data.message.content
     );
     return result.todos;
+  }
+
+  async generateTodaySheet(input: TodaySheetInput): Promise<TodaySheetOutput> {
+    const systemPrompt = this.buildSystemPrompt();
+    const userPrompt = this.buildTodaySheetPrompt(input);
+
+    const response = await fetch(`${this.baseURL}/api/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: this.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        stream: false,
+        format: 'json', // Ollama JSON mode
+        options: {
+          temperature: 0.5,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Ollama API error: ${response.statusText}`);
+    }
+
+    const data = (await response.json()) as OllamaResponse;
+    return this.parseResponse<TodaySheetOutput>(data.message.content);
   }
 }

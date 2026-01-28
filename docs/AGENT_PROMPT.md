@@ -97,14 +97,3 @@ Nothing else exists until explicitly declared in the project documentation.
 - Basic documentation
 
 Work milestone-by-milestone. Do not jump ahead.
-
-## Current Milestone
-
-**M1: Core Data Layer** (default starting point unless told otherwise)
-
-Before writing any code, confirm:
-1. Database choice (PostgreSQL or SQLite)
-2. ORM preference (Prisma, Drizzle, raw SQL)
-3. Project structure (monorepo tool: Turborepo, Nx, or simple workspaces)
-
-Then proceed with schema design and data layer implementation.

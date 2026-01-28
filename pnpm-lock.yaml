@@ -141,6 +141,12 @@ importers:
         specifier: ^3.22.4
         version: 3.25.76
     devDependencies:
+      dotenv:
+        specifier: ^16.6.1
+        version: 16.6.1
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
       typescript:
         specifier: ^5.3.3
         version: 5.9.3

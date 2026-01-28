@@ -1,4 +1,4 @@
-import type { Capture, Template } from 'types';
+import type { Capture, Template, Todo } from 'types';
 
 // Organization result from LLM
 export interface OrganizedOutput {
@@ -10,6 +10,40 @@ export interface OrganizedOutput {
     content: string;
     dueDate?: string; // ISO date string
   }[];
+}
+
+// Today Sheet types
+export interface TodaySheetInput {
+  captures: Capture[];
+  existingTodos: Todo[];
+  template: Template;
+  context: {
+    currentTimeOfDay: number; // 0-23
+    workingHoursMinutes: number;
+    currentDate: string; // ISO date (YYYY-MM-DD)
+  };
+}
+
+export interface TodaySheetTaskItem {
+  title: string;
+  description?: string;
+  timeEstimate: 'quick' | 'medium' | 'long';
+  priorityScore: number; // 0-100
+  tags: string[];
+  sourceType: 'capture' | 'todo';
+  sourceId: string; // captureId or todoId
+  dueDate?: string; // ISO date string
+}
+
+export interface TodaySheetOutput {
+  summary: string; // Natural language plan summary (1-2 sentences)
+  sections: {
+    must_do_today: TodaySheetTaskItem[];
+    likely_today: TodaySheetTaskItem[];
+    opportunistic: TodaySheetTaskItem[];
+    overflow: TodaySheetTaskItem[];
+  };
+  totalEstimatedMinutes: number;
 }
 
 // LLM Provider interface
@@ -28,6 +62,13 @@ export interface LLMProvider {
    * @returns Array of extracted todos
    */
   extractTasks(text: string): Promise<{ content: string; dueDate?: string }[]>;
+
+  /**
+   * Generate a Today Sheet from captures and todos
+   * @param input - Captures, todos, template, and context
+   * @returns Prioritized sections with tasks, summary, and time estimate
+   */
+  generateTodaySheet(input: TodaySheetInput): Promise<TodaySheetOutput>;
 }
 
 // Provider configuration

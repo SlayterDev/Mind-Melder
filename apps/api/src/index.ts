@@ -13,6 +13,7 @@ import {
 import { ProviderFactory } from 'llm';
 import { createCapturesRouter, createTodosRouter, createNotesRouter, createTemplatesRouter } from './routes';
 import { createOrganizeRouter } from './routes/organize';
+import { createTodaySheetRouter } from './routes/today-sheet';
 import { errorHandler, requestLogger } from './middleware';
 
 // Load .env from project root
@@ -61,6 +62,7 @@ app.use('/api/v1/todos', createTodosRouter(todosRepo));
 app.use('/api/v1/notes', createNotesRouter(notesRepo));
 app.use('/api/v1/templates', createTemplatesRouter(templatesRepo));
 app.use('/api/v1/organize', createOrganizeRouter(db, getLLMProvider));
+app.use('/api/v1/today-sheet', createTodaySheetRouter(db, getLLMProvider));
 
 // Error handler (must be last)
 app.use(errorHandler);
