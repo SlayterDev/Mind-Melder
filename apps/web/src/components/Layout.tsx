@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ReactNode } from 'react';
 import { useInboxCount } from '../api/queries';
+import { PenLine, CalendarDays, Inbox, FileText, ListChecks, Settings } from 'lucide-react';
 
 interface LayoutProps {
   children: ReactNode;
@@ -14,12 +15,12 @@ export default function Layout({ children }: LayoutProps) {
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    { path: '/', label: 'Capture', icon: '✏️' },
-    { path: '/today', label: 'Today Sheet', icon: '📋' },
-    { path: '/inbox', label: 'Inbox', icon: '📥' },
-    { path: '/notes', label: 'Notes', icon: '📝' },
-    { path: '/todos', label: 'Todos', icon: '✓' },
-    { path: '/templates', label: 'Templates', icon: '⚙️' },
+    { path: '/', label: 'Capture', icon: PenLine },
+    { path: '/today', label: 'Today Sheet', icon: CalendarDays },
+    { path: '/inbox', label: 'Inbox', icon: Inbox },
+    { path: '/notes', label: 'Notes', icon: FileText },
+    { path: '/todos', label: 'Todos', icon: ListChecks },
+    { path: '/templates', label: 'Templates', icon: Settings },
   ];
 
   return (
@@ -32,28 +33,31 @@ export default function Layout({ children }: LayoutProps) {
         </div>
 
         <nav className="mt-6">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`
-                flex items-center gap-3 px-6 py-3 transition-all
-                ${
-                  isActive(item.path)
-                    ? 'bg-gray-800 border-l-4 border-accent text-gray-100'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
-                }
-              `}
-            >
-              <span className="text-xl">{item.icon}</span>
-              <span className="font-medium">{item.label}</span>
-              {item.path === '/inbox' && inboxCount > 0 && (
-                <span className="badge-accent">
-                  {inboxCount}
-                </span>
-              )}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`
+                  flex items-center gap-3 px-6 py-3 transition-all
+                  ${
+                    isActive(item.path)
+                      ? 'bg-gray-800 border-l-4 border-accent text-gray-100'
+                      : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                  }
+                `}
+              >
+                <Icon className="w-5 h-5" />
+                <span className="font-medium">{item.label}</span>
+                {item.path === '/inbox' && inboxCount > 0 && (
+                  <span className="badge-accent">
+                    {inboxCount}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
       </aside>
 

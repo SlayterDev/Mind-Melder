@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { todosAPI } from '../api/client';
+import { CheckCircle, Check, X } from 'lucide-react';
 
 export default function TodosPage() {
   const [todos, setTodos] = useState<any[]>([]);
@@ -96,7 +97,7 @@ export default function TodosPage() {
 
       {todos.length === 0 ? (
         <div className="sheet-card-inner p-12 text-center">
-          <div className="text-6xl mb-4">✓</div>
+          <CheckCircle className="w-16 h-16 mx-auto mb-4 text-gray-400" />
           <h3 className="text-xl font-semibold text-gray-300 mb-2">
             {statusFilter === 'completed' ? 'No completed todos' : 'No todos yet'}
           </h3>
@@ -125,7 +126,7 @@ export default function TodosPage() {
                   }`}
                   title={todo.status === 'completed' ? 'Mark as pending' : 'Mark as completed'}
                 >
-                  {todo.status === 'completed' && <span className="text-white text-xs">✓</span>}
+                  {todo.status === 'completed' && <Check className="w-3 h-3 text-white" />}
                 </button>
 
                 <div className="flex-1">
@@ -161,7 +162,7 @@ export default function TodosPage() {
                            transition-all text-sm px-3 py-1 rounded hover:bg-gray-800"
                   title="Delete"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>

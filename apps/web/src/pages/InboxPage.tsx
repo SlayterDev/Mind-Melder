@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { capturesAPI, organizeAPI } from '../api/client';
+import { Zap, MailOpen, X } from 'lucide-react';
 
 export default function InboxPage() {
   const [captures, setCaptures] = useState<any[]>([]);
@@ -65,9 +66,10 @@ export default function InboxPage() {
           <button
             onClick={handleOrganize}
             disabled={isOrganizing}
-            className="btn-accent-lg"
+            className="btn-accent-lg flex items-center gap-2"
           >
-            {isOrganizing ? '⚡ Organizing...' : '⚡ Organize Now'}
+            <Zap className="w-5 h-5" />
+            {isOrganizing ? 'Organizing...' : 'Organize Now'}
           </button>
         )}
       </div>
@@ -80,7 +82,7 @@ export default function InboxPage() {
 
       {captures.length === 0 ? (
         <div className="sheet-card-inner p-12 text-center">
-          <div className="text-6xl mb-4">📭</div>
+          <MailOpen className="w-16 h-16 mx-auto mb-4 text-gray-400" />
           <h3 className="text-xl font-semibold text-gray-300 mb-2">Inbox is empty</h3>
           <p className="text-gray-500">All captures have been organized!</p>
         </div>
@@ -107,7 +109,7 @@ export default function InboxPage() {
                            transition-all text-sm px-3 py-1 rounded hover:bg-gray-800"
                   title="Delete"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>

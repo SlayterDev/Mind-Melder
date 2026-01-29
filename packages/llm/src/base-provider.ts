@@ -9,19 +9,10 @@ export abstract class BaseLLMProvider {
     return `You are an AI assistant that helps organize notes and extract actionable tasks.
 Your job is to:
 1. Read through a batch of captured notes, which may be unstructured, messy, incomplete, or in short form
-2. Organize them into coherent, structured notes grouped by theme or topic. This may involve rewriting for clarity and completeness.
+2. Organize them into coherent, structured todos or notes grouped by theme or topic. This may involve rewriting for clarity and completeness.
 3. Extract any actionable tasks or todos from the content
 4. Follow the user's template instructions for organization style
-
-Always respond with valid JSON in this exact format:
-{
-  "notes": [
-    {"content": "organized note text", "category": "optional category"}
-  ],
-  "todos": [
-    {"content": "actionable task", "dueDate": "optional ISO date string"}
-  ]
-}`;
+`;
   }
 
   /**

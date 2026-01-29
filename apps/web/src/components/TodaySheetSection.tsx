@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import TaskCard from './TaskCard';
+import { ChevronRight, ChevronDown, LucideIcon } from 'lucide-react';
 
 interface Todo {
   id: string;
@@ -16,7 +17,7 @@ interface Todo {
 interface SectionProps {
   id: string;
   title: string;
-  emoji: string;
+  icon: LucideIcon;
   todos: Todo[];
   onToggleComplete: (id: string, status: string) => void;
 }
@@ -24,7 +25,7 @@ interface SectionProps {
 export default function TodaySheetSection({
   id,
   title,
-  emoji,
+  icon: Icon,
   todos,
   onToggleComplete,
 }: SectionProps) {
@@ -39,11 +40,15 @@ export default function TodaySheetSection({
         className="flex items-center justify-between w-full mb-4 group"
       >
         <div className="flex items-center gap-3">
-          <span className="text-2xl">{emoji}</span>
+          <Icon className="w-6 h-6" />
           <h3 className="section-header">{title}</h3>
           <span className="badge-accent">{todos.length}</span>
         </div>
-        <span className="text-accent-arrow text-lg">{isCollapsed ? '▶' : '▼'}</span>
+        {isCollapsed ? (
+          <ChevronRight className="w-5 h-5 text-accent-arrow" />
+        ) : (
+          <ChevronDown className="w-5 h-5 text-accent-arrow" />
+        )}
       </button>
 
       {/* Section Content */}

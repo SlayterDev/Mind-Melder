@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { notesAPI } from '../api/client';
+import { FileText, X } from 'lucide-react';
 
 export default function NotesPage() {
   const [notes, setNotes] = useState<any[]>([]);
@@ -65,7 +66,7 @@ export default function NotesPage() {
 
       {notes.length === 0 ? (
         <div className="sheet-card-inner p-12 text-center">
-          <div className="text-6xl mb-4">📝</div>
+          <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
           <h3 className="text-xl font-semibold text-gray-300 mb-2">No organized notes yet</h3>
           <p className="text-gray-500">
             Capture some notes and click "Organize Now" in the Inbox
@@ -101,7 +102,7 @@ export default function NotesPage() {
                            transition-all text-sm px-3 py-1 rounded hover:bg-gray-800"
                   title="Delete"
                 >
-                  ✕
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>

@@ -1,5 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Zap, Clock, Hourglass, GripVertical, Check } from 'lucide-react';
 
 interface TaskCardProps {
   todo: {
@@ -29,10 +30,13 @@ export default function TaskCard({ todo, onToggleComplete }: TaskCardProps) {
     transition,
   };
 
-  const timeEstimateLabels: Record<string, string> = {
-    quick: '⚡ <15min',
-    medium: '⏱️ 30-60min',
-    long: '⏳ >90min',
+  const getTimeEstimateDisplay = (estimate: string) => {
+    const displays: Record<string, { icon: typeof Zap; label: string }> = {
+      quick: { icon: Zap, label: '<15min' },
+      medium: { icon: Clock, label: '30-60min' },
+      long: { icon: Hourglass, label: '>90min' },
+    };
+    return displays[estimate];
   };
 
   const isOverdue = todo.dueDate && new Date(todo.dueDate) < new Date() && todo.status === 'pending';
@@ -53,7 +57,7 @@ export default function TaskCard({ todo, onToggleComplete }: TaskCardProps) {
           className="drag-handle"
           title="Drag to reorder"
         >
-          ⋮⋮
+          <GripVertical className="w-4 h-4" />
         </button>
 
         {/* Checkbox */}
@@ -64,7 +68,7 @@ export default function TaskCard({ todo, onToggleComplete }: TaskCardProps) {
           }`}
           title={todo.status === 'completed' ? 'Mark as pending' : 'Mark as completed'}
         >
-          {todo.status === 'completed' && <span className="text-white text-xs">✓</span>}
+          {todo.status === 'completed' && <Check className="w-3 h-3 text-white" />}
         </button>
 
         {/* Content */}
@@ -81,11 +85,16 @@ export default function TaskCard({ todo, onToggleComplete }: TaskCardProps) {
           {(todo.timeEstimate || todo.dueDate || (todo.tags && todo.tags.length > 0)) && (
             <div className="flex flex-wrap gap-2 mt-3">
               {/* Time Estimate */}
-              {todo.timeEstimate && todo.timeEstimate !== 'none' && timeEstimateLabels[todo.timeEstimate] && (
-                <span className="badge-chip">
-                  {timeEstimateLabels[todo.timeEstimate]}
-                </span>
-              )}
+              {todo.timeEstimate && todo.timeEstimate !== 'none' && getTimeEstimateDisplay(todo.timeEstimate) && (() => {
+                const display = getTimeEstimateDisplay(todo.timeEstimate!);
+                const Icon = display.icon;
+                return (
+                  <span className="badge-chip flex items-center gap-1">
+                    <Icon className="w-3 h-3" />
+                    {display.label}
+                  </span>
+                );
+              })()}
 
               {/* Due Date */}
               {todo.dueDate && (

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { templatesAPI } from '../api/client';
+import { Settings, CircleDot, Circle, Pencil, X } from 'lucide-react';
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<any[]>([]);
@@ -168,7 +169,7 @@ export default function TemplatesPage() {
 
       {templates.length === 0 ? (
         <div className="sheet-card-inner p-12 text-center">
-          <div className="text-6xl mb-4">⚙️</div>
+          <Settings className="w-16 h-16 mx-auto mb-4 text-gray-400" />
           <h3 className="text-xl font-semibold text-gray-300 mb-2">No templates yet</h3>
           <p className="text-gray-500">Create a template to define how AI should organize your notes</p>
         </div>
@@ -206,7 +207,11 @@ export default function TemplatesPage() {
                     className="text-gray-500 hover:text-accent text-sm px-3 py-1 rounded hover:bg-gray-800"
                     title={template.isActive ? 'Deactivate' : 'Activate'}
                   >
-                    {template.isActive ? '◉' : '○'}
+                    {template.isActive ? (
+                      <CircleDot className="w-4 h-4" />
+                    ) : (
+                      <Circle className="w-4 h-4" />
+                    )}
                   </button>
 
                   <button
@@ -214,7 +219,7 @@ export default function TemplatesPage() {
                     className="text-gray-500 hover:text-accent text-sm px-3 py-1 rounded hover:bg-gray-800"
                     title="Edit"
                   >
-                    ✎
+                    <Pencil className="w-4 h-4" />
                   </button>
 
                   <button
@@ -222,7 +227,7 @@ export default function TemplatesPage() {
                     className="text-gray-500 hover:text-red-400 text-sm px-3 py-1 rounded hover:bg-gray-800"
                     title="Delete"
                   >
-                    ✕
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>

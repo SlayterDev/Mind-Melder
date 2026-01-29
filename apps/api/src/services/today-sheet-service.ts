@@ -73,6 +73,7 @@ export class TodaySheetService {
         currentDate: new Date().toISOString().split('T')[0],
       },
     });
+    console.log('LLM Today Sheet result:', aiResult);
 
     // 4. Clear existing today sheet items (set section to 'none')
     const existingSheetTodoIds = existingTodos

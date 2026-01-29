@@ -1,4 +1,5 @@
 import QuickCaptureInput from '../components/QuickCaptureInput';
+import { Lightbulb } from 'lucide-react';
 
 export default function CapturePage() {
   return (
@@ -13,7 +14,10 @@ export default function CapturePage() {
       <QuickCaptureInput variant="textarea" autoFocus />
 
       <div className="mt-8 bg-gray-900/50 border border-gray-800/50 rounded-lg p-4 shadow-lg shadow-black/10">
-        <h3 className="text-sm font-semibold text-gray-300 mb-2">💡 Pro Tips</h3>
+        <h3 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+          <Lightbulb className="w-4 h-4" />
+          Pro Tips
+        </h3>
         <ul className="text-sm text-gray-400 space-y-1">
           <li>• Press <kbd className="px-2 py-0.5 bg-gray-800 rounded text-xs">Cmd/Ctrl+Enter</kbd> to submit</li>
           <li>• No need to organize - AI will do it for you</li>

@@ -12,6 +12,7 @@ import TodaySheetSection from '../components/TodaySheetSection';
 import TaskCard from '../components/TaskCard';
 import QuickCaptureInput from '../components/QuickCaptureInput';
 import { useInboxCount } from '../api/queries';
+import { ClipboardList, RefreshCw, Sparkles, Flame, Target, Lightbulb, Package } from 'lucide-react';
 
 interface Todo {
   id: string;
@@ -55,6 +56,7 @@ export default function TodaySheetPage() {
     setIsLoading(true);
     try {
       const data = await todaySheetAPI.get();
+      console.log('Today sheet data:', data);
       setSheet(data);
     } catch (error: any) {
       if (error.message.includes('404')) {
@@ -230,7 +232,7 @@ export default function TodaySheetPage() {
   if (isLoading) {
     return (
       <div className="text-gray-400 text-center py-12">
-        <div className="text-4xl mb-4">📋</div>
+        <ClipboardList className="w-12 h-12 mx-auto mb-4" />
         <div>Loading today's sheet...</div>
       </div>
     );
@@ -264,9 +266,21 @@ export default function TodaySheetPage() {
               <button
                 onClick={() => handleGenerate.mutateAsync()}
                 disabled={isGenerating}
-                className="btn-accent"
+                className="btn-accent flex items-center gap-2"
               >
-                {isGenerating ? 'Generating...' : sheet ? '🔄 Regenerate' : '✨ Generate Plan'}
+                {isGenerating ? (
+                  'Generating...'
+                ) : sheet ? (
+                  <>
+                    <RefreshCw className="w-4 h-4" />
+                    Regenerate
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Generate Plan
+                  </>
+                )}
               </button>
               {inboxCount > 0 && (
                 <div className="mt-2 text-sm text-gray-400 italic text-right pr-1">
@@ -280,7 +294,7 @@ export default function TodaySheetPage() {
         {!sheet ? (
           /* Empty State */
           <div className="sheet-card-inner p-12 text-center">
-            <div className="text-6xl mb-4">📋</div>
+            <ClipboardList className="w-16 h-16 mx-auto mb-4 text-gray-400" />
             <h3 className="text-xl font-semibold text-gray-100 mb-2">No Today Sheet Yet</h3>
             <p className="text-gray-400 mb-6">
               Generate your daily plan from captures and todos using AI prioritization.
@@ -288,9 +302,16 @@ export default function TodaySheetPage() {
             <button
               onClick={() => handleGenerate.mutateAsync()}
               disabled={isGenerating}
-              className="btn-accent-lg"
+              className="btn-accent-lg flex items-center gap-2 mx-auto"
             >
-              {isGenerating ? 'Generating...' : '✨ Generate Today Sheet'}
+              {isGenerating ? (
+                'Generating...'
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  Generate Today Sheet
+                </>
+              )}
             </button>
           </div>
         ) : (
@@ -325,28 +346,28 @@ export default function TodaySheetPage() {
                 <TodaySheetSection
                   id="must_do_today"
                   title="Must-Do Today"
-                  emoji="🔥"
+                  icon={Flame}
                   todos={sheet.sections.must_do_today}
                   onToggleComplete={handleToggleComplete}
                 />
                 <TodaySheetSection
                   id="likely_today"
                   title="Likely Today"
-                  emoji="🎯"
+                  icon={Target}
                   todos={sheet.sections.likely_today}
                   onToggleComplete={handleToggleComplete}
                 />
                 <TodaySheetSection
                   id="opportunistic"
                   title="Opportunistic"
-                  emoji="💡"
+                  icon={Lightbulb}
                   todos={sheet.sections.opportunistic}
                   onToggleComplete={handleToggleComplete}
                 />
                 <TodaySheetSection
                   id="overflow"
                   title="Overflow"
-                  emoji="📦"
+                  icon={Package}
                   todos={sheet.sections.overflow}
                   onToggleComplete={handleToggleComplete}
                 />

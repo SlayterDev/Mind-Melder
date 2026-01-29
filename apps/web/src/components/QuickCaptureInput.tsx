@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { capturesAPI } from '../api/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Check, PenLine } from 'lucide-react';
 
 interface QuickCaptureInputProps {
   variant?: 'textarea' | 'input';
@@ -58,14 +59,14 @@ export default function QuickCaptureInput({
     try {
       await createCapture.mutateAsync({ content: content.trim() });
       setContent('');
-      setMessage('✓ Captured!');
+      setMessage('success:Captured!');
       setTimeout(() => setMessage(''), 2000);
 
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      setMessage(`Error: ${error instanceof Error ? error.message : 'Failed to capture'}`);
+      setMessage(`error:${error instanceof Error ? error.message : 'Failed to capture'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -109,9 +110,12 @@ export default function QuickCaptureInput({
             <div className="text-sm">
               {message && (
                 <span
-                  className={`${message.startsWith('✓') ? 'text-green-400' : 'text-red-400'}`}
+                  className={`flex items-center gap-1.5 ${
+                    message.startsWith('success:') ? 'text-green-400' : 'text-red-400'
+                  }`}
                 >
-                  {message}
+                  {message.startsWith('success:') && <Check className="w-4 h-4" />}
+                  {message.split(':')[1]}
                 </span>
               )}
             </div>
@@ -147,16 +151,17 @@ export default function QuickCaptureInput({
           disabled={isSubmitting || !content.trim()}
           className="btn-accent px-5"
         >
-          {isSubmitting ? '...' : '✏️'}
+          {isSubmitting ? '...' : <PenLine className="w-5 h-5" />}
         </button>
       </form>
       {message && (
         <div
-          className={`text-sm mt-2 ${
-            message.startsWith('✓') ? 'text-green-400' : 'text-red-400'
+          className={`flex items-center gap-1.5 text-sm mt-2 ${
+            message.startsWith('success:') ? 'text-green-400' : 'text-red-400'
           }`}
         >
-          {message}
+          {message.startsWith('success:') && <Check className="w-4 h-4" />}
+          {message.split(':')[1]}
         </div>
       )}
     </div>
