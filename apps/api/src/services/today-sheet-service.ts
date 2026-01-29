@@ -6,6 +6,7 @@ import {
   TodosRepository,
   TemplatesRepository,
 } from 'database';
+import { templateTools } from '../utils/template-tools';
 
 export interface TodaySheet {
   summary: string;
@@ -54,7 +55,7 @@ export class TodaySheetService {
       }
     } else {
       const activeTemplates = await this.templatesRepo.findActive(userId);
-      template = activeTemplates[0];
+      template = activeTemplates[0] || templateTools.defaultTemplate;
 
       if (!template) {
         throw new Error('No active template found. Please create a template first.');

@@ -6,10 +6,12 @@ import {
   DragStartEvent,
   closestCorners,
 } from '@dnd-kit/core';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { todaySheetAPI } from '../api/client';
 import TodaySheetSection from '../components/TodaySheetSection';
 import TaskCard from '../components/TaskCard';
 import QuickCaptureInput from '../components/QuickCaptureInput';
+import { useInboxCount } from '../api/queries';
 
 interface Todo {
   id: string;
@@ -41,6 +43,9 @@ export default function TodaySheetPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const { data: inboxCount = 0 } = useInboxCount();
+
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     loadSheet();
@@ -62,18 +67,34 @@ export default function TodaySheetPage() {
     }
   };
 
-  const handleGenerate = async () => {
-    setIsGenerating(true);
-    try {
-      const { sheet: newSheet } = await todaySheetAPI.generate();
-      setSheet(newSheet);
-    } catch (error) {
-      console.error('Failed to generate today sheet:', error);
-      alert('Failed to generate today sheet');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  const handleGenerate = useMutation({
+    mutationFn: async () => {
+      setIsGenerating(true);
+      try {
+        const { sheet: newSheet } = await todaySheetAPI.generate();
+        setSheet(newSheet);
+      } catch (error) {
+        console.error('Failed to generate today sheet:', error);
+        alert('Failed to generate today sheet');
+      } finally {
+        setIsGenerating(false);
+      }
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['inboxCount'] });
+      const previous = queryClient.getQueryData<number>({ queryKey: ['inboxCount'] });
+      queryClient.setQueryData<number>({ queryKey: ['inboxCount'] }, 0);
+      return { previous };
+    },
+    onError: (err, newItem, context: any) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData({ queryKey: ['inboxCount'] }, context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['inboxCount'] });
+    },
+  });
 
   const handleToggleComplete = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
@@ -239,13 +260,20 @@ export default function TodaySheetPage() {
               <h1 className="text-3xl font-bold text-gray-100 mb-1">Today's Plan</h1>
               <p className="text-gray-400 text-sm font-serif italic">{dateStr}</p>
             </div>
-            <button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="btn-accent"
-            >
-              {isGenerating ? 'Generating...' : sheet ? '🔄 Regenerate' : '✨ Generate Plan'}
-            </button>
+            <div className="grid grid-cols-1 justify-end">
+              <button
+                onClick={() => handleGenerate.mutateAsync()}
+                disabled={isGenerating}
+                className="btn-accent"
+              >
+                {isGenerating ? 'Generating...' : sheet ? '🔄 Regenerate' : '✨ Generate Plan'}
+              </button>
+              {inboxCount > 0 && (
+                <div className="mt-2 text-sm text-gray-400 italic text-right pr-1">
+                  {inboxCount} items unorganized
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -258,7 +286,7 @@ export default function TodaySheetPage() {
               Generate your daily plan from captures and todos using AI prioritization.
             </p>
             <button
-              onClick={handleGenerate}
+              onClick={() => handleGenerate.mutateAsync()}
               disabled={isGenerating}
               className="btn-accent-lg"
             >

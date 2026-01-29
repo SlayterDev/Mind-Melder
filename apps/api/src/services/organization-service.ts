@@ -7,6 +7,7 @@ import {
   TemplatesRepository,
 } from 'database';
 import type { OrganizationResult } from 'types';
+import { templateTools } from '../utils/template-tools';
 
 export class OrganizationService {
   private capturesRepo: CapturesRepository;
@@ -51,7 +52,7 @@ export class OrganizationService {
       }
     } else {
       const activeTemplates = await this.templatesRepo.findActive(userId);
-      template = activeTemplates[0];
+      template = activeTemplates[0] || templateTools.defaultTemplate;
 
       if (!template) {
         throw new Error('No active template found. Please create a template first.');

@@ -9,7 +9,7 @@ export abstract class BaseLLMProvider {
     return `You are an AI assistant that helps organize notes and extract actionable tasks.
 Your job is to:
 1. Read through a batch of captured notes, which may be unstructured, messy, incomplete, or in short form
-2. Organize them into coherent, structured notes grouped by theme or topic
+2. Organize them into coherent, structured notes grouped by theme or topic. This may involve rewriting for clarity and completeness.
 3. Extract any actionable tasks or todos from the content
 4. Follow the user's template instructions for organization style
 
@@ -88,15 +88,16 @@ ${input.template.prompt}
 
 YOUR TASK:
 1. Extract actionable tasks from captures (skip pure notes/info)
-2. Include relevant existing todos
-3. Prioritize by: due dates (today/overdue highest), importance, effort, available time
-4. Assign to sections:
+2. Minimally rephrase capture content for task coherency and clarity
+3. Include relevant existing todos
+4. Prioritize by: due dates (today/overdue highest), importance, effort, available time
+5. Assign to sections:
    - must_do_today: Due today/overdue, critical items (3-7 max)
    - likely_today: Important, high-impact, fits capacity
    - opportunistic: Nice-to-have, quick wins, no urgency
    - overflow: Defer to later this week
-5. Time estimates: quick (<15min), medium (30-60min), long (>90min)
-6. Generate 1-2 sentence summary of day's focus
+6. Time estimates: quick (<15min), medium (30-60min), long (>90min)
+7. Generate 1-2 sentence summary of day's focus
 
 CRITICAL RULE FOR sourceId:
 - You MUST use the exact ID from the input lists above (copy the UUID after "ID:")
