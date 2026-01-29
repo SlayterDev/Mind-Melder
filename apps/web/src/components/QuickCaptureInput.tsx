@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { capturesAPI } from '../api/client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface QuickCaptureInputProps {
   variant?: 'textarea' | 'input';
@@ -27,23 +28,38 @@ export default function QuickCaptureInput({
     }
   }, [autoFocus]);
 
+  useEffect(() => {
+    if (content === '' && !isSubmitting && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [content, isSubmitting]);
+
+  const queryClient = useQueryClient();
+  const createCapture = useMutation({
+    mutationFn: (data: { content: string }) => capturesAPI.create(data),
+    onMutate: async (newItem) => {
+      await queryClient.cancelQueries({ queryKey: ['inboxCount'] });
+      const previous = queryClient.getQueryData<number>({ queryKey: ['inboxCount'] });
+      queryClient.setQueryData<number>({ queryKey: ['inboxCount'] }, (old = 0) => old + 1);
+      return { previous };
+    },
+    onError: (err, newItem, context: any) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData({ queryKey: ['inboxCount'] }, context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['inboxCount'] });
+    },
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
-
-    setIsSubmitting(true);
-    setMessage('');
-
     try {
-      await capturesAPI.create({ content: content.trim() });
+      await createCapture.mutateAsync({ content: content.trim() });
       setContent('');
       setMessage('✓ Captured!');
       setTimeout(() => setMessage(''), 2000);
-
-      // Keep focus on input for quick successive captures
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
 
       if (onSuccess) {
         onSuccess();
