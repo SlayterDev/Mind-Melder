@@ -12,7 +12,7 @@ import TodaySheetSection from '../components/TodaySheetSection';
 import TaskCard from '../components/TaskCard';
 import QuickCaptureInput from '../components/QuickCaptureInput';
 import { useInboxCount } from '../api/queries';
-import { ClipboardList, RefreshCw, Sparkles, Flame, Target, Lightbulb, Package } from 'lucide-react';
+import { ClipboardList, Sparkles, Flame, Target, Lightbulb, Package } from 'lucide-react';
 
 interface Todo {
   id: string;
@@ -272,7 +272,7 @@ export default function TodaySheetPage() {
                   'Generating...'
                 ) : sheet ? (
                   <>
-                    <RefreshCw className="w-4 h-4" />
+                    <Sparkles className="w-4 h-4" />
                     Regenerate
                   </>
                 ) : (
