@@ -2,11 +2,145 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer components {
+  /* Today Sheet Card Styles */
+  .sheet-card {
+    @apply rounded-lg shadow-lg;
+    background: linear-gradient(to bottom right, rgb(17 24 39), rgb(17 24 39 / 0.95));
+    border: 1px solid rgb(114 97 175 / 0.3);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+  }
+
+  .sheet-card-inner {
+    @apply rounded-lg;
+    background: rgb(31 41 55 / 0.5);
+    border: 1px solid rgb(114 97 175 / 0.2);
+  }
+
+  /* Task Card Styles */
+  .task-card {
+    @apply rounded-lg p-4 transition-all relative;
+    background: linear-gradient(to bottom right, rgb(17 24 39), rgb(17 24 39 / 0.95));
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2);
+  }
+
+  .task-card:hover {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+  }
+
+  .task-card-active {
+    border: 1px solid rgb(114 97 175 / 0.3);
+  }
+
+  .task-card-completed {
+    @apply opacity-60 border-gray-800;
+  }
+
+  /* Button Styles */
+  .btn-accent {
+    @apply px-4 py-2 text-white font-medium rounded-lg transition-colors shadow-md;
+    background-color: rgb(114 97 175 / 0.4);
+    border: 1px solid rgb(114 97 175 / 0.3);
+  }
+
+  .btn-accent:hover:not(:disabled) {
+    background-color: rgb(114 97 175 / 0.6);
+  }
+
+  .btn-accent-lg {
+    @apply px-6 py-3 text-white font-medium rounded-lg transition-colors shadow-lg;
+    background-color: rgb(114 97 175 / 0.4);
+    border: 1px solid rgb(114 97 175 / 0.3);
+  }
+
+  .btn-accent-lg:hover:not(:disabled) {
+    background-color: rgb(114 97 175 / 0.6);
+  }
+
+  .btn-accent:disabled {
+    @apply bg-gray-800 text-gray-600 border-gray-700;
+  }
+
+  /* Input Styles */
+  .input-accent {
+    @apply rounded-lg px-4 py-2.5 text-gray-100 placeholder-gray-500;
+    background-color: rgb(31 41 55 / 0.8);
+    border: 1px solid rgb(114 97 175 / 0.2);
+  }
+
+  .input-accent:focus {
+    @apply outline-none border-transparent;
+    box-shadow: 0 0 0 2px rgb(114 97 175 / 0.5);
+  }
+
+  /* Drag Handle */
+  .drag-handle {
+    @apply mt-1 cursor-grab active:cursor-grabbing transition-colors text-lg leading-none select-none;
+    color: rgb(114 97 175 / 0.5);
+  }
+
+  .drag-handle:hover {
+    color: rgb(114 97 175 / 0.7);
+  }
+
+  /* Checkbox */
+  .checkbox-accent {
+    @apply mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0;
+  }
+
+  .checkbox-accent-unchecked {
+    border-color: rgb(114 97 175 / 0.5);
+  }
+
+  .checkbox-accent-unchecked:hover {
+    border-color: rgb(114 97 175 / 0.7);
+    background-color: rgb(114 97 175 / 0.1);
+  }
+
+  .checkbox-accent-checked {
+    @apply bg-green-600 border-green-500 shadow-inner;
+  }
+
+  /* Badge Styles */
+  .badge-accent {
+    @apply px-2.5 py-0.5 rounded-full text-sm text-gray-300;
+    background-color: rgb(114 97 175 / 0.2);
+    border: 1px solid rgb(114 97 175 / 0.3);
+  }
+
+  .badge-chip {
+    @apply px-2 py-0.5 rounded text-xs text-gray-300;
+    background-color: rgb(31 41 55 / 0.8);
+    border: 1px solid rgb(114 97 175 / 0.3);
+  }
+
+  /* Section Styles */
+  .section-header {
+    @apply text-xl font-semibold text-gray-100 group-hover:text-white transition-colors;
+  }
+
+  .section-divider {
+    border-bottom: 2px solid rgb(114 97 175 / 0.2);
+  }
+
+  .section-border {
+    border-left: 2px solid rgb(114 97 175 / 0.2);
+  }
+
+  /* Summary Box */
+  .summary-box {
+    @apply rounded-lg p-4 shadow-md;
+    background-color: rgb(114 97 175 / 0.1);
+    border: 1px solid rgb(114 97 175 / 0.3);
+  }
+
+  /* Accent Text */
+  .text-accent-highlight {
+    @apply font-semibold;
+    color: #7261af;
+  }
+
+  .text-accent-arrow {
+    color: rgb(114 97 175 / 0.5);
+  }
 }

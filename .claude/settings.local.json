@@ -30,7 +30,11 @@
       "Bash(LLM_PROVIDER=openai pnpm exec tsx:*)",
       "Bash(pnpm exec tsx:*)",
       "Bash(node -e:*)",
-      "Bash(/Users/slayter/Developer/Mind-Melder/test-today-sheet-api.sh)"
+      "Bash(/Users/slayter/Developer/Mind-Melder/test-today-sheet-api.sh)",
+      "Bash(pnpm --filter web add:*)",
+      "Bash(pnpm run build:*)",
+      "Bash(pnpm --filter web dev:*)",
+      "Bash(cat:*)"
     ]
   }
 }

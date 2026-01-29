@@ -12,6 +12,7 @@ export default function Layout({ children }: LayoutProps) {
 
   const navItems = [
     { path: '/', label: 'Capture', icon: '✏️' },
+    { path: '/today', label: 'Today Sheet', icon: '📋' },
     { path: '/inbox', label: 'Inbox', icon: '📥' },
     { path: '/notes', label: 'Notes', icon: '📝' },
     { path: '/todos', label: 'Todos', icon: '✓' },

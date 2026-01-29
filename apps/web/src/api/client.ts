@@ -66,3 +66,23 @@ export const organizeAPI = {
       { method: 'POST', body: templateId ? JSON.stringify({ templateId }) : undefined }
     ),
 };
+
+// Today Sheet
+export const todaySheetAPI = {
+  generate: (templateId?: string) =>
+    fetchAPI<{ success: boolean; sheet: any; message: string }>(
+      '/today-sheet/generate',
+      { method: 'POST', body: JSON.stringify(templateId ? { templateId } : {}) }
+    ),
+  get: () => fetchAPI<any>('/today-sheet'),
+  updateTodo: (id: string, updates: Partial<any>) =>
+    fetchAPI<any>(`/today-sheet/todos/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    }),
+  reorder: (updates: Array<{ id: string; section: string; order: number }>) =>
+    fetchAPI('/today-sheet/reorder', {
+      method: 'PATCH',
+      body: JSON.stringify({ updates }),
+    }),
+};
