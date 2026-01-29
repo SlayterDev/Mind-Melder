@@ -15,6 +15,13 @@
       "when": 1769629290046,
       "tag": "0001_greedy_gressill",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1769715423275,
+      "tag": "0002_handy_paibok",
+      "breakpoints": true
     }
   ]
 }

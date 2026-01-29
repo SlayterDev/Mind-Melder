@@ -1,5 +1,6 @@
 import { pgTable, uuid, text, timestamp, pgEnum, index, integer, jsonb } from 'drizzle-orm/pg-core';
 import { captures } from './captures';
+import { todaySheets } from './today-sheets';
 
 export const todoStatusEnum = pgEnum('todo_status', ['pending', 'completed']);
 
@@ -23,6 +24,7 @@ export const todos = pgTable(
   {
     id: uuid('id').defaultRandom().primaryKey(),
     content: text('content').notNull(),
+    description: text('description'),
     status: todoStatusEnum('status').notNull().default('pending'),
     dueDate: timestamp('due_date', { withTimezone: true }),
     completedAt: timestamp('completed_at', { withTimezone: true }),
@@ -30,6 +32,7 @@ export const todos = pgTable(
     // Today Sheet fields
     todaySheetSection: todaySheetSectionEnum('today_sheet_section').default('none'),
     todaySheetOrder: integer('today_sheet_order'),
+    todaySheetId: uuid('today_sheet_id').references(() => todaySheets.id, { onDelete: 'set null' }),
     timeEstimate: timeEstimateEnum('time_estimate').default('none'),
     priorityScore: integer('priority_score'),
     tags: jsonb('tags').$type<string[]>().default([]),

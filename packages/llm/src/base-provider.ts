@@ -1,5 +1,6 @@
 import type { Capture, Template } from 'types';
 import type { TodaySheetInput } from './types';
+import { z } from 'zod';
 
 export abstract class BaseLLMProvider {
   /**
@@ -126,13 +127,24 @@ Total should not exceed ${input.context.workingHoursMinutes} minutes.`;
   /**
    * Parse and validate LLM JSON response
    */
-  protected parseResponse<T>(response: string): T {
+  protected parseResponse<T>(response: string, schema?: z.ZodSchema<T>): T {
     try {
       // Try to extract JSON from markdown code blocks if present
       const jsonMatch = response.match(/```json\n?([\s\S]*?)\n?```/);
       const jsonStr = jsonMatch ? jsonMatch[1] : response;
 
-      return JSON.parse(jsonStr.trim());
+      const parsed = JSON.parse(jsonStr.trim());
+
+      // Validate against schema if provided
+      if (schema) {
+        const result = schema.safeParse(parsed);
+        if (!result.success) {
+          throw new Error(`LLM response validation failed: ${result.error.message}`);
+        }
+        return result.data;
+      }
+
+      return parsed;
     } catch (error) {
       throw new Error(`Failed to parse LLM response: ${error}`);
     }

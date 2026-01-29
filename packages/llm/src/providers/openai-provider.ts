@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import type { Capture, Template } from 'types';
 import { BaseLLMProvider } from '../base-provider';
 import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types';
+import { organizedOutputSchema, todaySheetOutputSchema } from '../validation';
 
 export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
   private client: OpenAI;
@@ -40,7 +41,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       throw new Error('Empty response from OpenAI');
     }
 
-    return this.parseResponse<OrganizedOutput>(content);
+    return this.parseResponse<OrganizedOutput>(content, organizedOutputSchema);
   }
 
   async extractTasks(text: string): Promise<{ content: string; dueDate?: string }[]> {
@@ -84,6 +85,6 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       throw new Error('Empty response from OpenAI');
     }
 
-    return this.parseResponse<TodaySheetOutput>(content);
+    return this.parseResponse<TodaySheetOutput>(content, todaySheetOutputSchema);
   }
 }

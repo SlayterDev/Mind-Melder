@@ -63,17 +63,25 @@ export class TodaySheetService {
     }
 
     // 3. Call LLM to generate Today Sheet
-    const aiResult = await this.llmProvider.generateTodaySheet({
-      captures,
-      existingTodos,
-      template,
-      context: {
-        currentTimeOfDay: new Date().getHours(),
-        workingHoursMinutes: 480, // 8 hours default
-        currentDate: new Date().toISOString().split('T')[0],
-      },
-    });
-    console.log('LLM Today Sheet result:', aiResult);
+    let aiResult;
+    try {
+      aiResult = await this.llmProvider.generateTodaySheet({
+        captures,
+        existingTodos,
+        template,
+        context: {
+          currentTimeOfDay: new Date().getHours(),
+          workingHoursMinutes: 480, // 8 hours default
+          currentDate: new Date().toISOString().split('T')[0],
+        },
+      });
+      console.log('LLM Today Sheet result:', aiResult);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('validation failed')) {
+        throw new Error('AI returned invalid response format. Please try again.');
+      }
+      throw error;
+    }
 
     // 4. Clear existing today sheet items (set section to 'none')
     const existingSheetTodoIds = existingTodos

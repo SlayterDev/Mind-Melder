@@ -34,7 +34,9 @@
       "Bash(pnpm --filter web add:*)",
       "Bash(pnpm run build:*)",
       "Bash(pnpm --filter web dev:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(docker ps:*)",
+      "Bash(pnpm:*)"
     ]
   }
 }
