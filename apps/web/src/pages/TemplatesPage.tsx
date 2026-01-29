@@ -98,8 +98,7 @@ export default function TemplatesPage() {
         {!isCreating && !editingId && (
           <button
             onClick={() => setIsCreating(true)}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg
-                     transition-colors shadow-lg shadow-blue-900/30 border border-blue-500/30"
+            className="btn-accent-lg"
           >
             + New Template
           </button>
@@ -107,7 +106,7 @@ export default function TemplatesPage() {
       </div>
 
       {(isCreating || editingId) && (
-        <div className="mb-6 bg-gray-900 border border-gray-800 rounded-lg p-6 shadow-lg shadow-black/20">
+        <div className="mb-6 sheet-card p-6">
           <h3 className="text-lg font-semibold mb-4">
             {isCreating ? 'Create Template' : 'Edit Template'}
           </h3>
@@ -128,9 +127,7 @@ export default function TemplatesPage() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g., Daily Review, Weekly Summary"
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                         shadow-inner"
+                className="input-accent w-full shadow-inner"
                 required
               />
             </div>
@@ -143,9 +140,7 @@ export default function TemplatesPage() {
                 value={formData.prompt}
                 onChange={(e) => setFormData({ ...formData, prompt: e.target.value })}
                 placeholder="Describe how the AI should organize notes. E.g., 'Group by Work, Personal, Ideas. Extract todos with due dates.'"
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                         shadow-inner resize-none"
+                className="input-accent w-full shadow-inner resize-none"
                 rows={4}
                 required
               />
@@ -154,8 +149,7 @@ export default function TemplatesPage() {
             <div className="flex gap-3">
               <button
                 type="submit"
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg
-                         transition-colors shadow-lg shadow-blue-900/30 border border-blue-500/30"
+                className="btn-accent px-6 py-2"
               >
                 {isCreating ? 'Create' : 'Save'}
               </button>
@@ -173,7 +167,7 @@ export default function TemplatesPage() {
       )}
 
       {templates.length === 0 ? (
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-12 text-center shadow-lg shadow-black/20">
+        <div className="sheet-card-inner p-12 text-center">
           <div className="text-6xl mb-4">⚙️</div>
           <h3 className="text-xl font-semibold text-gray-300 mb-2">No templates yet</h3>
           <p className="text-gray-500">Create a template to define how AI should organize your notes</p>
@@ -183,8 +177,7 @@ export default function TemplatesPage() {
           {templates.map((template) => (
             <div
               key={template.id}
-              className="bg-gray-900 border border-gray-800 rounded-lg p-5 shadow-lg shadow-black/10
-                       hover:border-gray-700 transition-colors group"
+              className="task-card task-card-active group p-5"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
@@ -210,7 +203,7 @@ export default function TemplatesPage() {
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
                   <button
                     onClick={() => handleToggleActive(template.id, template.isActive)}
-                    className="text-gray-500 hover:text-blue-400 text-sm px-3 py-1 rounded hover:bg-gray-800"
+                    className="text-gray-500 hover:text-accent text-sm px-3 py-1 rounded hover:bg-gray-800"
                     title={template.isActive ? 'Deactivate' : 'Activate'}
                   >
                     {template.isActive ? '◉' : '○'}
@@ -218,7 +211,7 @@ export default function TemplatesPage() {
 
                   <button
                     onClick={() => startEdit(template)}
-                    className="text-gray-500 hover:text-blue-400 text-sm px-3 py-1 rounded hover:bg-gray-800"
+                    className="text-gray-500 hover:text-accent text-sm px-3 py-1 rounded hover:bg-gray-800"
                     title="Edit"
                   >
                     ✎

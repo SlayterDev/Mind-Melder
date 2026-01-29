@@ -6,9 +6,10 @@ import {
   DragStartEvent,
   closestCorners,
 } from '@dnd-kit/core';
-import { capturesAPI, todaySheetAPI } from '../api/client';
+import { todaySheetAPI } from '../api/client';
 import TodaySheetSection from '../components/TodaySheetSection';
 import TaskCard from '../components/TaskCard';
+import QuickCaptureInput from '../components/QuickCaptureInput';
 
 interface Todo {
   id: string;
@@ -41,11 +42,6 @@ export default function TodaySheetPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  // Quick Capture state
-  const [captureContent, setCaptureContent] = useState('');
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [captureMessage, setCaptureMessage] = useState('');
-
   useEffect(() => {
     loadSheet();
   }, []);
@@ -76,25 +72,6 @@ export default function TodaySheetPage() {
       alert('Failed to generate today sheet');
     } finally {
       setIsGenerating(false);
-    }
-  };
-
-  const handleQuickCapture = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!captureContent.trim()) return;
-
-    setIsCapturing(true);
-    setCaptureMessage('');
-
-    try {
-      await capturesAPI.create({ content: captureContent.trim() });
-      setCaptureContent('');
-      setCaptureMessage('✓ Captured!');
-      setTimeout(() => setCaptureMessage(''), 2000);
-    } catch (error) {
-      setCaptureMessage(`Error: ${error instanceof Error ? error.message : 'Failed to capture'}`);
-    } finally {
-      setIsCapturing(false);
     }
   };
 
@@ -249,33 +226,8 @@ export default function TodaySheetPage() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Quick Capture */}
-      <div className="mb-8 sheet-card p-5">
-        <form onSubmit={handleQuickCapture} className="flex gap-3">
-          <input
-            type="text"
-            value={captureContent}
-            onChange={(e) => setCaptureContent(e.target.value)}
-            placeholder="Quick capture... (Press Enter to submit)"
-            className="flex-1 input-accent"
-            disabled={isCapturing}
-          />
-          <button
-            type="submit"
-            disabled={isCapturing || !captureContent.trim()}
-            className="btn-accent px-5"
-          >
-            {isCapturing ? '...' : '✏️'}
-          </button>
-        </form>
-        {captureMessage && (
-          <div
-            className={`text-sm mt-2 ${
-              captureMessage.startsWith('✓') ? 'text-green-400' : 'text-red-400'
-            }`}
-          >
-            {captureMessage}
-          </div>
-        )}
+      <div className="mb-8">
+        <QuickCaptureInput variant="input" placeholder="Quick capture..." autoFocus />
       </div>
 
       {/* Card wrapper for Today's Plan and content */}

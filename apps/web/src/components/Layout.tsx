@@ -37,7 +37,7 @@ export default function Layout({ children }: LayoutProps) {
                 flex items-center gap-3 px-6 py-3 transition-all
                 ${
                   isActive(item.path)
-                    ? 'bg-gray-800 border-l-4 border-blue-500 text-gray-100'
+                    ? 'bg-gray-800 border-l-4 border-accent text-gray-100'
                     : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
                 }
               `}

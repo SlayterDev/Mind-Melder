@@ -69,16 +69,24 @@ export default function TodosPage() {
           </p>
         </div>
 
-        <div className="flex gap-2 bg-gray-900 border border-gray-800 rounded-lg p-1 shadow-lg shadow-black/10">
+        <div className="flex gap-2 sheet-card p-1">
           {(['all', 'pending', 'completed'] as const).map((filter) => (
             <button
               key={filter}
               onClick={() => setStatusFilter(filter)}
               className={`px-4 py-2 rounded-md font-medium transition-colors capitalize ${
                 statusFilter === filter
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30'
+                  ? 'text-white shadow-lg'
                   : 'text-gray-400 hover:text-gray-200'
               }`}
+              style={
+                statusFilter === filter
+                  ? {
+                      backgroundColor: 'rgb(114 97 175 / 0.6)',
+                      boxShadow: '0 10px 15px -3px rgb(114 97 175 / 0.3)',
+                    }
+                  : undefined
+              }
             >
               {filter}
             </button>
@@ -87,7 +95,7 @@ export default function TodosPage() {
       </div>
 
       {todos.length === 0 ? (
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-12 text-center shadow-lg shadow-black/20">
+        <div className="sheet-card-inner p-12 text-center">
           <div className="text-6xl mb-4">✓</div>
           <h3 className="text-xl font-semibold text-gray-300 mb-2">
             {statusFilter === 'completed' ? 'No completed todos' : 'No todos yet'}
@@ -103,18 +111,17 @@ export default function TodosPage() {
           {todos.map((todo) => (
             <div
               key={todo.id}
-              className={`bg-gray-900 border border-gray-800 rounded-lg p-4 shadow-lg shadow-black/10
-                       hover:border-gray-700 transition-colors group ${
-                         todo.status === 'completed' ? 'opacity-60' : ''
-                       }`}
+              className={`task-card group ${
+                todo.status === 'completed' ? 'task-card-completed' : 'task-card-active'
+              }`}
             >
               <div className="flex items-start gap-4">
                 <button
                   onClick={() => handleToggleComplete(todo.id, todo.status)}
-                  className={`mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                  className={`checkbox-accent ${
                     todo.status === 'completed'
-                      ? 'bg-green-600 border-green-500 shadow-inner'
-                      : 'border-gray-600 hover:border-gray-500'
+                      ? 'checkbox-accent-checked'
+                      : 'checkbox-accent-unchecked'
                   }`}
                   title={todo.status === 'completed' ? 'Mark as pending' : 'Mark as completed'}
                 >
@@ -133,9 +140,9 @@ export default function TodosPage() {
                   <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
                     {todo.dueDate && (
                       <span
-                        className={`px-2 py-0.5 bg-gray-800 border border-gray-700 rounded ${
+                        className={`badge-chip ${
                           new Date(todo.dueDate) < new Date() && todo.status === 'pending'
-                            ? 'text-red-400 border-red-900'
+                            ? 'text-red-400 border-red-900 bg-red-950/30'
                             : ''
                         }`}
                       >

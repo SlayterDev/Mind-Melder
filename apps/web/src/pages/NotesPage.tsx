@@ -51,9 +51,7 @@ export default function NotesPage() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 bg-gray-900 border border-gray-800 rounded-lg text-gray-300
-                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                     shadow-lg shadow-black/10"
+            className="input-accent px-4 py-2"
           >
             <option value="">All Categories</option>
             {categories.map((cat) => (
@@ -66,7 +64,7 @@ export default function NotesPage() {
       </div>
 
       {notes.length === 0 ? (
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-12 text-center shadow-lg shadow-black/20">
+        <div className="sheet-card-inner p-12 text-center">
           <div className="text-6xl mb-4">📝</div>
           <h3 className="text-xl font-semibold text-gray-300 mb-2">No organized notes yet</h3>
           <p className="text-gray-500">
@@ -78,14 +76,12 @@ export default function NotesPage() {
           {notes.map((note) => (
             <div
               key={note.id}
-              className="bg-gray-900 border border-gray-800 rounded-lg p-5 shadow-lg shadow-black/10
-                       hover:border-gray-700 transition-colors group"
+              className="task-card task-card-active group p-5"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   {note.category && (
-                    <span className="inline-block px-3 py-1 bg-blue-900/30 border border-blue-700/30 text-blue-400
-                                   text-xs font-medium rounded-full mb-3 shadow-inner">
+                    <span className="badge-accent px-3 py-1 mb-3 inline-block shadow-inner">
                       {note.category}
                     </span>
                   )}
