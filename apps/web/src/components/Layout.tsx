@@ -1,14 +1,31 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
+import { capturesAPI } from '../api/client';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 export default function Layout({ children }: LayoutProps) {
+  const [inboxCount, setInboxCount] = useState(0); // Placeholder for inbox count logic
+
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
+
+  const loadCaptures = async () => {
+    try {
+      const data = await capturesAPI.listUnorganized();
+      setInboxCount(data.length);
+    } catch (error) {
+      console.error('Failed to load captures:', error);
+      setInboxCount(0);
+    }
+  };
+
+  useEffect(() => {
+    loadCaptures();
+  }, []);
 
   const navItems = [
     { path: '/', label: 'Capture', icon: '✏️' },
@@ -44,6 +61,11 @@ export default function Layout({ children }: LayoutProps) {
             >
               <span className="text-xl">{item.icon}</span>
               <span className="font-medium">{item.label}</span>
+              {item.path === '/inbox' && inboxCount > 0 && (
+                <span className="badge-accent">
+                  {inboxCount}
+                </span>
+              )}
             </Link>
           ))}
         </nav>

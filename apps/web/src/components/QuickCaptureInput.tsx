@@ -5,6 +5,7 @@ interface QuickCaptureInputProps {
   variant?: 'textarea' | 'input';
   placeholder?: string;
   autoFocus?: boolean;
+  rows?: number;
   onSuccess?: () => void;
 }
 
@@ -12,6 +13,7 @@ export default function QuickCaptureInput({
   variant = 'textarea',
   placeholder = 'Type anything...',
   autoFocus = false,
+  rows,
   onSuccess,
 }: QuickCaptureInputProps) {
   const [content, setContent] = useState('');
@@ -82,7 +84,7 @@ export default function QuickCaptureInput({
               e.target.style.boxShadow = '';
               e.target.style.borderColor = 'rgb(114 97 175 / 0.2)';
             }}
-            rows={6}
+            rows={rows || 6}
             disabled={isSubmitting}
             onKeyDown={handleKeyDown}
           />
@@ -121,7 +123,7 @@ export default function QuickCaptureInput({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder={`${placeholder} (Press Enter to submit)`}
-          className="flex-1 input-accent"
+          className="flex-1 input-accent font-mono"
           disabled={isSubmitting}
         />
         <button
