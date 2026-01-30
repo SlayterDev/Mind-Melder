@@ -12,7 +12,27 @@ A self-hosted productivity tool that captures quick notes throughout the day and
 
 ---
 
-## Quick Start (Post-Implementation)
+## Deployment
+
+**Pre-requisites:**
+
+- Docker
+- pnpm - (development only)
+
+Copy `.env.example` to `.env`. You need to setup at least one LLM provider. Paste in your key and set the provider in `LLM_PROVIDER`.
+
+```bash
+# Build containers
+docker compose build
+
+# Start containers
+docker compose up -d
+```
+UI is available at `http://<your_ip>:8080`
+
+---
+
+## Quick Start (Development)
 
 ```bash
 # Clone and install dependencies
@@ -48,27 +68,14 @@ docker-compose up -d
 
 ---
 
-## Development Milestones
-
-- **M1**: Core Data Layer (schema, migrations, CRUD)
-- **M2**: API Foundation (REST endpoints, validation)
-- **M3**: LLM Integration (organization, task extraction)
-- **M4**: Basic UI (capture, inbox, organized views)
-- **M5**: Scheduling & Export (cron, markdown)
-- **M6**: Deployment (Docker, documentation)
-
-Current milestone: **M1** (see AGENT_PROMPT.md)
-
----
-
 ## Key Features
 
 - ⚡ Quick capture with keyboard shortcut (Cmd/Ctrl+Shift+N)
 - 🤖 LLM-powered organization (OpenAI, Anthropic, Ollama)
 - 📝 User-defined templates for personalized structure
 - ✅ Automatic task extraction from natural language
-- 📅 Scheduled batch organization
-- 📤 Markdown export for portability
+- 📅 Scheduled batch organization (future)
+- 📤 Markdown export for portability (future)
 - 🐳 Self-hosted via Docker Compose
 
 ---
