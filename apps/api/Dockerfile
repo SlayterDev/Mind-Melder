@@ -31,6 +31,9 @@ RUN pnpm --filter database build && \
 # Production stage
 FROM node:20-alpine
 
+# Install wget for healthcheck
+RUN apk add --no-cache wget
+
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@10.28.2 --activate
 

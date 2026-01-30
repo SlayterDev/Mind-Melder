@@ -30,6 +30,9 @@ RUN pnpm --filter database build && \
 # Production stage with nginx
 FROM nginx:alpine
 
+# Install wget for healthcheck
+RUN apk add --no-cache wget
+
 # Copy built static files
 COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 
