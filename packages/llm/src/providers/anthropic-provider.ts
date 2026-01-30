@@ -18,7 +18,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       apiKey: config.apiKey,
     });
 
-    this.model = config.model || 'claude-3-5-sonnet-20241022';
+    this.model = config.model || 'claude-sonnet-4-5';
   }
 
   async organize(captures: Capture[], template: Template): Promise<OrganizedOutput> {
