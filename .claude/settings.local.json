@@ -36,7 +36,9 @@
       "Bash(pnpm --filter web dev:*)",
       "Bash(cat:*)",
       "Bash(docker ps:*)",
-      "Bash(pnpm:*)"
+      "Bash(pnpm:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill -9)"
     ]
   }
 }

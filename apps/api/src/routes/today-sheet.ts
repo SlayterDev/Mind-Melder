@@ -19,6 +19,7 @@ const updateTodoSchema = z.object({
   timeEstimate: z.enum(['quick', 'medium', 'long', 'none']).optional(),
   tags: z.array(z.string()).optional(),
   status: z.enum(['pending', 'completed']).optional(),
+  dueDate: z.string().datetime().nullable().optional(),
 });
 
 const reorderSchema = z.object({
@@ -82,7 +83,13 @@ export function createTodaySheetRouter(db: Database, getLLMProvider: () => LLMPr
     validateBody(updateTodoSchema),
     asyncHandler(async (req, res) => {
       const { id } = req.params;
-      const updates = req.body;
+      const { dueDate, ...otherUpdates } = req.body;
+
+      // Convert dueDate string to Date object if provided
+      const updates = {
+        ...otherUpdates,
+        ...(dueDate !== undefined && { dueDate: dueDate ? new Date(dueDate) : null }),
+      };
 
       const todo = await todosRepo.update(id, updates);
 

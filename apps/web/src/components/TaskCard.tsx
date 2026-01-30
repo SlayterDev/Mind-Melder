@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Zap, Clock, Hourglass, GripVertical, Check } from 'lucide-react';
+import { Zap, Clock, Hourglass, GripVertical, Check, ChevronDown, ChevronRight, FileText } from 'lucide-react';
 
 interface TaskCardProps {
   todo: {
@@ -11,11 +12,14 @@ interface TaskCardProps {
     dueDate?: string;
     tags?: string[];
     priorityScore?: number;
+    description?: string;
+    captureId?: string;
   };
   onToggleComplete: (id: string, status: string) => void;
+  onUpdateDueDate?: (id: string, dueDate: string | null) => void;
 }
 
-export default function TaskCard({ todo, onToggleComplete }: TaskCardProps) {
+export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -28,6 +32,42 @@ export default function TaskCard({ todo, onToggleComplete }: TaskCardProps) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+  };
+
+  const [showDescription, setShowDescription] = useState(false);
+  const [showOriginal, setShowOriginal] = useState(false);
+  const [originalCapture, setOriginalCapture] = useState<string | null>(null);
+  const [isLoadingCapture, setIsLoadingCapture] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const fetchOriginalCapture = async () => {
+    if (!todo.captureId || originalCapture) return;
+    setIsLoadingCapture(true);
+    try {
+      const response = await fetch(`http://localhost:3000/api/v1/captures/${todo.captureId}`);
+      const capture = await response.json();
+      setOriginalCapture(capture.content);
+    } catch (error) {
+      console.error('Failed to fetch capture:', error);
+      setOriginalCapture('Failed to load original capture');
+    } finally {
+      setIsLoadingCapture(false);
+    }
+  };
+
+  const toggleOriginal = () => {
+    if (!showOriginal && !originalCapture) {
+      fetchOriginalCapture();
+    }
+    setShowOriginal(!showOriginal);
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = e.target.value;
+    if (onUpdateDueDate) {
+      onUpdateDueDate(todo.id, newDate || null);
+    }
+    setShowDatePicker(false);
   };
 
   const getTimeEstimateDisplay = (estimate: string) => {
@@ -73,13 +113,57 @@ export default function TaskCard({ todo, onToggleComplete }: TaskCardProps) {
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <p
-            className={`text-gray-100 leading-relaxed ${
-              todo.status === 'completed' ? 'line-through text-gray-500' : ''
-            }`}
-          >
-            {todo.content}
-          </p>
+          {/* Main content with optional capture icon */}
+          <div className="flex items-start gap-2">
+            <p
+              className={`flex-1 text-gray-100 leading-relaxed ${
+                todo.status === 'completed' ? 'line-through text-gray-500' : ''
+              }`}
+            >
+              {todo.content}
+            </p>
+
+            {/* Original capture icon - subtle and on the right */}
+            {todo.captureId && (
+              <button
+                onClick={toggleOriginal}
+                className="flex-shrink-0 mt-0.5 opacity-40 hover:opacity-100 transition-opacity"
+                title="View original capture"
+              >
+                <FileText className="w-3.5 h-3.5 text-gray-400" />
+              </button>
+            )}
+          </div>
+
+          {/* Expanded original capture */}
+          {showOriginal && todo.captureId && (
+            <div className="mt-3 px-3 py-2 bg-gray-900/40 border border-gray-700/50 rounded text-sm text-gray-400 italic">
+              {isLoadingCapture ? (
+                <span>Loading original capture...</span>
+              ) : (
+                <div>
+                  <div className="text-xs text-gray-500 mb-1">Original capture:</div>
+                  <p>{originalCapture}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Description section */}
+          {todo.description && (
+            <div className="mt-3 border-l-2 border-gray-700 pl-3">
+              <button
+                onClick={() => setShowDescription(!showDescription)}
+                className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-300"
+              >
+                {showDescription ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                <span className="font-medium">Details</span>
+              </button>
+              {showDescription && (
+                <p className="mt-2 text-sm text-gray-300 leading-relaxed">{todo.description}</p>
+              )}
+            </div>
+          )}
 
           {/* Metadata Chips */}
           {(todo.timeEstimate || todo.dueDate || (todo.tags && todo.tags.length > 0)) && (
@@ -97,14 +181,29 @@ export default function TaskCard({ todo, onToggleComplete }: TaskCardProps) {
               })()}
 
               {/* Due Date */}
-              {todo.dueDate && (
-                <span
-                  className={`badge-chip ${
+              {todo.dueDate && !showDatePicker && (
+                <button
+                  onClick={() => setShowDatePicker(true)}
+                  className={`badge-chip cursor-pointer hover:opacity-80 transition-opacity ${
                     isOverdue ? 'text-red-400 border-red-900 bg-red-950/30' : ''
                   }`}
                 >
                   Due: {new Date(todo.dueDate).toLocaleDateString()}
-                </span>
+                </button>
+              )}
+
+              {/* Date Picker */}
+              {showDatePicker && (
+                <div className="relative">
+                  <input
+                    type="date"
+                    defaultValue={todo.dueDate ? new Date(todo.dueDate).toISOString().split('T')[0] : ''}
+                    onChange={handleDateChange}
+                    onBlur={() => setShowDatePicker(false)}
+                    autoFocus
+                    className="px-2 py-1 bg-gray-800 border border-gray-600 rounded text-xs text-gray-200 focus:outline-none focus:border-accent-highlight"
+                  />
+                </div>
               )}
 
               {/* Tags */}

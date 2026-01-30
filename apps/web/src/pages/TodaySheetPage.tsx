@@ -24,6 +24,8 @@ interface Todo {
   dueDate?: string;
   tags?: string[];
   priorityScore?: number;
+  description?: string;
+  captureId?: string;
 }
 
 interface TodaySheet {
@@ -118,6 +120,29 @@ export default function TodaySheetPage() {
       await todaySheetAPI.updateTodo(id, { status: newStatus });
     } catch (error) {
       console.error('Failed to update todo:', error);
+      // Revert on error
+      loadSheet();
+    }
+  };
+
+  const handleUpdateDueDate = async (id: string, dueDate: string | null) => {
+    // Optimistic update
+    if (sheet) {
+      const updatedSheet = { ...sheet };
+      Object.keys(updatedSheet.sections).forEach((sectionKey) => {
+        const section = sectionKey as keyof typeof updatedSheet.sections;
+        updatedSheet.sections[section] = updatedSheet.sections[section].map((t) =>
+          t.id === id ? { ...t, dueDate: dueDate || undefined } : t
+        );
+      });
+      setSheet(updatedSheet);
+    }
+
+    // API call
+    try {
+      await todaySheetAPI.updateTodo(id, { dueDate: dueDate ? new Date(dueDate).toISOString() : null });
+    } catch (error) {
+      console.error('Failed to update due date:', error);
       // Revert on error
       loadSheet();
     }
@@ -349,6 +374,7 @@ export default function TodaySheetPage() {
                   icon={Flame}
                   todos={sheet.sections.must_do_today}
                   onToggleComplete={handleToggleComplete}
+                  onUpdateDueDate={handleUpdateDueDate}
                 />
                 <TodaySheetSection
                   id="likely_today"
@@ -356,6 +382,7 @@ export default function TodaySheetPage() {
                   icon={Target}
                   todos={sheet.sections.likely_today}
                   onToggleComplete={handleToggleComplete}
+                  onUpdateDueDate={handleUpdateDueDate}
                 />
                 <TodaySheetSection
                   id="opportunistic"
@@ -363,6 +390,7 @@ export default function TodaySheetPage() {
                   icon={Lightbulb}
                   todos={sheet.sections.opportunistic}
                   onToggleComplete={handleToggleComplete}
+                  onUpdateDueDate={handleUpdateDueDate}
                 />
                 <TodaySheetSection
                   id="overflow"
@@ -370,6 +398,7 @@ export default function TodaySheetPage() {
                   icon={Package}
                   todos={sheet.sections.overflow}
                   onToggleComplete={handleToggleComplete}
+                  onUpdateDueDate={handleUpdateDueDate}
                 />
               </div>
 

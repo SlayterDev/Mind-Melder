@@ -5,6 +5,7 @@ import {
   CapturesRepository,
   TodosRepository,
   TemplatesRepository,
+  TodaySheetsRepository,
 } from 'database';
 import { templateTools } from '../utils/template-tools';
 
@@ -25,6 +26,7 @@ export class TodaySheetService {
   private capturesRepo: CapturesRepository;
   private todosRepo: TodosRepository;
   private templatesRepo: TemplatesRepository;
+  private todaySheetsRepo: TodaySheetsRepository;
 
   constructor(
     private db: Database,
@@ -33,6 +35,7 @@ export class TodaySheetService {
     this.capturesRepo = new CapturesRepository(db);
     this.todosRepo = new TodosRepository(db);
     this.templatesRepo = new TemplatesRepository(db);
+    this.todaySheetsRepo = new TodaySheetsRepository(db);
   }
 
   /**
@@ -83,7 +86,16 @@ export class TodaySheetService {
       throw error;
     }
 
-    // 4. Clear existing today sheet items (set section to 'none')
+    // 4. Create today_sheets record to persist summary and metadata
+    const todaySheet = await this.todaySheetsRepo.create({
+      userId,
+      summary: aiResult.summary,
+      capturesProcessed: captures.length,
+      todosIncluded: existingTodos.length,
+      totalEstimatedMinutes: aiResult.totalEstimatedMinutes,
+    });
+
+    // 5. Clear existing today sheet items (set section to 'none')
     const existingSheetTodoIds = existingTodos
       .filter(t => t.todaySheetSection !== 'none')
       .map(t => t.id);
@@ -91,7 +103,7 @@ export class TodaySheetService {
       await this.todosRepo.removeFromTodaySheet(existingSheetTodoIds);
     }
 
-    // 5. Create/update todos from AI result
+    // 6. Create/update todos from AI result
     const createdTodos: Record<string, Todo[]> = {
       must_do_today: [],
       likely_today: [],
@@ -111,12 +123,14 @@ export class TodaySheetService {
             // Update existing todo with today sheet metadata
             todo = await this.todosRepo.update(item.sourceId, {
               content: item.title,
+              description: item.description,
               todaySheetSection: section as any,
               todaySheetOrder: i,
+              todaySheetId: todaySheet.id,
               timeEstimate: item.timeEstimate as any,
               priorityScore: item.priorityScore,
               tags: item.tags,
-              dueDate: item.dueDate ? new Date(item.dueDate) : todo.dueDate,
+              dueDate: todo.dueDate || (item.dueDate ? new Date(item.dueDate) : null),
             });
           }
         }
@@ -126,8 +140,10 @@ export class TodaySheetService {
           todo = await this.todosRepo.create({
             userId,
             content: item.title,
+            description: item.description,
             todaySheetSection: section as any,
             todaySheetOrder: i,
+            todaySheetId: todaySheet.id,
             timeEstimate: item.timeEstimate as any,
             priorityScore: item.priorityScore,
             tags: item.tags,
@@ -140,7 +156,7 @@ export class TodaySheetService {
       }
     }
 
-    // 6. Mark captures as organized
+    // 7. Mark captures as organized
     for (const capture of captures) {
       await this.capturesRepo.markAsOrganized(capture.id);
     }
@@ -164,6 +180,9 @@ export class TodaySheetService {
       return null;
     }
 
+    // Fetch the latest today sheet for summary and metadata
+    const latestSheet = await this.todaySheetsRepo.findLatest(userId);
+
     // Group by section
     const sections = {
       must_do_today: todos.filter(t => t.todaySheetSection === 'must_do_today'),
@@ -184,10 +203,10 @@ export class TodaySheetService {
     );
 
     return {
-      summary: '', // Not stored in MVP, would need separate metadata table
+      summary: latestSheet?.summary || '',
       sections,
       totalEstimatedMinutes,
-      capturesProcessed: 0,
+      capturesProcessed: latestSheet?.capturesProcessed || 0,
       todosIncluded: todos.length,
     };
   }
