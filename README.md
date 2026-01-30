@@ -17,6 +17,11 @@ A self-hosted productivity tool that captures quick notes throughout the day and
 **Pre-requisites:**
 
 - Docker
+- Tilt (for local development)
+   
+    ```sh
+    curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/master/scripts/install.sh | bash
+    ```
 - pnpm - (development only)
 
 Copy `.env.example` to `.env`. You need to setup at least one LLM provider. Paste in your key and set the provider in `LLM_PROVIDER`.
@@ -38,9 +43,11 @@ UI is available at `http://<your_ip>:8080`
 # Clone and install dependencies
 pnpm install
 
-# Start development environment
-docker-compose up -d postgres
-pnpm dev
+# Start development environment (Tilt)
+tilt up
+
+# Optional: stop Tilt
+tilt down
 
 # Build for production
 pnpm build
@@ -48,6 +55,9 @@ pnpm build
 # Deploy with Docker
 docker-compose up -d
 ```
+
+Tilt runs the Docker containers for `postgres`, `api`, and `web`, matching production as closely as possible.
+Scripts in `./scripts` are available as manual Tilt resources and do not run on startup.
 
 ---
 
