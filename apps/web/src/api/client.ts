@@ -14,7 +14,18 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
     throw new Error(error.error || `HTTP ${response.status}`);
   }
 
-  return response.json();
+  // Handle 204 No Content or empty responses
+  if (response.status === 204 || response.headers.get('content-length') === '0') {
+    return undefined as T;
+  }
+
+  // Check if there's actually content to parse
+  const text = await response.text();
+  if (!text) {
+    return undefined as T;
+  }
+
+  return JSON.parse(text);
 }
 
 // Captures

@@ -309,7 +309,7 @@ export default function TodaySheetPage() {
               </button>
               {inboxCount > 0 && (
                 <div className="mt-2 text-sm text-gray-400 italic text-right pr-1">
-                  {inboxCount} items unorganized
+                  <span className="text-accent-highlight">{inboxCount}</span> items unorganized
                 </div>
               )}
             </div>

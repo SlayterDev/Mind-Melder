@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { capturesAPI, organizeAPI } from '../api/client';
 import { Zap, MailOpen, X } from 'lucide-react';
 
@@ -7,6 +8,7 @@ export default function InboxPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [message, setMessage] = useState('');
+  const queryClient = useQueryClient();
 
   const loadCaptures = async () => {
     setIsLoading(true);
@@ -34,6 +36,8 @@ export default function InboxPage() {
       const result = await organizeAPI.trigger();
       setMessage(result.message);
       await loadCaptures(); // Reload to show empty inbox
+      // Invalidate inbox count query
+      queryClient.invalidateQueries({ queryKey: ['inboxCount'] });
     } catch (error) {
       setMessage(`Error: ${error instanceof Error ? error.message : 'Organization failed'}`);
     } finally {
@@ -42,11 +46,18 @@ export default function InboxPage() {
   };
 
   const handleDelete = async (id: string) => {
+    // Optimistic update - remove from UI immediately
+    const previousCaptures = captures;
+    setCaptures((prev) => prev.filter((c) => c.id !== id));
+
     try {
       await capturesAPI.delete(id);
-      setCaptures(captures.filter((c) => c.id !== id));
+      // Invalidate inbox count query to update other components
+      queryClient.invalidateQueries({ queryKey: ['inboxCount'] });
     } catch (error) {
       console.error('Failed to delete capture:', error);
+      // Revert on error
+      setCaptures(previousCaptures);
     }
   };
 
