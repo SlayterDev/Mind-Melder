@@ -38,7 +38,7 @@
 
   /* Button Styles */
   .btn-accent {
-    @apply px-4 py-2 text-white font-medium rounded-lg transition-colors shadow-md;
+    @apply px-4 py-2 text-gray-100 font-medium rounded-lg transition-colors shadow-md;
     background-color: rgb(114 97 175 / 0.4);
     border: 1px solid rgb(114 97 175 / 0.3);
   }
@@ -48,7 +48,7 @@
   }
 
   .btn-accent-lg {
-    @apply px-6 py-3 text-white font-medium rounded-lg transition-colors shadow-lg;
+    @apply px-6 py-3 text-gray-100 font-medium rounded-lg transition-colors shadow-lg;
     background-color: rgb(114 97 175 / 0.4);
     border: 1px solid rgb(114 97 175 / 0.3);
   }
@@ -58,6 +58,10 @@
   }
 
   .btn-accent:disabled {
+    @apply bg-gray-800 text-gray-600 border-gray-700;
+  }
+
+  .btn-accent-lg:disabled {
     @apply bg-gray-800 text-gray-600 border-gray-700;
   }
 

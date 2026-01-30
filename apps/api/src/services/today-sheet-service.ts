@@ -79,6 +79,7 @@ export class TodaySheetService {
         },
       });
       console.log('LLM Today Sheet result:', aiResult);
+      console.log('Do today: ', JSON.stringify(aiResult.sections.must_do_today, null, 2));
     } catch (error) {
       if (error instanceof Error && error.message.includes('validation failed')) {
         throw new Error('AI returned invalid response format. Please try again.');

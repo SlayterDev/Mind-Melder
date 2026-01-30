@@ -75,12 +75,13 @@ ${input.existingTodos.map((t, i) =>
   `${i + 1}. ID: ${t.id} | ${t.content}${t.dueDate ? ` (Due: ${new Date(t.dueDate).toLocaleDateString()})` : ''}`
 ).join('\n')}
 
-USER TEMPLATE:
-${input.template.prompt}
-
 YOUR TASK:
 1. Extract actionable tasks from captures (skip pure notes/info)
-2. Minimally rephrase capture content for task coherency and clarity
+2. Transform captures into clear, actionable task titles:
+  - Title: Concise action-oriented summary (5-10 words) that makes the task immediately clear
+  - Description: Additional context, reasoning, or implementation details from the original capture
+  - Expand abbreviations, add clarity, make titles scannable
+  - Example: "auth middleware jwt" → Title: "Refactor authentication middleware for JWT support" / Description: "Update existing middleware to handle JWT tokens properly"
 3. Include relevant existing todos
 4. Prioritize by: due dates (today/overdue highest), importance, effort, available time
 5. Assign to sections:
@@ -90,12 +91,27 @@ YOUR TASK:
    - overflow: Defer to later this week
 6. Time estimates: quick (<15min), medium (30-60min), long (>90min)
 7. Generate 1-2 sentence summary of day's focus
+8. Defer non-urgent, low-value tasks to future days
+9. Defer to user template instructions below for any additional formatting or organization rules
+
+TITLE GUIDELINES:
+  - Be specific and action-oriented (start with verbs: "Review", "Update", "Fix", "Implement")
+  - Include key details in the title itself, not just in description
+  - Expand abbreviations and incomplete thoughts
+  - Make titles independently understandable without reading the description
+  - Description should add context, not be the primary information
+
+USER TEMPLATE:
+${input.template.prompt}
 
 CRITICAL RULE FOR sourceId:
 - You MUST use the exact ID from the input lists above (copy the UUID after "ID:")
 - For captures, use sourceType="capture" and copy the ID from the captures list
 - For todos, use sourceType="todo" and copy the ID from the todos list
 - NEVER generate new IDs or use numbers like "1", "2", etc.
+
+CRITICAL RULE FOR DUE DATES:
+- Do not assign dates before today's date (${input.context.currentDate})
 
 OUTPUT FORMAT (valid JSON only):
 {
