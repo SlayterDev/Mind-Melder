@@ -3,9 +3,9 @@ import { z } from 'zod';
 import type { Database } from 'database';
 import type { LLMProvider } from 'llm';
 import { TodosRepository } from 'database';
-import { TodaySheetService } from '../services/today-sheet-service';
-import { asyncHandler } from '../utils/async-handler';
-import { validateBody, ApiError } from '../middleware';
+import { TodaySheetService } from '../services/today-sheet-service.js';
+import { asyncHandler } from '../utils/async-handler.js';
+import { validateBody, ApiError } from '../middleware/index.js';
 
 // Validation schemas
 const generateSheetSchema = z.object({
@@ -30,7 +30,7 @@ const reorderSchema = z.object({
   })),
 });
 
-export function createTodaySheetRouter(db: Database, getLLMProvider: () => LLMProvider) {
+export function createTodaySheetRouter(db: Database, getLLMProvider: () => LLMProvider): Router {
   const router = Router();
   const todosRepo = new TodosRepository(db);
 

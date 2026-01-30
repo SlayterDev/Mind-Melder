@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 import type { Capture, Template } from 'types';
-import { BaseLLMProvider } from '../base-provider';
-import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types';
-import { organizedOutputSchema, todaySheetOutputSchema } from '../validation';
+import { BaseLLMProvider } from '../base-provider.js';
+import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types.js';
+import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
 
 export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
   private client: OpenAI;

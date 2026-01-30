@@ -7,7 +7,7 @@ import {
   TemplatesRepository,
   TodaySheetsRepository,
 } from 'database';
-import { templateTools } from '../utils/template-tools';
+import { templateTools } from '../utils/template-tools.js';
 
 export interface TodaySheet {
   summary: string;
@@ -105,7 +105,12 @@ export class TodaySheetService {
     }
 
     // 6. Create/update todos from AI result
-    const createdTodos: Record<string, Todo[]> = {
+    const createdTodos: {
+      must_do_today: Todo[];
+      likely_today: Todo[];
+      opportunistic: Todo[];
+      overflow: Todo[];
+    } = {
       must_do_today: [],
       likely_today: [],
       opportunistic: [],
@@ -153,7 +158,7 @@ export class TodaySheetService {
           });
         }
 
-        createdTodos[section].push(todo);
+        (createdTodos as any)[section].push(todo);
       }
     }
 

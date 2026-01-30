@@ -7,7 +7,7 @@ import {
   TemplatesRepository,
 } from 'database';
 import type { OrganizationResult } from 'types';
-import { templateTools } from '../utils/template-tools';
+import { templateTools } from '../utils/template-tools.js';
 
 export class OrganizationService {
   private capturesRepo: CapturesRepository;

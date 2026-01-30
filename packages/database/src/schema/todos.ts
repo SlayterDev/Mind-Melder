@@ -1,6 +1,6 @@
 import { pgTable, uuid, text, timestamp, pgEnum, index, integer, jsonb } from 'drizzle-orm/pg-core';
-import { captures } from './captures';
-import { todaySheets } from './today-sheets';
+import { captures } from './captures.js';
+import { todaySheets } from './today-sheets.js';
 
 export const todoStatusEnum = pgEnum('todo_status', ['pending', 'completed']);
 

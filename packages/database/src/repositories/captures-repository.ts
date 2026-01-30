@@ -1,6 +1,6 @@
 import { eq, isNull, and } from 'drizzle-orm';
-import { captures, type Capture, type NewCapture } from '../schema/captures';
-import type { Database } from '../client';
+import { captures, type Capture, type NewCapture } from '../schema/captures.js';
+import type { Database } from '../client.js';
 
 export class CapturesRepository {
   constructor(private db: Database) {}

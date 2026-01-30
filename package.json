@@ -13,7 +13,13 @@
     "db:migrate": "pnpm --filter database migrate",
     "db:push": "pnpm --filter database push",
     "db:studio": "pnpm --filter database studio",
-    "db:test": "pnpm --filter database test"
+    "db:test": "pnpm --filter database test",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:restart": "docker compose restart",
+    "docker:clean": "docker compose down -v"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",

@@ -86,13 +86,13 @@ export default function TodaySheetPage() {
     },
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ['inboxCount'] });
-      const previous = queryClient.getQueryData<number>({ queryKey: ['inboxCount'] });
-      queryClient.setQueryData<number>({ queryKey: ['inboxCount'] }, 0);
+      const previous = queryClient.getQueryData<number>(['inboxCount']);
+      queryClient.setQueryData<number>(['inboxCount'], 0);
       return { previous };
     },
-    onError: (err, newItem, context: any) => {
+    onError: (_err, _newItem, context: any) => {
       if (context?.previous !== undefined) {
-        queryClient.setQueryData({ queryKey: ['inboxCount'] }, context.previous);
+        queryClient.setQueryData(['inboxCount'], context.previous);
       }
     },
     onSettled: () => {

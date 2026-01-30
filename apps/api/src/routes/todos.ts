@@ -1,11 +1,10 @@
-import { Router } from 'express';
+import { Router, type Router as ExpressRouter } from 'express';
 import { TodosRepository } from 'database';
 import { createTodoSchema, updateTodoSchema } from 'types';
-import { asyncHandler } from '../utils/async-handler';
-import { validateBody, ApiError } from '../middleware';
-import { z } from 'zod';
+import { asyncHandler } from '../utils/async-handler.js';
+import { validateBody, ApiError } from '../middleware/index.js';
 
-export function createTodosRouter(todosRepo: TodosRepository) {
+export function createTodosRouter(todosRepo: TodosRepository): ExpressRouter {
   const router = Router();
 
   // POST /api/v1/todos - Create todo

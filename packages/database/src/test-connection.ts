@@ -1,6 +1,6 @@
-import { createDatabaseClient } from './client';
-import { CapturesRepository } from './repositories/captures-repository';
-import { TodosRepository } from './repositories/todos-repository';
+import { createDatabaseClient } from './client.js';
+import { CapturesRepository } from './repositories/captures-repository.js';
+import { TodosRepository } from './repositories/todos-repository.js';
 import dotenv from 'dotenv';
 
 // Load environment variables from root .env file

@@ -1,10 +1,10 @@
-import { Router } from 'express';
+import { Router, type Router as ExpressRouter } from 'express';
 import { OrganizedNotesRepository } from 'database';
 import { updateOrganizedNoteSchema } from 'types';
-import { asyncHandler } from '../utils/async-handler';
-import { validateBody, ApiError } from '../middleware';
+import { asyncHandler } from '../utils/async-handler.js';
+import { validateBody, ApiError } from '../middleware/index.js';
 
-export function createNotesRouter(notesRepo: OrganizedNotesRepository) {
+export function createNotesRouter(notesRepo: OrganizedNotesRepository): ExpressRouter {
   const router = Router();
 
   // GET /api/v1/notes - List notes (optional: filter by category)

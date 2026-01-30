@@ -1,6 +1,6 @@
 import { eq, desc } from 'drizzle-orm';
-import { todaySheets, type TodaySheet, type NewTodaySheet } from '../schema/today-sheets';
-import type { Database } from '../client';
+import { todaySheets, type TodaySheet, type NewTodaySheet } from '../schema/today-sheets.js';
+import type { Database } from '../client.js';
 
 export class TodaySheetsRepository {
   constructor(private db: Database) {}

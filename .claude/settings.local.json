@@ -38,7 +38,9 @@
       "Bash(docker ps:*)",
       "Bash(pnpm:*)",
       "Bash(lsof:*)",
-      "Bash(xargs kill -9)"
+      "Bash(xargs kill -9)",
+      "Bash(grep:*)",
+      "Bash(xargs -I {} sh -c \"echo \"\"=== {} ===\"\" && grep \"\"from \\\\.\\\\/\"\" {} | grep -v \"\"\\\\.js\"\"\")"
     ]
   }
 }

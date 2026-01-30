@@ -7,7 +7,9 @@
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     "noEmit": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]

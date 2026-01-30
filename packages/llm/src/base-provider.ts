@@ -1,5 +1,5 @@
 import type { Capture, Template } from 'types';
-import type { TodaySheetInput } from './types';
+import type { TodaySheetInput } from './types.js';
 import { z } from 'zod';
 
 export abstract class BaseLLMProvider {

@@ -1,7 +1,7 @@
-import { Router } from 'express';
-import { OrganizationService } from '../services/organization-service';
-import { ApiError } from '../middleware';
-import { asyncHandler } from '../utils/async-handler';
+import { Router, type Router as ExpressRouter } from 'express';
+import { OrganizationService } from '../services/organization-service.js';
+import { ApiError } from '../middleware/index.js';
+import { asyncHandler } from '../utils/async-handler.js';
 import type { LLMProvider } from 'llm';
 import type { Database } from 'database';
 import { z } from 'zod';
@@ -10,7 +10,7 @@ const organizeRequestSchema = z.object({
   templateId: z.string().uuid().optional(),
 });
 
-export function createOrganizeRouter(db: Database, getLLMProvider: () => LLMProvider) {
+export function createOrganizeRouter(db: Database, getLLMProvider: () => LLMProvider): ExpressRouter {
   const router = Router();
 
   // POST /api/v1/organize - Trigger batch organization

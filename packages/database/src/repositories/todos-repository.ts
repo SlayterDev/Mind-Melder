@@ -1,6 +1,6 @@
 import { eq, and, desc, ne, asc, inArray } from 'drizzle-orm';
-import { todos, type Todo, type NewTodo } from '../schema/todos';
-import type { Database } from '../client';
+import { todos, type Todo, type NewTodo } from '../schema/todos.js';
+import type { Database } from '../client.js';
 
 export class TodosRepository {
   constructor(private db: Database) {}

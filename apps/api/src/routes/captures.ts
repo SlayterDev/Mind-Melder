@@ -1,10 +1,10 @@
-import { Router } from 'express';
+import { Router, type Router as ExpressRouter } from 'express';
 import { CapturesRepository } from 'database';
 import { createCaptureSchema } from 'types';
-import { asyncHandler } from '../utils/async-handler';
-import { validateBody, ApiError } from '../middleware';
+import { asyncHandler } from '../utils/async-handler.js';
+import { validateBody, ApiError } from '../middleware/index.js';
 
-export function createCapturesRouter(capturesRepo: CapturesRepository) {
+export function createCapturesRouter(capturesRepo: CapturesRepository): ExpressRouter {
   const router = Router();
 
   // POST /api/v1/captures - Create new capture

@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { Capture, Template } from 'types';
-import { BaseLLMProvider } from '../base-provider';
-import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types';
+import { BaseLLMProvider } from '../base-provider.js';
+import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types.js';
 
 export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
   private client: Anthropic;

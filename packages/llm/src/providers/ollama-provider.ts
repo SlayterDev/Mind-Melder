@@ -1,6 +1,6 @@
 import type { Capture, Template } from 'types';
-import { BaseLLMProvider } from '../base-provider';
-import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types';
+import { BaseLLMProvider } from '../base-provider.js';
+import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types.js';
 
 interface OllamaResponse {
   message: {
@@ -16,7 +16,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     super();
 
     this.baseURL = config.baseURL || 'http://localhost:11434';
-    this.model = config.model || 'llama3.1';
+    this.model = config.model || 'mistral';
   }
 
   async organize(captures: Capture[], template: Template): Promise<OrganizedOutput> {

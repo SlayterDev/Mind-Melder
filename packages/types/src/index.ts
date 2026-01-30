@@ -7,7 +7,7 @@ export type { Todo, NewTodo } from 'database';
 export type { Template, NewTemplate } from 'database';
 
 // Export validation schemas and types
-export * from './validation';
+export * from './validation.js';
 
 // API Response types
 export interface OrganizationResult {

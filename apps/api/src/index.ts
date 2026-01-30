@@ -11,10 +11,10 @@ import {
   TemplatesRepository,
 } from 'database';
 import { ProviderFactory } from 'llm';
-import { createCapturesRouter, createTodosRouter, createNotesRouter, createTemplatesRouter } from './routes';
-import { createOrganizeRouter } from './routes/organize';
-import { createTodaySheetRouter } from './routes/today-sheet';
-import { errorHandler, requestLogger } from './middleware';
+import { createCapturesRouter, createTodosRouter, createNotesRouter, createTemplatesRouter } from './routes/index.js';
+import { createOrganizeRouter } from './routes/organize.js';
+import { createTodaySheetRouter } from './routes/today-sheet.js';
+import { errorHandler, requestLogger } from './middleware/index.js';
 
 // Load .env from project root
 const __filename = fileURLToPath(import.meta.url);

@@ -1,11 +1,11 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
+import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import * as schema from './schema/index';
+import * as schema from './schema/index.js';
 
 let client: ReturnType<typeof postgres> | null = null;
-let db: ReturnType<typeof drizzle> | null = null;
+let db: PostgresJsDatabase<typeof schema> | null = null;
 
-export function createDatabaseClient(connectionString: string) {
+export function createDatabaseClient(connectionString: string): PostgresJsDatabase<typeof schema> {
   if (!connectionString) {
     throw new Error('DATABASE_URL is required');
   }
@@ -23,7 +23,7 @@ export function createDatabaseClient(connectionString: string) {
   return db;
 }
 
-export function getDatabaseClient() {
+export function getDatabaseClient(): PostgresJsDatabase<typeof schema> {
   if (!db) {
     throw new Error('Database client not initialized. Call createDatabaseClient first.');
   }
@@ -38,4 +38,4 @@ export async function closeDatabaseClient() {
   }
 }
 
-export type Database = NonNullable<typeof db>;
+export type Database = PostgresJsDatabase<typeof schema>;

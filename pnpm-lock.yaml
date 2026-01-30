@@ -171,6 +171,9 @@ importers:
 
   packages/types:
     dependencies:
+      database:
+        specifier: workspace:*
+        version: link:../database
       zod:
         specifier: ^3.22.4
         version: 3.25.76

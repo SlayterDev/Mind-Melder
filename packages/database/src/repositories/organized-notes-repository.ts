@@ -3,8 +3,8 @@ import {
   organizedNotes,
   type OrganizedNote,
   type NewOrganizedNote,
-} from '../schema/organized-notes';
-import type { Database } from '../client';
+} from '../schema/organized-notes.js';
+import type { Database } from '../client.js';
 
 export class OrganizedNotesRepository {
   constructor(private db: Database) {}

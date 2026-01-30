@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm';
-import { templates, type Template, type NewTemplate } from '../schema/templates';
-import type { Database } from '../client';
+import { templates, type Template, type NewTemplate } from '../schema/templates.js';
+import type { Database } from '../client.js';
 
 export class TemplatesRepository {
   constructor(private db: Database) {}
