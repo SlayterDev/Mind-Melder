@@ -1,13 +1,19 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { capturesAPI } from '../api/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, PenLine } from 'lucide-react';
+
+type Chip = {
+  kind: 'trigger';
+  label: string;
+};
 
 interface QuickCaptureInputProps {
   variant?: 'textarea' | 'input';
   placeholder?: string;
   autoFocus?: boolean;
   rows?: number;
+  trigger?: string;
   onSuccess?: () => void;
 }
 
@@ -16,12 +22,24 @@ export default function QuickCaptureInput({
   placeholder = 'Type anything...',
   autoFocus = false,
   rows,
+  trigger = 'n:',
   onSuccess,
 }: QuickCaptureInputProps) {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
+  const [chip, setChip] = useState<Chip | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
+
+  const tiggerPattern = useMemo(() => {
+    const escapedTrigger = trigger.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+    return new RegExp(`^${escapedTrigger}\\s`, 'i');
+  }, [trigger]);
+
+  const removeChip = () => {
+    setChip(null);
+    queueMicrotask(() => inputRef.current?.focus());
+  }
 
   useEffect(() => {
     if (autoFocus && inputRef.current) {
@@ -58,6 +76,7 @@ export default function QuickCaptureInput({
     e.preventDefault();
     try {
       await createCapture.mutateAsync({ content: content.trim() });
+      setChip(null);
       setContent('');
       setMessage('success:Captured!');
       setTimeout(() => setMessage(''), 2000);
@@ -72,11 +91,52 @@ export default function QuickCaptureInput({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (variant === 'textarea' && (e.metaKey || e.ctrlKey) && e.key === 'Enter') {
       handleSubmit(e);
+      return;
     }
-  };
+
+    if (!chip) {
+      return;
+    }
+
+    if (e.key === 'Backspace') {
+      const el = e.currentTarget;
+      const caret = el.selectionStart || 0;
+      const hasSelection = (el.selectionStart ?? 0) !== (el.selectionEnd ?? 0);
+
+      if (caret === 0 && !hasSelection) {
+        e.preventDefault();
+        setChip(null);
+
+        queueMicrotask(() => {
+          const input = inputRef.current;
+          if (!input) return;
+          input.focus();
+          input.setSelectionRange(0, 0);
+        });
+      }
+    }
+  }, [chip, content]);
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+    const raw = e.target.value;
+
+    if (!chip && tiggerPattern.test(raw)) {
+      const match = raw.match(tiggerPattern);
+      const consumed = match?.[0]?.length || 0;
+
+      const nextChip: Chip = { kind: 'trigger', label: trigger.trim() };
+      const nextText = raw.slice(consumed);
+
+      setChip(nextChip);
+      setContent(nextText);
+      return;
+    }
+
+    setContent(raw);
+  }, [chip, trigger, tiggerPattern]);
 
   if (variant === 'textarea') {
     return (
@@ -137,15 +197,43 @@ export default function QuickCaptureInput({
   return (
     <div className="sheet-card p-5">
       <form onSubmit={handleSubmit} className="flex gap-3">
-        <input
-          ref={inputRef as React.RefObject<HTMLInputElement>}
-          type="text"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder={`${placeholder} (Press Enter to submit)`}
-          className="flex-1 input-accent font-mono"
-          disabled={isSubmitting}
-        />
+        <div
+          className="flex-1 flex items-center input-accent"
+          onMouseDown={(e) => {
+            // Clicking empty space focuses input (but don't steal clicks from chip button).
+            if (e.target === e.currentTarget) {
+              e.preventDefault();
+              inputRef.current?.focus();
+            }
+          }}
+        >
+          {chip && (
+            <span
+              className="inline-flex items-center gap-2 px-3 py-1 mr-2 rounded-full bg-accent text-gray-100 text-sm font-mono"
+            >
+              <span>{chip.label}</span>
+              <button
+                type="button"
+                onClick={removeChip}
+                className="hover:text-white"
+                aria-label="Remove trigger"
+              >
+                &times;
+              </button>
+            </span>
+          )}
+
+          <input
+            ref={inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={content}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder={`${placeholder} (Press Enter to submit)`}
+            className="min-w-0 flex-1 font-mono bg-transparent outline-none"
+            disabled={isSubmitting}
+          />
+        </div>
         <button
           type="submit"
           disabled={isSubmitting || !content.trim()}
