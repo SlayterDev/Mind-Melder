@@ -155,6 +155,52 @@ export default function TodaySheetPage() {
     }
   };
 
+  const handleUpdateDescription = async (id: string, description: string) => {
+    // Optimistic update
+    if (sheet) {
+      const updatedSheet = { ...sheet };
+      Object.keys(updatedSheet.sections).forEach((sectionKey) => {
+        const section = sectionKey as keyof typeof updatedSheet.sections;
+        updatedSheet.sections[section] = updatedSheet.sections[section].map((t) =>
+          t.id === id ? { ...t, description } : t
+        );
+      });
+      setSheet(updatedSheet);
+    }
+
+    // API call
+    try {
+      await todaySheetAPI.updateTodo(id, { description });
+    } catch (error) {
+      console.error('Failed to update description:', error);
+      // Revert on error
+      loadSheet();
+    }
+  };
+
+  const handleUpdateContent = async (id: string, content: string) => {
+    // Optimistic update
+    if (sheet) {
+      const updatedSheet = { ...sheet };
+      Object.keys(updatedSheet.sections).forEach((sectionKey) => {
+        const section = sectionKey as keyof typeof updatedSheet.sections;
+        updatedSheet.sections[section] = updatedSheet.sections[section].map((t) =>
+          t.id === id ? { ...t, content } : t
+        );
+      });
+      setSheet(updatedSheet);
+    }
+
+    // API call
+    try {
+      await todaySheetAPI.updateTodo(id, { content });
+    } catch (error) {
+      console.error('Failed to update content:', error);
+      // Revert on error
+      loadSheet();
+    }
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
   };
@@ -382,6 +428,8 @@ export default function TodaySheetPage() {
                   todos={sheet.sections.must_do_today}
                   onToggleComplete={handleToggleComplete}
                   onUpdateDueDate={handleUpdateDueDate}
+                  onUpdateDescription={handleUpdateDescription}
+                  onUpdateContent={handleUpdateContent}
                 />
                 <TodaySheetSection
                   id="likely_today"
@@ -390,6 +438,8 @@ export default function TodaySheetPage() {
                   todos={sheet.sections.likely_today}
                   onToggleComplete={handleToggleComplete}
                   onUpdateDueDate={handleUpdateDueDate}
+                  onUpdateDescription={handleUpdateDescription}
+                  onUpdateContent={handleUpdateContent}
                 />
                 <TodaySheetSection
                   id="opportunistic"
@@ -398,6 +448,8 @@ export default function TodaySheetPage() {
                   todos={sheet.sections.opportunistic}
                   onToggleComplete={handleToggleComplete}
                   onUpdateDueDate={handleUpdateDueDate}
+                  onUpdateDescription={handleUpdateDescription}
+                  onUpdateContent={handleUpdateContent}
                 />
                 <TodaySheetSection
                   id="overflow"
@@ -406,6 +458,8 @@ export default function TodaySheetPage() {
                   todos={sheet.sections.overflow}
                   onToggleComplete={handleToggleComplete}
                   onUpdateDueDate={handleUpdateDueDate}
+                  onUpdateDescription={handleUpdateDescription}
+                  onUpdateContent={handleUpdateContent}
                 />
               </div>
 

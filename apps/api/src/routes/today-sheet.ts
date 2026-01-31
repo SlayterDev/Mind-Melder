@@ -14,6 +14,7 @@ const generateSheetSchema = z.object({
 
 const updateTodoSchema = z.object({
   content: z.string().min(1).max(1000).optional(),
+  description: z.string().max(5000).optional(),
   todaySheetSection: z.enum(['must_do_today', 'likely_today', 'opportunistic', 'overflow', 'none']).optional(),
   todaySheetOrder: z.number().int().optional(),
   timeEstimate: z.enum(['quick', 'medium', 'long', 'none']).optional(),

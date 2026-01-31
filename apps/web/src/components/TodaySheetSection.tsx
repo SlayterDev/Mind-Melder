@@ -21,6 +21,8 @@ interface SectionProps {
   todos: Todo[];
   onToggleComplete: (id: string, status: string) => void;
   onUpdateDueDate?: (id: string, dueDate: string | null) => void;
+  onUpdateDescription?: (id: string, description: string) => void;
+  onUpdateContent?: (id: string, content: string) => void;
 }
 
 export default function TodaySheetSection({
@@ -30,6 +32,8 @@ export default function TodaySheetSection({
   todos,
   onToggleComplete,
   onUpdateDueDate,
+  onUpdateDescription,
+  onUpdateContent,
 }: SectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { setNodeRef } = useDroppable({ id });
@@ -61,7 +65,14 @@ export default function TodaySheetSection({
           ) : (
             <SortableContext items={todos.map((t) => t.id)} strategy={verticalListSortingStrategy}>
               {todos.map((todo) => (
-                <TaskCard key={todo.id} todo={todo} onToggleComplete={onToggleComplete} onUpdateDueDate={onUpdateDueDate} />
+                <TaskCard
+                  key={todo.id}
+                  todo={todo}
+                  onToggleComplete={onToggleComplete}
+                  onUpdateDueDate={onUpdateDueDate}
+                  onUpdateDescription={onUpdateDescription}
+                  onUpdateContent={onUpdateContent}
+                />
               ))}
             </SortableContext>
           )}

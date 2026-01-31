@@ -31,6 +31,7 @@ export const createTodoSchema = z.object({
 
 export const updateTodoSchema = z.object({
   content: z.string().min(1).max(1000).optional(),
+  description: z.string().max(5000).optional(),
   status: z.enum(['pending', 'completed']).optional(),
   dueDate: z.string().datetime().optional(),
 });
