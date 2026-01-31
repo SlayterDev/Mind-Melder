@@ -15,10 +15,14 @@ export function createTemplatesRouter(templatesRepo: TemplatesRepository): Expre
       const { name, prompt } = req.body;
       const userId = 'test-user-1'; // TODO: Get from auth context
 
+      // Check if this is the first template for the user
+      const existingCount = await templatesRepo.countByUserId(userId);
+
       const template = await templatesRepo.create({
         name,
         prompt,
         userId,
+        isActive: existingCount === 0, // Auto-activate first template
       });
 
       res.status(201).json(template);
@@ -69,8 +73,22 @@ export function createTemplatesRouter(templatesRepo: TemplatesRepository): Expre
     asyncHandler(async (req, res) => {
       const { id } = req.params;
       const { name, prompt, isActive } = req.body;
+      const userId = 'test-user-1'; // TODO: Get from auth context
 
-      const template = await templatesRepo.update(id, { name, prompt, isActive });
+      let template;
+
+      // If activating this template, use setActive to deactivate others
+      if (isActive === true) {
+        template = await templatesRepo.setActive(id, userId);
+        // Also update name/prompt if provided
+        if (name || prompt) {
+          template = await templatesRepo.update(id, { name, prompt });
+        }
+      } else {
+        // Regular update (name, prompt, or deactivate)
+        template = await templatesRepo.update(id, { name, prompt, isActive });
+      }
+
       if (!template) {
         throw new ApiError(404, 'Template not found');
       }

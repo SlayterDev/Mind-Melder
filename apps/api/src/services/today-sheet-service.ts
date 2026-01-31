@@ -49,7 +49,7 @@ export class TodaySheetService {
     const captures = await this.capturesRepo.findUnorganized(userId);
     const existingTodos = await this.todosRepo.findByStatus(userId, 'pending');
 
-    // 2. Get template (use provided ID or first active template)
+    // 2. Get template (use provided ID or active template or default)
     let template;
     if (templateId) {
       template = await this.templatesRepo.findById(templateId);
@@ -57,12 +57,9 @@ export class TodaySheetService {
         throw new Error('Template not found or unauthorized');
       }
     } else {
-      const activeTemplates = await this.templatesRepo.findActive(userId);
-      template = activeTemplates[0] || templateTools.defaultTemplate;
-
-      if (!template) {
-        throw new Error('No active template found. Please create a template first.');
-      }
+      // Use the active template, or fall back to default if no templates exist
+      const activeTemplate = await this.templatesRepo.findActiveTemplate(userId);
+      template = activeTemplate || templateTools.defaultTemplate;
     }
 
     // 3. Call LLM to generate Today Sheet

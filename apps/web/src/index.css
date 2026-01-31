@@ -147,4 +147,16 @@
   .text-accent-arrow {
     color: rgb(114 97 175 / 0.5);
   }
+
+  .text-accent {
+    color: #7261af;
+  }
+
+  .border-accent {
+    border-color: #7261af;
+  }
+
+  .bg-accent {
+    background-color: #7261af;
+  }
 }

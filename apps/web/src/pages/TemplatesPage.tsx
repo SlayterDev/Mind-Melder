@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { templatesAPI } from '../api/client';
-import { Settings, CircleDot, Circle, Pencil, X } from 'lucide-react';
+import { Settings, Pencil, X } from 'lucide-react';
 
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState<any[]>([]);
@@ -52,12 +52,17 @@ export default function TemplatesPage() {
     }
   };
 
-  const handleToggleActive = async (id: string, currentStatus: boolean) => {
+  const handleSetActive = async (id: string) => {
     try {
-      await templatesAPI.update(id, { isActive: !currentStatus });
-      setTemplates(templates.map((t) => (t.id === id ? { ...t, isActive: !currentStatus } : t)));
+      // Optimistically update UI: deactivate all others, activate this one
+      setTemplates(templates.map((t) => ({ ...t, isActive: t.id === id })));
+
+      // API call will handle deactivating others
+      await templatesAPI.update(id, { isActive: true });
     } catch (error) {
-      console.error('Failed to toggle template:', error);
+      console.error('Failed to activate template:', error);
+      // Revert on error
+      await loadTemplates();
     }
   };
 
@@ -182,15 +187,7 @@ export default function TemplatesPage() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-100">{template.name}</h3>
-                    {template.isActive && (
-                      <span className="px-2 py-0.5 bg-green-900/30 border border-green-700/30 text-green-400
-                                     text-xs font-medium rounded shadow-inner">
-                        Active
-                      </span>
-                    )}
-                  </div>
+                  <h3 className="text-lg font-semibold text-gray-100 mb-2">{template.name}</h3>
 
                   <p className="text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">
                     {template.prompt}
@@ -201,34 +198,44 @@ export default function TemplatesPage() {
                   </p>
                 </div>
 
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                <div className="flex items-center gap-2">
+                  {/* Radio button for active selection */}
                   <button
-                    onClick={() => handleToggleActive(template.id, template.isActive)}
-                    className="text-gray-500 hover:text-accent text-sm px-3 py-1 rounded hover:bg-gray-800"
-                    title={template.isActive ? 'Deactivate' : 'Activate'}
+                    onClick={() => handleSetActive(template.id)}
+                    className="flex items-center gap-2 px-3 py-1 rounded hover:bg-gray-800 transition-colors"
+                    title="Set as active template"
                   >
-                    {template.isActive ? (
-                      <CircleDot className="w-4 h-4" />
-                    ) : (
-                      <Circle className="w-4 h-4" />
-                    )}
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
+                      template.isActive
+                        ? 'border-accent bg-accent'
+                        : 'border-gray-500 hover:border-accent'
+                    }`}>
+                      {template.isActive && (
+                        <div className="w-2 h-2 rounded-full bg-white"></div>
+                      )}
+                    </div>
+                    <span className={`text-sm ${template.isActive ? 'text-accent' : 'text-gray-500'}`}>
+                      {template.isActive ? 'Active' : 'Set Active'}
+                    </span>
                   </button>
 
-                  <button
-                    onClick={() => startEdit(template)}
-                    className="text-gray-500 hover:text-accent text-sm px-3 py-1 rounded hover:bg-gray-800"
-                    title="Edit"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                    <button
+                      onClick={() => startEdit(template)}
+                      className="text-gray-500 hover:text-accent text-sm px-3 py-1 rounded hover:bg-gray-800"
+                      title="Edit"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
 
-                  <button
-                    onClick={() => handleDelete(template.id)}
-                    className="text-gray-500 hover:text-red-400 text-sm px-3 py-1 rounded hover:bg-gray-800"
-                    title="Delete"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                    <button
+                      onClick={() => handleDelete(template.id)}
+                      className="text-gray-500 hover:text-red-400 text-sm px-3 py-1 rounded hover:bg-gray-800"
+                      title="Delete"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
