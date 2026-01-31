@@ -279,26 +279,26 @@ export default function TodaySheetPage() {
   });
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 md:px-0">
       {/* Quick Capture */}
       <div className="mb-8">
         <QuickCaptureInput variant="input" placeholder="Quick capture..." autoFocus />
       </div>
 
       {/* Card wrapper for Today's Plan and content */}
-      <div className="sheet-card p-8 -mx-[50px]">
+      <div className="sheet-card p-4 md:p-8 -mx-4 md:-mx-[50px]">
         {/* Journal Page Header */}
         <div className="mb-6 pb-4 section-divider">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-100 mb-1">Today's Plan</h1>
+          <div className="flex flex-col md:flex-row items-start md:items-start justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-100 mb-1">Today's Plan</h1>
               <p className="text-gray-400 text-sm font-serif italic">{dateStr}</p>
             </div>
-            <div className="grid grid-cols-1 justify-end">
+            <div className="grid grid-cols-1 justify-end w-full md:w-auto">
               <button
                 onClick={() => handleGenerate.mutateAsync()}
                 disabled={isGenerating}
-                className="btn-accent flex items-center gap-2"
+                className="btn-accent flex items-center justify-center gap-2 w-full md:w-auto"
               >
                 {isGenerating ? (
                   'Generating...'
@@ -325,7 +325,7 @@ export default function TodaySheetPage() {
 
         {!sheet ? (
           /* Empty State */
-          <div className="sheet-card-inner p-12 text-center">
+          <div className="sheet-card-inner p-6 md:p-12 text-center">
             <ClipboardList className="w-16 h-16 mx-auto mb-4 text-gray-400" />
             <h3 className="text-xl font-semibold text-gray-100 mb-2">No Today Sheet Yet</h3>
             <p className="text-gray-400 mb-6">
