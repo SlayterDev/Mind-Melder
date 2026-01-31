@@ -12,7 +12,7 @@ import TodaySheetSection from '../components/TodaySheetSection';
 import TaskCard from '../components/TaskCard';
 import QuickCaptureInput from '../components/QuickCaptureInput';
 import { useInboxCount } from '../api/queries';
-import { ClipboardList, Sparkles, Flame, Target, Lightbulb, Package } from 'lucide-react';
+import { ClipboardList, Sparkles, Flame, Target, Lightbulb, Package, Loader2 } from 'lucide-react';
 
 interface Todo {
   id: string;
@@ -45,6 +45,7 @@ export default function TodaySheetPage() {
   const [sheet, setSheet] = useState<TodaySheet | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const { data: inboxCount = 0 } = useInboxCount();
 
@@ -74,9 +75,13 @@ export default function TodaySheetPage() {
   const handleGenerate = useMutation({
     mutationFn: async () => {
       setIsGenerating(true);
+      setShowSuccess(false);
       try {
         const { sheet: newSheet } = await todaySheetAPI.generate();
         setSheet(newSheet);
+        // Show success animation
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 1000);
       } catch (error) {
         console.error('Failed to generate today sheet:', error);
         alert('Failed to generate today sheet');
@@ -334,7 +339,7 @@ export default function TodaySheetPage() {
       {/* Card wrapper for Today's Plan and content */}
       <div className="sheet-card p-4 md:p-8 -mx-4 md:-mx-[50px]">
         {/* Journal Page Header */}
-        <div className="mb-6 pb-4 section-divider">
+        <div className={`mb-6 pb-4 section-divider ${isGenerating ? 'section-divider-generating' : ''}`}>
           <div className="flex flex-col md:flex-row items-start md:items-start justify-between gap-4">
             <div className="flex-1">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-100 mb-1">Today's Plan</h1>
@@ -344,10 +349,15 @@ export default function TodaySheetPage() {
               <button
                 onClick={() => handleGenerate.mutateAsync()}
                 disabled={isGenerating}
-                className="btn-accent flex items-center justify-center gap-2 w-full md:w-auto"
+                className={`btn-accent flex items-center justify-center gap-2 w-full md:w-auto transition-all ${
+                  isGenerating ? 'btn-generating' : ''
+                } ${showSuccess ? 'btn-success-flash' : ''}`}
               >
                 {isGenerating ? (
-                  'Generating...'
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Generating...
+                  </>
                 ) : sheet ? (
                   <>
                     <Sparkles className="w-4 h-4" />
@@ -421,46 +431,54 @@ export default function TodaySheetPage() {
               onDragEnd={handleDragEnd}
             >
               <div className="space-y-6">
-                <TodaySheetSection
-                  id="must_do_today"
-                  title="Must-Do Today"
-                  icon={Flame}
-                  todos={sheet.sections.must_do_today}
-                  onToggleComplete={handleToggleComplete}
-                  onUpdateDueDate={handleUpdateDueDate}
-                  onUpdateDescription={handleUpdateDescription}
-                  onUpdateContent={handleUpdateContent}
-                />
-                <TodaySheetSection
-                  id="likely_today"
-                  title="Likely Today"
-                  icon={Target}
-                  todos={sheet.sections.likely_today}
-                  onToggleComplete={handleToggleComplete}
-                  onUpdateDueDate={handleUpdateDueDate}
-                  onUpdateDescription={handleUpdateDescription}
-                  onUpdateContent={handleUpdateContent}
-                />
-                <TodaySheetSection
-                  id="opportunistic"
-                  title="Opportunistic"
-                  icon={Lightbulb}
-                  todos={sheet.sections.opportunistic}
-                  onToggleComplete={handleToggleComplete}
-                  onUpdateDueDate={handleUpdateDueDate}
-                  onUpdateDescription={handleUpdateDescription}
-                  onUpdateContent={handleUpdateContent}
-                />
-                <TodaySheetSection
-                  id="overflow"
-                  title="Overflow"
-                  icon={Package}
-                  todos={sheet.sections.overflow}
-                  onToggleComplete={handleToggleComplete}
-                  onUpdateDueDate={handleUpdateDueDate}
-                  onUpdateDescription={handleUpdateDescription}
-                  onUpdateContent={handleUpdateContent}
-                />
+                <div className="animate-fade-in" style={{ animationDelay: '0ms' }}>
+                  <TodaySheetSection
+                    id="must_do_today"
+                    title="Must-Do Today"
+                    icon={Flame}
+                    todos={sheet.sections.must_do_today}
+                    onToggleComplete={handleToggleComplete}
+                    onUpdateDueDate={handleUpdateDueDate}
+                    onUpdateDescription={handleUpdateDescription}
+                    onUpdateContent={handleUpdateContent}
+                  />
+                </div>
+                <div className="animate-fade-in" style={{ animationDelay: '150ms' }}>
+                  <TodaySheetSection
+                    id="likely_today"
+                    title="Likely Today"
+                    icon={Target}
+                    todos={sheet.sections.likely_today}
+                    onToggleComplete={handleToggleComplete}
+                    onUpdateDueDate={handleUpdateDueDate}
+                    onUpdateDescription={handleUpdateDescription}
+                    onUpdateContent={handleUpdateContent}
+                  />
+                </div>
+                <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
+                  <TodaySheetSection
+                    id="opportunistic"
+                    title="Opportunistic"
+                    icon={Lightbulb}
+                    todos={sheet.sections.opportunistic}
+                    onToggleComplete={handleToggleComplete}
+                    onUpdateDueDate={handleUpdateDueDate}
+                    onUpdateDescription={handleUpdateDescription}
+                    onUpdateContent={handleUpdateContent}
+                  />
+                </div>
+                <div className="animate-fade-in" style={{ animationDelay: '450ms' }}>
+                  <TodaySheetSection
+                    id="overflow"
+                    title="Overflow"
+                    icon={Package}
+                    todos={sheet.sections.overflow}
+                    onToggleComplete={handleToggleComplete}
+                    onUpdateDueDate={handleUpdateDueDate}
+                    onUpdateDescription={handleUpdateDescription}
+                    onUpdateContent={handleUpdateContent}
+                  />
+                </div>
               </div>
 
               <DragOverlay>
