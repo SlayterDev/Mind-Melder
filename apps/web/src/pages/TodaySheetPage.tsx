@@ -140,7 +140,14 @@ export default function TodaySheetPage() {
 
     // API call
     try {
-      await todaySheetAPI.updateTodo(id, { dueDate: dueDate ? new Date(dueDate).toISOString() : null });
+      // Convert date string to midnight in local timezone, then to ISO string
+      let isoDate: string | null = null;
+      if (dueDate) {
+        const [year, month, day] = dueDate.split('-').map(Number);
+        const localDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+        isoDate = localDate.toISOString();
+      }
+      await todaySheetAPI.updateTodo(id, { dueDate: isoDate });
     } catch (error) {
       console.error('Failed to update due date:', error);
       // Revert on error

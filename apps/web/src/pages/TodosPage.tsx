@@ -7,6 +7,14 @@ export default function TodosPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
 
+  // Helper to get date from ISO string without timezone conversion
+  const getDateOnly = (isoString: string): Date => {
+    // Extract just the date portion (YYYY-MM-DD) and parse as local date
+    const datePart = isoString.split('T')[0];
+    const [year, month, day] = datePart.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
   const loadTodos = async (status?: 'pending' | 'completed') => {
     setIsLoading(true);
     try {
@@ -142,16 +150,16 @@ export default function TodosPage() {
                     {todo.dueDate && (
                       <span
                         className={`badge-chip ${
-                          new Date(todo.dueDate) < new Date() && todo.status === 'pending'
+                          getDateOnly(todo.dueDate) < getDateOnly(new Date().toISOString()) && todo.status === 'pending'
                             ? 'text-red-400 border-red-900 bg-red-950/30'
                             : ''
                         }`}
                       >
-                        Due: {new Date(todo.dueDate).toLocaleDateString()}
+                        Due: {getDateOnly(todo.dueDate).toLocaleDateString()}
                       </span>
                     )}
                     {todo.completedAt && (
-                      <span>Completed: {new Date(todo.completedAt).toLocaleDateString()}</span>
+                      <span>Completed: {getDateOnly(todo.completedAt).toLocaleDateString()}</span>
                     )}
                   </div>
                 </div>

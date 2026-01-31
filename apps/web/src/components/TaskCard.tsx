@@ -79,7 +79,15 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate }: Ta
     return displays[estimate];
   };
 
-  const isOverdue = todo.dueDate && new Date(todo.dueDate) < new Date() && todo.status === 'pending';
+  // Helper to get date from ISO string without timezone conversion
+  const getDateOnly = (isoString: string): Date => {
+    // Extract just the date portion (YYYY-MM-DD) and parse as local date
+    const datePart = isoString.split('T')[0];
+    const [year, month, day] = datePart.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const isOverdue = todo.dueDate && getDateOnly(todo.dueDate) < getDateOnly(new Date().toISOString()) && todo.status === 'pending';
 
   return (
     <div
@@ -188,7 +196,7 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate }: Ta
                     isOverdue ? 'text-red-400 border-red-900 bg-red-950/30' : ''
                   }`}
                 >
-                  Due: {new Date(todo.dueDate).toLocaleDateString()}
+                  Due: {getDateOnly(todo.dueDate).toLocaleDateString()}
                 </button>
               )}
 
@@ -197,7 +205,7 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate }: Ta
                 <div className="relative">
                   <input
                     type="date"
-                    defaultValue={todo.dueDate ? new Date(todo.dueDate).toISOString().split('T')[0] : ''}
+                    defaultValue={todo.dueDate ? getDateOnly(todo.dueDate).toISOString().split('T')[0] : ''}
                     onChange={handleDateChange}
                     onBlur={() => setShowDatePicker(false)}
                     autoFocus
