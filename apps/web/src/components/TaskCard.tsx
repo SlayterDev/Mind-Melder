@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Zap, Clock, Hourglass, GripVertical, Check, ChevronDown, ChevronRight, FileText, Pencil, Save, X } from 'lucide-react';
+import { 
+  Zap, Clock, Hourglass, GripVertical, Check, ChevronDown, ChevronRight, FileText, Pencil, Save, X,
+  Calendar
+ } from 'lucide-react';
 
 interface TaskCardProps {
   todo: {
@@ -41,6 +44,7 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUp
   const [originalCapture, setOriginalCapture] = useState<string | null>(null);
   const [isLoadingCapture, setIsLoadingCapture] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState(todo.description || '');
   const [isEditingContent, setIsEditingContent] = useState(false);
@@ -69,11 +73,22 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUp
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = e.target.value;
+    setSelectedDate(e.target.value);
+  };
+
+  const handleDateBlur = () => {
     if (onUpdateDueDate) {
-      onUpdateDueDate(todo.id, newDate || null);
+      onUpdateDueDate(todo.id, selectedDate || null);
     }
     setShowDatePicker(false);
+  };
+
+  const openDatePicker = () => {
+    const initialDate = todo.dueDate
+      ? getDateOnly(todo.dueDate).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0];
+    setSelectedDate(initialDate);
+    setShowDatePicker(true);
   };
 
   const getTimeEstimateDisplay = (estimate: string) => {
@@ -300,7 +315,7 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUp
               {/* Due Date */}
               {todo.dueDate && !showDatePicker && (
                 <button
-                  onClick={() => setShowDatePicker(true)}
+                  onClick={openDatePicker}
                   className={`badge-chip cursor-pointer hover:opacity-80 transition-opacity ${
                     isOverdue ? 'text-red-400 border-red-900 bg-red-950/30' : ''
                   }`}
@@ -309,14 +324,24 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUp
                 </button>
               )}
 
+              {/* Add Due Date Button */}
+              {!todo.dueDate && !showDatePicker && (
+                <button
+                  onClick={openDatePicker}
+                  className="px-2 py-0.5 badge-chip cursor-pointer hover:opacity-80 transition-opacity"
+                >
+                  <Calendar className="w-3 h-3" />
+                </button>
+              )}
+
               {/* Date Picker */}
               {showDatePicker && (
                 <div className="relative">
                   <input
                     type="date"
-                    defaultValue={todo.dueDate ? getDateOnly(todo.dueDate).toISOString().split('T')[0] : ''}
+                    value={selectedDate}
                     onChange={handleDateChange}
-                    onBlur={() => setShowDatePicker(false)}
+                    onBlur={handleDateBlur}
                     autoFocus
                     className="px-2 py-1 bg-gray-800 border border-gray-600 rounded text-xs text-gray-200 focus:outline-none focus:border-accent-highlight"
                   />

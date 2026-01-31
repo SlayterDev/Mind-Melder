@@ -70,7 +70,7 @@ export function createTodosRouter(todosRepo: TodosRepository): ExpressRouter {
         content,
         description,
         status,
-        dueDate: dueDate ? new Date(dueDate) : undefined,
+        dueDate: dueDate !== undefined ? (dueDate ? new Date(dueDate) : null) : undefined,
       });
 
       if (!todo) {

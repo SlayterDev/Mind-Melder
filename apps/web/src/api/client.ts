@@ -43,7 +43,7 @@ export const todosAPI = {
     fetchAPI<any[]>(`/todos${status ? `?status=${status}` : ''}`),
   create: (data: { content: string; dueDate?: string }) =>
     fetchAPI('/todos', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: { content?: string; status?: string; dueDate?: string; description?: string }) =>
+  update: (id: string, data: { content?: string; status?: string; dueDate?: string | null; description?: string }) =>
     fetchAPI(`/todos/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   markComplete: (id: string) => fetchAPI(`/todos/${id}/complete`, { method: 'PATCH' }),
   delete: (id: string) => fetchAPI(`/todos/${id}`, { method: 'DELETE' }),
