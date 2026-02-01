@@ -19,7 +19,7 @@ Your job is to:
   /**
    * Build the user prompt with captures and template
    */
-  protected buildOrganizePrompt(captures: Capture[], template: Template, tags?: Tag[]): string {
+  protected buildOrganizePrompt(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions: boolean = false): string {
     const captureList = captures
       .map((c, i) => `${i + 1}. [${new Date(c.timestamp).toLocaleString()}] ${c.content}`)
       .join('\n');
@@ -27,7 +27,7 @@ Your job is to:
     let tagsInstruction = '';
     if (tags && tags.length > 0) {
       const tagsList = tags
-        .map(tag => tag.description ? `${tag.name} (${tag.description})` : tag.name)
+        .map(tag => includeDescriptions && tag.description ? `${tag.name} (${tag.description})` : tag.name)
         .join(', ');
       tagsInstruction = `\nCategorization tags: Use the following tags to categorize notes: ${tagsList}.`;
     } else {
@@ -71,8 +71,9 @@ Format:
     // Build tags instruction if tags are provided
     let tagsInstruction = '';
     if (input.tags && input.tags.length > 0) {
+      const includeDescriptions = input.includeDescriptions ?? false;
       const tagsList = input.tags
-        .map(tag => tag.description ? `${tag.name} (${tag.description})` : tag.name)
+        .map(tag => includeDescriptions && tag.description ? `${tag.name} (${tag.description})` : tag.name)
         .join(', ');
       tagsInstruction = `\nCATEGORIZATION TAGS:
 Use the following tags to categorize tasks: ${tagsList}.
