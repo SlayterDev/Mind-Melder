@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { useInboxCount } from '../api/queries';
-import { PenLine, CalendarDays, Inbox, FileText, ListChecks, Settings } from 'lucide-react';
+import { PenLine, CalendarDays, Inbox, FileText, ListChecks, Layers, Cog, Menu, X } from 'lucide-react';
 
 interface LayoutProps {
   children: ReactNode;
@@ -9,6 +9,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const { data: inboxCount = 0 } = useInboxCount();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const location = useLocation();
 
@@ -20,12 +21,15 @@ export default function Layout({ children }: LayoutProps) {
     { path: '/inbox', label: 'Inbox', icon: Inbox },
     { path: '/notes', label: 'Notes', icon: FileText },
     { path: '/todos', label: 'Todos', icon: ListChecks },
-    { path: '/templates', label: 'Templates', icon: Settings },
+    { path: '/templates', label: 'Templates', icon: Layers },
+    { path: '/settings', label: 'Settings', icon: Cog },
   ];
+
+  const closeDrawer = () => setIsDrawerOpen(false);
 
   return (
     <div className="flex h-screen bg-gray-950 text-gray-100 overflow-hidden">
-      {/* Sidebar */}
+      {/* Sidebar - Desktop */}
       <aside className="hidden md:block w-64 bg-gray-900 border-r border-gray-800 shadow-2xl flex-shrink-0">
         <div className="p-6">
           <h1 className="text-2xl font-bold text-gray-100">Mind Melder</h1>
@@ -61,39 +65,77 @@ export default function Layout({ children }: LayoutProps) {
         </nav>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-auto">
-        <div className="max-w-5xl mx-auto p-4 md:p-8 pb-20 md:pb-8">{children}</div>
-      </main>
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-900 border-b border-gray-800 z-50">
+        <div className="flex items-center justify-between px-4 py-3">
+          <h1 className="text-lg font-bold text-gray-100">Mind Melder</h1>
+          <button
+            onClick={() => setIsDrawerOpen(true)}
+            className="p-2 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
+      </div>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 shadow-2xl z-50">
-        <div className="flex justify-around items-center px-2 py-3">
-          {navItems.slice(0, 5).map((item) => {
+      {/* Mobile Drawer Overlay */}
+      {isDrawerOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-50"
+          onClick={closeDrawer}
+        />
+      )}
+
+      {/* Mobile Drawer */}
+      <div
+        className={`md:hidden fixed top-0 right-0 h-full w-72 bg-gray-900 border-l border-gray-800 z-50 transform transition-transform duration-300 ease-in-out ${
+          isDrawerOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-gray-800">
+          <span className="font-semibold text-gray-200">Menu</span>
+          <button
+            onClick={closeDrawer}
+            className="p-2 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <nav className="py-4">
+          {navItems.map((item) => {
             const Icon = item.icon;
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg transition-all relative ${
-                  isActive(item.path)
-                    ? 'text-accent-highlight'
-                    : 'text-gray-400'
-                }`}
+                onClick={closeDrawer}
+                className={`
+                  flex items-center gap-3 px-6 py-3 transition-all
+                  ${
+                    isActive(item.path)
+                      ? 'bg-gray-800 border-l-4 border-accent text-gray-100'
+                      : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
+                  }
+                `}
               >
                 <Icon className="w-5 h-5" />
-                <span className="text-xs font-medium">{item.label.split(' ')[0]}</span>
+                <span className="font-medium">{item.label}</span>
                 {item.path === '/inbox' && inboxCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold"
-                    style={{ backgroundColor: 'rgb(114 97 175 / 0.4)', border: '1px solid rgb(114 97 175 / 0.3)' }}>
+                  <span className="badge-accent">
                     {inboxCount}
                   </span>
                 )}
               </Link>
             );
           })}
-        </div>
-      </nav>
+        </nav>
+      </div>
+
+      {/* Main content */}
+      <main className="flex-1 overflow-auto pt-14 md:pt-0">
+        <div className="max-w-5xl mx-auto p-4 md:p-8">{children}</div>
+      </main>
     </div>
   );
 }

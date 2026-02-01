@@ -1,4 +1,4 @@
-import type { LLMProvider } from './types.js';
+import type { LLMProvider, SettingsConfig } from './types.js';
 import { OpenAIProvider } from './providers/openai-provider.js';
 import { AnthropicProvider } from './providers/anthropic-provider.js';
 import { OllamaProvider } from './providers/ollama-provider.js';
@@ -12,6 +12,7 @@ export class ProviderFactory {
       apiKey?: string;
       baseURL?: string;
       model?: string;
+      temperature?: number;
     } = {}
   ): LLMProvider {
     switch (type) {
@@ -19,18 +20,21 @@ export class ProviderFactory {
         return new OpenAIProvider({
           apiKey: config.apiKey || process.env.OPENAI_API_KEY,
           model: config.model,
+          temperature: config.temperature,
         });
 
       case 'anthropic':
         return new AnthropicProvider({
           apiKey: config.apiKey || process.env.ANTHROPIC_API_KEY,
           model: config.model,
+          temperature: config.temperature,
         });
 
       case 'ollama':
         return new OllamaProvider({
           baseURL: config.baseURL || process.env.OLLAMA_BASE_URL,
           model: config.model,
+          temperature: config.temperature,
         });
 
       default:
@@ -48,5 +52,15 @@ export class ProviderFactory {
     }
 
     return this.createProvider(providerType);
+  }
+
+  static createFromSettings(settings: SettingsConfig): LLMProvider {
+    const providerType = settings.llmProvider;
+
+    return this.createProvider(providerType, {
+      model: settings.llmModel || undefined,
+      temperature: settings.llmTemperature,
+      baseURL: providerType === 'ollama' ? settings.ollamaBaseUrl : undefined,
+    });
   }
 }

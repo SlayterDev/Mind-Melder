@@ -9,9 +9,9 @@ import {
   TodosRepository,
   OrganizedNotesRepository,
   TemplatesRepository,
+  SettingsRepository,
 } from 'database';
-import { ProviderFactory } from 'llm';
-import { createCapturesRouter, createTodosRouter, createNotesRouter, createTemplatesRouter } from './routes/index.js';
+import { createCapturesRouter, createTodosRouter, createNotesRouter, createTemplatesRouter, createSettingsRouter } from './routes/index.js';
 import { createOrganizeRouter } from './routes/organize.js';
 import { createTodaySheetRouter } from './routes/today-sheet.js';
 import { errorHandler, requestLogger } from './middleware/index.js';
@@ -29,22 +29,13 @@ const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres
 const db = createDatabaseClient(DATABASE_URL);
 console.log('Database connected');
 
-// LLM provider will be lazily initialized when needed
-const getLLMProvider = () => {
-  try {
-    return ProviderFactory.createFromEnv();
-  } catch (error) {
-    throw new Error(
-      `Failed to initialize LLM provider: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
-  }
-};
 
 // Initialize repositories
 const capturesRepo = new CapturesRepository(db);
 const todosRepo = new TodosRepository(db);
 const notesRepo = new OrganizedNotesRepository(db);
 const templatesRepo = new TemplatesRepository(db);
+const settingsRepo = new SettingsRepository(db);
 
 // Middleware
 app.use(cors());
@@ -61,8 +52,9 @@ app.use('/api/v1/captures', createCapturesRouter(capturesRepo));
 app.use('/api/v1/todos', createTodosRouter(todosRepo));
 app.use('/api/v1/notes', createNotesRouter(notesRepo));
 app.use('/api/v1/templates', createTemplatesRouter(templatesRepo));
-app.use('/api/v1/organize', createOrganizeRouter(db, getLLMProvider));
-app.use('/api/v1/today-sheet', createTodaySheetRouter(db, getLLMProvider));
+app.use('/api/v1/settings', createSettingsRouter(settingsRepo));
+app.use('/api/v1/organize', createOrganizeRouter(db, settingsRepo));
+app.use('/api/v1/today-sheet', createTodaySheetRouter(db, settingsRepo));
 
 // Error handler (must be last)
 app.use(errorHandler);

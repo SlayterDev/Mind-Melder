@@ -6,6 +6,7 @@ import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, Tod
 export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
   private client: Anthropic;
   private model: string;
+  private temperature: number;
 
   constructor(config: ProviderConfig) {
     super();
@@ -19,6 +20,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     });
 
     this.model = config.model || 'claude-sonnet-4-5';
+    this.temperature = config.temperature ?? 0.7;
   }
 
   async organize(captures: Capture[], template: Template): Promise<OrganizedOutput> {
@@ -28,6 +30,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 4096,
+      temperature: this.temperature,
       system: systemPrompt,
       messages: [
         { role: 'user', content: userPrompt },
@@ -48,6 +51,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 2048,
+      temperature: Math.min(this.temperature, 0.5),
       system: this.buildSystemPrompt(),
       messages: [
         { role: 'user', content: prompt },
@@ -72,7 +76,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 4096,
-      temperature: 0.5, // More deterministic
+      temperature: Math.min(this.temperature, 0.5),
       system: systemPrompt,
       messages: [
         {

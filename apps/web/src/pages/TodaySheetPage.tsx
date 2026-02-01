@@ -14,13 +14,15 @@ import QuickCaptureInput from '../components/QuickCaptureInput';
 import { useInboxCount } from '../api/queries';
 import { ClipboardList, Sparkles, Flame, Target, Lightbulb, Package, Loader2 } from 'lucide-react';
 
+type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
+
 interface Todo {
   id: string;
   content: string;
   status: string;
   todaySheetSection: string;
   todaySheetOrder: number;
-  timeEstimate?: string;
+  timeEstimate?: TimeEstimate;
   dueDate?: string;
   tags?: string[];
   priorityScore?: number;
@@ -201,6 +203,29 @@ export default function TodaySheetPage() {
       await todaySheetAPI.updateTodo(id, { content });
     } catch (error) {
       console.error('Failed to update content:', error);
+      // Revert on error
+      loadSheet();
+    }
+  };
+
+  const handleUpdateTimeEstimate = async (id: string, timeEstimate: TimeEstimate) => {
+    // Optimistic update
+    if (sheet) {
+      const updatedSheet = { ...sheet };
+      Object.keys(updatedSheet.sections).forEach((sectionKey) => {
+        const section = sectionKey as keyof typeof updatedSheet.sections;
+        updatedSheet.sections[section] = updatedSheet.sections[section].map((t) =>
+          t.id === id ? { ...t, timeEstimate } : t
+        );
+      });
+      setSheet(updatedSheet);
+    }
+
+    // API call
+    try {
+      await todaySheetAPI.updateTodo(id, { timeEstimate });
+    } catch (error) {
+      console.error('Failed to update time estimate:', error);
       // Revert on error
       loadSheet();
     }
@@ -441,6 +466,7 @@ export default function TodaySheetPage() {
                     onUpdateDueDate={handleUpdateDueDate}
                     onUpdateDescription={handleUpdateDescription}
                     onUpdateContent={handleUpdateContent}
+                    onUpdateTimeEstimate={handleUpdateTimeEstimate}
                   />
                 </div>
                 <div className="animate-fade-in" style={{ animationDelay: '150ms' }}>
@@ -453,6 +479,7 @@ export default function TodaySheetPage() {
                     onUpdateDueDate={handleUpdateDueDate}
                     onUpdateDescription={handleUpdateDescription}
                     onUpdateContent={handleUpdateContent}
+                    onUpdateTimeEstimate={handleUpdateTimeEstimate}
                   />
                 </div>
                 <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
@@ -465,6 +492,7 @@ export default function TodaySheetPage() {
                     onUpdateDueDate={handleUpdateDueDate}
                     onUpdateDescription={handleUpdateDescription}
                     onUpdateContent={handleUpdateContent}
+                    onUpdateTimeEstimate={handleUpdateTimeEstimate}
                   />
                 </div>
                 <div className="animate-fade-in" style={{ animationDelay: '450ms' }}>
@@ -477,6 +505,7 @@ export default function TodaySheetPage() {
                     onUpdateDueDate={handleUpdateDueDate}
                     onUpdateDescription={handleUpdateDescription}
                     onUpdateContent={handleUpdateContent}
+                    onUpdateTimeEstimate={handleUpdateTimeEstimate}
                   />
                 </div>
               </div>

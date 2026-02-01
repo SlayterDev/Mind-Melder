@@ -29,12 +29,17 @@ export const createTodoSchema = z.object({
   dueDate: z.string().datetime().optional(),
 });
 
+export const timeEstimateSchema = z.enum(['quick', 'medium', 'long', 'none']);
+
 export const updateTodoSchema = z.object({
   content: z.string().min(1).max(1000).optional(),
   description: z.string().max(5000).optional(),
   status: z.enum(['pending', 'completed']).optional(),
-  dueDate: z.string().datetime().optional(),
+  dueDate: z.string().datetime().nullable().optional(),
+  timeEstimate: timeEstimateSchema.optional(),
 });
+
+export type TimeEstimate = z.infer<typeof timeEstimateSchema>;
 
 export type CreateTodoInput = z.infer<typeof createTodoSchema>;
 export type UpdateTodoInput = z.infer<typeof updateTodoSchema>;
@@ -53,3 +58,18 @@ export const updateTemplateSchema = z.object({
 
 export type CreateTemplateInput = z.infer<typeof createTemplateSchema>;
 export type UpdateTemplateInput = z.infer<typeof updateTemplateSchema>;
+
+// Settings validation schemas
+export const llmProviderSchema = z.enum(['openai', 'anthropic', 'ollama']);
+
+export const updateSettingsSchema = z.object({
+  llmProvider: llmProviderSchema.optional(),
+  llmModel: z.string().max(100).nullable().optional(),
+  llmTemperature: z.number().min(0).max(2).optional(),
+  ollamaBaseUrl: z.string().url().max(500).optional(),
+  organizationSchedule: z.string().max(100).optional(),
+  scheduleEnabled: z.boolean().optional(),
+});
+
+export type LLMProvider = z.infer<typeof llmProviderSchema>;
+export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;

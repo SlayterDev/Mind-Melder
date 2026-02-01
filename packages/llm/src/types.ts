@@ -76,4 +76,13 @@ export interface ProviderConfig {
   apiKey?: string;
   baseURL?: string;
   model?: string;
+  temperature?: number;
+}
+
+// Settings-based configuration (from database)
+export interface SettingsConfig {
+  llmProvider: 'openai' | 'anthropic' | 'ollama';
+  llmModel: string | null;
+  llmTemperature: number;
+  ollamaBaseUrl: string;
 }

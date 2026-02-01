@@ -6,6 +6,7 @@ import InboxPage from './pages/InboxPage';
 import NotesPage from './pages/NotesPage';
 import TodosPage from './pages/TodosPage';
 import TemplatesPage from './pages/TemplatesPage';
+import SettingsPage from './pages/SettingsPage';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/notes" element={<NotesPage />} />
           <Route path="/todos" element={<TodosPage />} />
           <Route path="/templates" element={<TemplatesPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </Layout>
     </BrowserRouter>
