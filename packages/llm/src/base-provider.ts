@@ -31,7 +31,7 @@ Your job is to:
         .join(', ');
       tagsInstruction = `\nCategorization tags: Use the following tags to categorize notes: ${tagsList}.`;
     } else {
-      tagsInstruction = '\nCategorization: Use your best judgment to categorize notes into meaningful groups.';
+      tagsInstruction = '\nCategorization: Use your best judgment to categorize notes with tags.';
     }
 
     return `Here are ${captures.length} captured notes to organize:
