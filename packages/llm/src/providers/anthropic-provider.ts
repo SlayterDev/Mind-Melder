@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { Capture, Template } from 'types';
+import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
 import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types.js';
 
@@ -23,7 +23,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     this.temperature = config.temperature ?? 0.7;
   }
 
-  async organize(captures: Capture[], template: Template, tags?: string[]): Promise<OrganizedOutput> {
+  async organize(captures: Capture[], template: Template, tags?: Tag[]): Promise<OrganizedOutput> {
     const systemPrompt = this.buildSystemPrompt();
     const userPrompt = this.buildOrganizePrompt(captures, template, tags);
 

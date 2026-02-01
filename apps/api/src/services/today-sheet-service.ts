@@ -6,6 +6,7 @@ import {
   TodosRepository,
   TemplatesRepository,
   TodaySheetsRepository,
+  TagsRepository,
 } from 'database';
 import { templateTools } from '../utils/template-tools.js';
 
@@ -27,6 +28,7 @@ export class TodaySheetService {
   private todosRepo: TodosRepository;
   private templatesRepo: TemplatesRepository;
   private todaySheetsRepo: TodaySheetsRepository;
+  private tagsRepo: TagsRepository;
 
   constructor(
     private db: Database,
@@ -36,6 +38,7 @@ export class TodaySheetService {
     this.todosRepo = new TodosRepository(db);
     this.templatesRepo = new TemplatesRepository(db);
     this.todaySheetsRepo = new TodaySheetsRepository(db);
+    this.tagsRepo = new TagsRepository(db);
   }
 
   /**
@@ -62,6 +65,9 @@ export class TodaySheetService {
       template = activeTemplate || templateTools.defaultTemplate;
     }
 
+    // 2.5. Fetch user's tags for categorization
+    const userTags = await this.tagsRepo.findByUserId(userId);
+
     // 3. Call LLM to generate Today Sheet
     let aiResult;
     try {
@@ -69,6 +75,7 @@ export class TodaySheetService {
         captures,
         existingTodos,
         template,
+        tags: userTags,
         context: {
           currentTimeOfDay: new Date().getHours(),
           workingHoursMinutes: 480, // 8 hours default

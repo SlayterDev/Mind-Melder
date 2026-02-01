@@ -1,4 +1,4 @@
-import type { Capture, Template } from 'types';
+import type { Capture, Template, Tag } from 'types';
 import type { TodaySheetInput } from './types.js';
 import { z } from 'zod';
 
@@ -19,14 +19,20 @@ Your job is to:
   /**
    * Build the user prompt with captures and template
    */
-  protected buildOrganizePrompt(captures: Capture[], template: Template, tags?: string[]): string {
+  protected buildOrganizePrompt(captures: Capture[], template: Template, tags?: Tag[]): string {
     const captureList = captures
       .map((c, i) => `${i + 1}. [${new Date(c.timestamp).toLocaleString()}] ${c.content}`)
       .join('\n');
 
-    const tagsInstruction = tags && tags.length > 0
-      ? `\nCategorization tags: Use the following tags to categorize notes: ${tags.join(', ')}. If none fit, you may suggest a new tag.`
-      : '\nCategorization: Use your best judgment to categorize notes into meaningful groups.';
+    let tagsInstruction = '';
+    if (tags && tags.length > 0) {
+      const tagsList = tags
+        .map(tag => tag.description ? `${tag.name} (${tag.description})` : tag.name)
+        .join(', ');
+      tagsInstruction = `\nCategorization tags: Use the following tags to categorize notes: ${tagsList}.`;
+    } else {
+      tagsInstruction = '\nCategorization: Use your best judgment to categorize notes into meaningful groups.';
+    }
 
     return `Here are ${captures.length} captured notes to organize:
 
@@ -62,6 +68,18 @@ Format:
   protected buildTodaySheetPrompt(input: TodaySheetInput): string {
     const remainingHours = Math.max(0, 17 - input.context.currentTimeOfDay); // 9-5 workday
 
+    // Build tags instruction if tags are provided
+    let tagsInstruction = '';
+    if (input.tags && input.tags.length > 0) {
+      const tagsList = input.tags
+        .map(tag => tag.description ? `${tag.name} (${tag.description})` : tag.name)
+        .join(', ');
+      tagsInstruction = `\nCATEGORIZATION TAGS:
+Use the following tags to categorize tasks: ${tagsList}.
+Assign appropriate tags to each task in the "tags" array field.
+`;
+    }
+
     return `You are generating a Today Sheet - a focused daily action plan for a knowledge worker.
 
 CONTEXT:
@@ -79,7 +97,7 @@ EXISTING TODOS (${input.existingTodos.length}):
 ${input.existingTodos.map((t, i) =>
   `${i + 1}. ID: ${t.id} | ${t.content}${t.dueDate ? ` (Due: ${new Date(t.dueDate).toLocaleDateString()})` : ''}`
 ).join('\n')}
-
+${tagsInstruction}
 YOUR TASK:
 1. Extract actionable tasks from captures (skip pure notes/info)
 2. Transform captures into clear, actionable task titles:

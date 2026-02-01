@@ -61,10 +61,9 @@ export class OrganizationService {
 
     // Fetch user's tags for categorization
     const userTags = await this.tagsRepo.findByUserId(userId);
-    const tagNames = userTags.map(tag => tag.name);
 
     // Use LLM to organize
-    const organized = await this.llmProvider.organize(captures, template, tagNames);
+    const organized = await this.llmProvider.organize(captures, template, userTags);
 
     // Create organized notes
     const createdNotes = await Promise.all(
