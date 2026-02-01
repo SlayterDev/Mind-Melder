@@ -11,12 +11,14 @@ interface OllamaResponse {
 export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
   private baseURL: string;
   private model: string;
+  private temperature: number;
 
   constructor(config: ProviderConfig) {
     super();
 
     this.baseURL = config.baseURL || 'http://localhost:11434';
     this.model = config.model || 'mistral';
+    this.temperature = config.temperature ?? 0.7;
   }
 
   async organize(captures: Capture[], template: Template): Promise<OrganizedOutput> {
@@ -36,6 +38,9 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
         ],
         stream: false,
         format: 'json',
+        options: {
+          temperature: this.temperature,
+        },
       }),
     });
 
@@ -63,6 +68,9 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
         ],
         stream: false,
         format: 'json',
+        options: {
+          temperature: Math.min(this.temperature, 0.5),
+        },
       }),
     });
 
@@ -95,7 +103,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
         stream: false,
         format: 'json', // Ollama JSON mode
         options: {
-          temperature: 0.5,
+          temperature: Math.min(this.temperature, 0.5),
         },
       }),
     });

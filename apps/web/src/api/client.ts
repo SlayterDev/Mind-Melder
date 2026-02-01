@@ -97,3 +97,23 @@ export const todaySheetAPI = {
       body: JSON.stringify({ updates }),
     }),
 };
+
+// Settings
+export interface Settings {
+  id: string;
+  userId: string;
+  llmProvider: 'openai' | 'anthropic' | 'ollama';
+  llmModel: string | null;
+  llmTemperature: number;
+  ollamaBaseUrl: string;
+  organizationSchedule: string;
+  scheduleEnabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const settingsAPI = {
+  get: () => fetchAPI<Settings>('/settings'),
+  update: (data: Partial<Omit<Settings, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>) =>
+    fetchAPI<Settings>('/settings', { method: 'PATCH', body: JSON.stringify(data) }),
+};

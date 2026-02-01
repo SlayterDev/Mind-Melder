@@ -2,15 +2,15 @@ import { Router, type Router as ExpressRouter } from 'express';
 import { OrganizationService } from '../services/organization-service.js';
 import { ApiError } from '../middleware/index.js';
 import { asyncHandler } from '../utils/async-handler.js';
-import type { LLMProvider } from 'llm';
-import type { Database } from 'database';
+import { ProviderFactory } from 'llm';
+import type { Database, SettingsRepository } from 'database';
 import { z } from 'zod';
 
 const organizeRequestSchema = z.object({
   templateId: z.string().uuid().optional(),
 });
 
-export function createOrganizeRouter(db: Database, getLLMProvider: () => LLMProvider): ExpressRouter {
+export function createOrganizeRouter(db: Database, settingsRepo: SettingsRepository): ExpressRouter {
   const router = Router();
 
   // POST /api/v1/organize - Trigger batch organization
@@ -27,8 +27,9 @@ export function createOrganizeRouter(db: Database, getLLMProvider: () => LLMProv
       }
 
       try {
-        // Lazy-load LLM provider when needed
-        const llmProvider = getLLMProvider();
+        // Get user settings and create LLM provider from them
+        const settings = await settingsRepo.getOrCreate(userId);
+        const llmProvider = ProviderFactory.createFromSettings(settings);
         const organizationService = new OrganizationService(db, llmProvider);
 
         const result = await organizationService.organizeCaptures(userId, templateId);

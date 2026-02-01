@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import type { Database } from 'database';
-import type { LLMProvider } from 'llm';
+import type { Database, SettingsRepository } from 'database';
+import { ProviderFactory } from 'llm';
 import { TodosRepository } from 'database';
 import { TodaySheetService } from '../services/today-sheet-service.js';
 import { asyncHandler } from '../utils/async-handler.js';
@@ -31,7 +31,7 @@ const reorderSchema = z.object({
   })),
 });
 
-export function createTodaySheetRouter(db: Database, getLLMProvider: () => LLMProvider): Router {
+export function createTodaySheetRouter(db: Database, settingsRepo: SettingsRepository): Router {
   const router = Router();
   const todosRepo = new TodosRepository(db);
 
@@ -44,7 +44,8 @@ export function createTodaySheetRouter(db: Database, getLLMProvider: () => LLMPr
       const { templateId } = req.body;
 
       try {
-        const llmProvider = getLLMProvider();
+        const settings = await settingsRepo.getOrCreate(userId);
+        const llmProvider = ProviderFactory.createFromSettings(settings);
         const todaySheetService = new TodaySheetService(db, llmProvider);
         const sheet = await todaySheetService.generateSheet(userId, templateId);
 
@@ -66,7 +67,8 @@ export function createTodaySheetRouter(db: Database, getLLMProvider: () => LLMPr
     asyncHandler(async (req, res) => {
       const userId = 'test-user-1'; // TODO: Get from auth context
 
-      const llmProvider = getLLMProvider();
+      const settings = await settingsRepo.getOrCreate(userId);
+      const llmProvider = ProviderFactory.createFromSettings(settings);
       const todaySheetService = new TodaySheetService(db, llmProvider);
       const sheet = await todaySheetService.getSheet(userId);
 

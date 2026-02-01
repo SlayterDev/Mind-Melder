@@ -53,3 +53,18 @@ export const updateTemplateSchema = z.object({
 
 export type CreateTemplateInput = z.infer<typeof createTemplateSchema>;
 export type UpdateTemplateInput = z.infer<typeof updateTemplateSchema>;
+
+// Settings validation schemas
+export const llmProviderSchema = z.enum(['openai', 'anthropic', 'ollama']);
+
+export const updateSettingsSchema = z.object({
+  llmProvider: llmProviderSchema.optional(),
+  llmModel: z.string().max(100).nullable().optional(),
+  llmTemperature: z.number().min(0).max(2).optional(),
+  ollamaBaseUrl: z.string().url().max(500).optional(),
+  organizationSchedule: z.string().max(100).optional(),
+  scheduleEnabled: z.boolean().optional(),
+});
+
+export type LLMProvider = z.infer<typeof llmProviderSchema>;
+export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;

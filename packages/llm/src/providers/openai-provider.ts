@@ -7,6 +7,7 @@ import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js'
 export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
   private client: OpenAI;
   private model: string;
+  private temperature: number;
 
   constructor(config: ProviderConfig) {
     super();
@@ -20,6 +21,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
     });
 
     this.model = config.model || 'gpt-4o-mini';
+    this.temperature = config.temperature ?? 0.7;
   }
 
   async organize(captures: Capture[], template: Template): Promise<OrganizedOutput> {
@@ -32,7 +34,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      temperature: 0.7,
+      temperature: this.temperature,
       response_format: { type: 'json_object' },
     });
 
@@ -53,7 +55,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
         { role: 'system', content: this.buildSystemPrompt() },
         { role: 'user', content: prompt },
       ],
-      temperature: 0.5,
+      temperature: Math.min(this.temperature, 0.5),
       response_format: { type: 'json_object' },
     });
 
@@ -76,8 +78,8 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      temperature: 0.5, // More deterministic than organize
-      response_format: { type: 'json_object' }, // Enforce JSON
+      temperature: Math.min(this.temperature, 0.5),
+      response_format: { type: 'json_object' },
     });
 
     const content = response.choices[0]?.message?.content;
