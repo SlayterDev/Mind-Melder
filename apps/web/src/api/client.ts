@@ -55,6 +55,8 @@ export const todosAPI = {
 export const notesAPI = {
   list: (category?: string) =>
     fetchAPI<any[]>(`/notes${category ? `?category=${category}` : ''}`),
+  create: (data: { content: string; category?: string }) =>
+    fetchAPI('/notes', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: { content?: string; category?: string }) =>
     fetchAPI(`/notes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => fetchAPI(`/notes/${id}`, { method: 'DELETE' }),

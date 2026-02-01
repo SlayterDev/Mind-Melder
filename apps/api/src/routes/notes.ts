@@ -1,6 +1,6 @@
 import { Router, type Router as ExpressRouter } from 'express';
 import { OrganizedNotesRepository } from 'database';
-import { updateOrganizedNoteSchema } from 'types';
+import { createOrganizedNoteSchema, updateOrganizedNoteSchema } from 'types';
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, ApiError } from '../middleware/index.js';
 
@@ -22,6 +22,19 @@ export function createNotesRouter(notesRepo: OrganizedNotesRepository): ExpressR
       }
 
       res.json(notes);
+    })
+  );
+
+  // POST /api/v1/notes - Create new note
+  router.post(
+    '/',
+    validateBody(createOrganizedNoteSchema),
+    asyncHandler(async (req, res) => {
+      const userId = 'test-user-1'; // TODO: Get from auth context
+      const { content, category } = req.body;
+
+      const note = await notesRepo.create({ userId, content, category });
+      res.status(201).json(note);
     })
   );
 

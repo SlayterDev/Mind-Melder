@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { capturesAPI } from '../api/client';
+import { capturesAPI, notesAPI } from '../api/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, PenLine } from 'lucide-react';
 
@@ -57,9 +57,21 @@ export default function QuickCaptureInput({
     }
   }, [content, isSubmitting]);
 
+  const submitCapture = async (data: { content: string; category?: string }) => {
+    if (!chip) {
+      await capturesAPI.create(data);
+      return;
+    }
+
+    const args = chip.label.split(':').slice(1).filter((s) => s !== '');
+    const cat = args.length ? args[0].trim().replace(/\-+/, ' ') : undefined;
+
+    await notesAPI.create({ content: data.content, category: cat });
+  }
+
   const queryClient = useQueryClient();
   const createCapture = useMutation({
-    mutationFn: (data: { content: string }) => capturesAPI.create(data),
+    mutationFn: (data: { content: string; category?: string }) => submitCapture(data),
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ['inboxCount'] });
       const previous = queryClient.getQueryData<number>(['inboxCount']);
