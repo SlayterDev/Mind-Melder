@@ -23,9 +23,9 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     this.temperature = config.temperature ?? 0.7;
   }
 
-  async organize(captures: Capture[], template: Template): Promise<OrganizedOutput> {
+  async organize(captures: Capture[], template: Template, tags?: string[]): Promise<OrganizedOutput> {
     const systemPrompt = this.buildSystemPrompt();
-    const userPrompt = this.buildOrganizePrompt(captures, template);
+    const userPrompt = this.buildOrganizePrompt(captures, template, tags);
 
     const response = await this.client.messages.create({
       model: this.model,

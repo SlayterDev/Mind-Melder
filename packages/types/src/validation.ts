@@ -73,3 +73,17 @@ export const updateSettingsSchema = z.object({
 
 export type LLMProvider = z.infer<typeof llmProviderSchema>;
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;
+
+// Tag validation schemas
+export const createTagSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(50, 'Name too long'),
+  description: z.string().max(200, 'Description too long').optional(),
+});
+
+export const updateTagSchema = z.object({
+  name: z.string().min(1).max(50).optional(),
+  description: z.string().max(200).optional(),
+});
+
+export type CreateTagInput = z.infer<typeof createTagSchema>;
+export type UpdateTagInput = z.infer<typeof updateTagSchema>;

@@ -19,10 +19,14 @@ Your job is to:
   /**
    * Build the user prompt with captures and template
    */
-  protected buildOrganizePrompt(captures: Capture[], template: Template): string {
+  protected buildOrganizePrompt(captures: Capture[], template: Template, tags?: string[]): string {
     const captureList = captures
       .map((c, i) => `${i + 1}. [${new Date(c.timestamp).toLocaleString()}] ${c.content}`)
       .join('\n');
+
+    const tagsInstruction = tags && tags.length > 0
+      ? `\nCategorization tags: Use the following tags to categorize notes: ${tags.join(', ')}. If none fit, you may suggest a new tag.`
+      : '\nCategorization: Use your best judgment to categorize notes into meaningful groups.';
 
     return `Here are ${captures.length} captured notes to organize:
 
@@ -30,6 +34,7 @@ ${captureList}
 
 Organization instructions:
 ${template.prompt}
+${tagsInstruction}
 
 Please organize these notes and extract any todos. Return valid JSON only.`;
   }

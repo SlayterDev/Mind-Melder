@@ -52,9 +52,10 @@ export interface LLMProvider {
    * Organize a batch of captures into structured notes and todos
    * @param captures - Array of unorganized captures
    * @param template - User template with organization instructions
+   * @param tags - Optional array of user-defined category tags
    * @returns Structured notes and todos
    */
-  organize(captures: Capture[], template: Template): Promise<OrganizedOutput>;
+  organize(captures: Capture[], template: Template, tags?: string[]): Promise<OrganizedOutput>;
 
   /**
    * Extract actionable tasks from text
