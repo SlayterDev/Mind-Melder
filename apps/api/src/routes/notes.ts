@@ -31,9 +31,9 @@ export function createNotesRouter(notesRepo: OrganizedNotesRepository): ExpressR
     validateBody(createOrganizedNoteSchema),
     asyncHandler(async (req, res) => {
       const userId = 'test-user-1'; // TODO: Get from auth context
-      const { content, category } = req.body;
+      const { content, category, date } = req.body;
 
-      const note = await notesRepo.create({ userId, content, category });
+      const note = await notesRepo.create({ userId, content, category, date });
       res.status(201).json(note);
     })
   );

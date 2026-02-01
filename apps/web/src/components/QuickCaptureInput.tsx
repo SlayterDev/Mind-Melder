@@ -31,7 +31,7 @@ export default function QuickCaptureInput({
   const [chip, setChip] = useState<Chip | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
 
-  const tiggerPattern = useMemo(() => {
+  const triggerPattern = useMemo(() => {
     const escapedTrigger = trigger.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
     return new RegExp(`^${escapedTrigger}\\s`, 'i');
   }, [trigger]);
@@ -64,7 +64,7 @@ export default function QuickCaptureInput({
     }
 
     const args = chip.label.split(':').slice(1).filter((s) => s !== '');
-    const cat = args.length ? args[0].trim().replace(/\-+/, ' ') : undefined;
+    const cat = args.length ? args[0].trim().replace(/-+/g, ' ') : undefined;
 
     await notesAPI.create({ content: data.content, category: cat });
   }
@@ -140,14 +140,14 @@ export default function QuickCaptureInput({
         });
       }
     }
-  }, [chip, content]);
+  }, [chip, content, variant, handleSubmit, inputRef]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
     const raw = e.target.value;
 
-    if (!chip && tiggerPattern.test(raw)) {
+    if (!chip && triggerPattern.test(raw)) {
       // New trigger detected
-      const match = raw.match(tiggerPattern);
+      const match = raw.match(triggerPattern);
       const consumed = match?.[0]?.length || 0;
 
       const nextChip: Chip = { kind: 'trigger', label: trigger.trim() };
@@ -170,7 +170,7 @@ export default function QuickCaptureInput({
     }
 
     setContent(raw);
-  }, [chip, trigger, tiggerPattern]);
+  }, [chip, trigger, triggerPattern, argumentPattern]);
 
   if (variant === 'textarea') {
     return (
