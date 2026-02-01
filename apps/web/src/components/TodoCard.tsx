@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Check, X, ChevronDown, ChevronRight, Pencil, Save, Calendar } from 'lucide-react';
+import { Check, X, ChevronDown, ChevronRight, Pencil, Save, Calendar, Zap, Clock, Hourglass } from 'lucide-react';
+import type { TimeEstimate } from '../api/client';
 
 interface TodoCardProps {
   todo: {
@@ -9,13 +10,22 @@ interface TodoCardProps {
     status: string;
     dueDate?: string;
     completedAt?: string;
+    timeEstimate?: TimeEstimate;
   };
   onToggleComplete: (id: string, status: string) => void;
   onUpdateContent: (id: string, content: string) => void;
   onUpdateDescription: (id: string, description: string) => void;
   onUpdateDueDate: (id: string, dueDate: string | null) => void;
+  onUpdateTimeEstimate: (id: string, timeEstimate: TimeEstimate) => void;
   onDelete: (id: string) => void;
 }
+
+const TIME_ESTIMATE_OPTIONS: { value: TimeEstimate; label: string; icon: typeof Zap }[] = [
+  { value: 'quick', label: '<15 min', icon: Zap },
+  { value: 'medium', label: '30-60 min', icon: Clock },
+  { value: 'long', label: '>90 min', icon: Hourglass },
+  { value: 'none', label: 'No estimate', icon: Clock },
+];
 
 export default function TodoCard({
   todo,
@@ -23,6 +33,7 @@ export default function TodoCard({
   onUpdateContent,
   onUpdateDescription,
   onUpdateDueDate,
+  onUpdateTimeEstimate,
   onDelete,
 }: TodoCardProps) {
   const [expandedDescription, setExpandedDescription] = useState(false);
@@ -32,6 +43,16 @@ export default function TodoCard({
   const [editedDescription, setEditedDescription] = useState(todo.description || '');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  const getTimeEstimateDisplay = (estimate: TimeEstimate) => {
+    const displays: Record<string, { icon: typeof Zap; label: string }> = {
+      quick: { icon: Zap, label: '<15min' },
+      medium: { icon: Clock, label: '30-60min' },
+      long: { icon: Hourglass, label: '>90min' },
+    };
+    return displays[estimate];
+  };
 
   // Helper to get date from ISO string without timezone conversion
   const getDateOnly = (isoString: string): Date => {
@@ -207,7 +228,64 @@ export default function TodoCard({
             </div>
           )}
 
-          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 mt-3 text-xs text-gray-500">
+            {/* Time Estimate */}
+            {(!todo.timeEstimate || todo.timeEstimate === 'none') && !showTimePicker && (
+              <button
+                onClick={() => setShowTimePicker(true)}
+                className="px-2 py-0.5 badge-chip cursor-pointer hover:opacity-80 transition-opacity"
+                title="Set time estimate"
+              >
+                <Clock className="w-3 h-3" />
+              </button>
+            )}
+            {todo.timeEstimate && todo.timeEstimate !== 'none' && !showTimePicker && (() => {
+              const display = getTimeEstimateDisplay(todo.timeEstimate);
+              if (!display) return null;
+              const Icon = display.icon;
+              return (
+                <button
+                  onClick={() => setShowTimePicker(true)}
+                  className="px-2 py-0.5 badge-chip flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
+                  title="Change time estimate"
+                >
+                  <Icon className="w-3 h-3" />
+                  {display.label}
+                </button>
+              );
+            })()}
+            {showTimePicker && (
+              <div className="relative flex gap-1">
+                {TIME_ESTIMATE_OPTIONS.map((option) => {
+                  const Icon = option.icon;
+                  const isSelected = todo.timeEstimate === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        onUpdateTimeEstimate(todo.id, option.value);
+                        setShowTimePicker(false);
+                      }}
+                      className={`px-2 py-1 rounded text-xs flex items-center gap-1 transition-colors ${
+                        isSelected
+                          ? 'bg-accent text-white'
+                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      }`}
+                    >
+                      <Icon className="w-3 h-3" />
+                      {option.label}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => setShowTimePicker(false)}
+                  className="px-2 py-1 bg-gray-700 text-gray-400 rounded text-xs hover:bg-gray-600"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
             {/* Due Date with picker */}
             {!todo.dueDate && !showDatePicker && (
               <button

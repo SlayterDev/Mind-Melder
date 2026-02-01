@@ -1,10 +1,19 @@
 import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { 
+import {
   Zap, Clock, Hourglass, GripVertical, Check, ChevronDown, ChevronRight, FileText, Pencil, Save, X,
   Calendar
  } from 'lucide-react';
+
+type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
+
+const TIME_ESTIMATE_OPTIONS: { value: TimeEstimate; label: string; icon: typeof Zap }[] = [
+  { value: 'quick', label: '<15 min', icon: Zap },
+  { value: 'medium', label: '30-60 min', icon: Clock },
+  { value: 'long', label: '>90 min', icon: Hourglass },
+  { value: 'none', label: 'None', icon: Clock },
+];
 
 interface TaskCardProps {
   todo: {
@@ -22,9 +31,10 @@ interface TaskCardProps {
   onUpdateDueDate?: (id: string, dueDate: string | null) => void;
   onUpdateDescription?: (id: string, description: string) => void;
   onUpdateContent?: (id: string, content: string) => void;
+  onUpdateTimeEstimate?: (id: string, timeEstimate: TimeEstimate) => void;
 }
 
-export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUpdateDescription, onUpdateContent }: TaskCardProps) {
+export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUpdateDescription, onUpdateContent, onUpdateTimeEstimate }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -49,6 +59,7 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUp
   const [editedDescription, setEditedDescription] = useState(todo.description || '');
   const [isEditingContent, setIsEditingContent] = useState(false);
   const [editedContent, setEditedContent] = useState(todo.content);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const fetchOriginalCapture = async () => {
     if (!todo.captureId || originalCapture) return;
@@ -298,69 +309,113 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUp
           )}
 
           {/* Metadata Chips */}
-          {(todo.timeEstimate || todo.dueDate || (todo.tags && todo.tags.length > 0)) && (
-            <div className="flex flex-wrap gap-2 mt-3">
-              {/* Time Estimate */}
-              {todo.timeEstimate && todo.timeEstimate !== 'none' && getTimeEstimateDisplay(todo.timeEstimate) && (() => {
-                const display = getTimeEstimateDisplay(todo.timeEstimate!);
-                const Icon = display.icon;
-                return (
-                  <span className="badge-chip flex items-center gap-1">
-                    <Icon className="w-3 h-3" />
-                    {display.label}
-                  </span>
-                );
-              })()}
-
-              {/* Due Date */}
-              {todo.dueDate && !showDatePicker && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {/* Time Estimate */}
+            {(!todo.timeEstimate || todo.timeEstimate === 'none') && !showTimePicker && (
+              <button
+                onClick={() => setShowTimePicker(true)}
+                className="px-2 py-0.5 badge-chip cursor-pointer hover:opacity-80 transition-opacity"
+                title="Set time estimate"
+              >
+                <Clock className="w-3 h-3" />
+              </button>
+            )}
+            {todo.timeEstimate && todo.timeEstimate !== 'none' && !showTimePicker && getTimeEstimateDisplay(todo.timeEstimate) && (() => {
+              const display = getTimeEstimateDisplay(todo.timeEstimate!);
+              const Icon = display.icon;
+              return (
                 <button
-                  onClick={openDatePicker}
-                  className={`badge-chip cursor-pointer hover:opacity-80 transition-opacity ${
-                    isOverdue ? 'text-red-400 border-red-900 bg-red-950/30' : ''
-                  }`}
+                  onClick={() => setShowTimePicker(true)}
+                  className="px-2 py-0.5 badge-chip flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
+                  title="Change time estimate"
                 >
-                  Due: {getDateOnly(todo.dueDate).toLocaleDateString()}
+                  <Icon className="w-3 h-3" />
+                  {display.label}
                 </button>
-              )}
-
-              {/* Add Due Date Button */}
-              {!todo.dueDate && !showDatePicker && (
+              );
+            })()}
+            {showTimePicker && (
+              <div className="relative flex gap-1">
+                {TIME_ESTIMATE_OPTIONS.map((option) => {
+                  const Icon = option.icon;
+                  const isSelected = todo.timeEstimate === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        if (onUpdateTimeEstimate) {
+                          onUpdateTimeEstimate(todo.id, option.value);
+                        }
+                        setShowTimePicker(false);
+                      }}
+                      className={`px-2 py-1 rounded text-xs flex items-center gap-1 transition-colors ${
+                        isSelected
+                          ? 'bg-accent text-white'
+                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      }`}
+                    >
+                      <Icon className="w-3 h-3" />
+                      {option.label}
+                    </button>
+                  );
+                })}
                 <button
-                  onClick={openDatePicker}
-                  className="px-2 py-0.5 badge-chip cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => setShowTimePicker(false)}
+                  className="px-2 py-1 bg-gray-700 text-gray-400 rounded text-xs hover:bg-gray-600"
                 >
-                  <Calendar className="w-3 h-3" />
+                  <X className="w-3 h-3" />
                 </button>
-              )}
+              </div>
+            )}
 
-              {/* Date Picker */}
-              {showDatePicker && (
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={handleDateChange}
-                    onBlur={handleDateBlur}
-                    autoFocus
-                    className="px-2 py-1 bg-gray-800 border border-gray-600 rounded text-xs text-gray-200 focus:outline-none focus:border-accent-highlight"
-                  />
-                </div>
-              )}
+            {/* Due Date */}
+            {todo.dueDate && !showDatePicker && (
+              <button
+                onClick={openDatePicker}
+                className={`badge-chip cursor-pointer hover:opacity-80 transition-opacity ${
+                  isOverdue ? 'text-red-400 border-red-900 bg-red-950/30' : ''
+                }`}
+              >
+                Due: {getDateOnly(todo.dueDate).toLocaleDateString()}
+              </button>
+            )}
 
-              {/* Tags */}
-              {todo.tags &&
-                todo.tags.length > 0 &&
-                todo.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-0.5 bg-blue-900/20 border border-blue-700/40 rounded text-xs text-blue-300/90"
-                  >
-                    {tag}
-                  </span>
-                ))}
-            </div>
-          )}
+            {/* Add Due Date Button */}
+            {!todo.dueDate && !showDatePicker && (
+              <button
+                onClick={openDatePicker}
+                className="px-2 py-0.5 badge-chip cursor-pointer hover:opacity-80 transition-opacity"
+              >
+                <Calendar className="w-3 h-3" />
+              </button>
+            )}
+
+            {/* Date Picker */}
+            {showDatePicker && (
+              <div className="relative">
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={handleDateChange}
+                  onBlur={handleDateBlur}
+                  autoFocus
+                  className="px-2 py-1 bg-gray-800 border border-gray-600 rounded text-xs text-gray-200 focus:outline-none focus:border-accent-highlight"
+                />
+              </div>
+            )}
+
+            {/* Tags */}
+            {todo.tags &&
+              todo.tags.length > 0 &&
+              todo.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-2 py-0.5 bg-blue-900/20 border border-blue-700/40 rounded text-xs text-blue-300/90"
+                >
+                  {tag}
+                </span>
+              ))}
+          </div>
         </div>
       </div>
     </div>

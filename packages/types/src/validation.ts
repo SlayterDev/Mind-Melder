@@ -29,12 +29,17 @@ export const createTodoSchema = z.object({
   dueDate: z.string().datetime().optional(),
 });
 
+export const timeEstimateSchema = z.enum(['quick', 'medium', 'long', 'none']);
+
 export const updateTodoSchema = z.object({
   content: z.string().min(1).max(1000).optional(),
   description: z.string().max(5000).optional(),
   status: z.enum(['pending', 'completed']).optional(),
   dueDate: z.string().datetime().nullable().optional(),
+  timeEstimate: timeEstimateSchema.optional(),
 });
+
+export type TimeEstimate = z.infer<typeof timeEstimateSchema>;
 
 export type CreateTodoInput = z.infer<typeof createTodoSchema>;
 export type UpdateTodoInput = z.infer<typeof updateTodoSchema>;

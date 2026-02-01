@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { todosAPI } from '../api/client';
+import { todosAPI, type TimeEstimate } from '../api/client';
 import { CheckCircle } from 'lucide-react';
 import TodoCard from '../components/TodoCard';
 
@@ -93,6 +93,18 @@ export default function TodosPage() {
     }
   };
 
+  const handleUpdateTimeEstimate = async (id: string, timeEstimate: TimeEstimate) => {
+    // Optimistic update
+    setTodos(todos.map((t) => (t.id === id ? { ...t, timeEstimate } : t)));
+
+    try {
+      await todosAPI.update(id, { timeEstimate });
+    } catch (error) {
+      console.error('Failed to update time estimate:', error);
+      loadTodos(statusFilter === 'all' ? undefined : statusFilter);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this todo?')) return;
 
@@ -168,6 +180,7 @@ export default function TodosPage() {
               onUpdateContent={handleUpdateContent}
               onUpdateDescription={handleUpdateDescription}
               onUpdateDueDate={handleUpdateDueDate}
+              onUpdateTimeEstimate={handleUpdateTimeEstimate}
               onDelete={handleDelete}
             />
           ))}

@@ -14,6 +14,8 @@ interface Todo {
   priorityScore?: number;
 }
 
+type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
+
 interface SectionProps {
   id: string;
   title: string;
@@ -23,6 +25,7 @@ interface SectionProps {
   onUpdateDueDate?: (id: string, dueDate: string | null) => void;
   onUpdateDescription?: (id: string, description: string) => void;
   onUpdateContent?: (id: string, content: string) => void;
+  onUpdateTimeEstimate?: (id: string, timeEstimate: TimeEstimate) => void;
 }
 
 export default function TodaySheetSection({
@@ -34,6 +37,7 @@ export default function TodaySheetSection({
   onUpdateDueDate,
   onUpdateDescription,
   onUpdateContent,
+  onUpdateTimeEstimate,
 }: SectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { setNodeRef } = useDroppable({ id });
@@ -72,6 +76,7 @@ export default function TodaySheetSection({
                   onUpdateDueDate={onUpdateDueDate}
                   onUpdateDescription={onUpdateDescription}
                   onUpdateContent={onUpdateContent}
+                  onUpdateTimeEstimate={onUpdateTimeEstimate}
                 />
               ))}
             </SortableContext>
