@@ -36,6 +36,10 @@ export default function QuickCaptureInput({
     return new RegExp(`^${escapedTrigger}\\s`, 'i');
   }, [trigger]);
 
+  const argumentPattern = useMemo(() => {
+    return new RegExp(`^[a-zA-Z0-9\-]+:\\s`, 'i');
+  }, [trigger]);
+
   const removeChip = () => {
     setChip(null);
     queueMicrotask(() => inputRef.current?.focus());
@@ -108,7 +112,13 @@ export default function QuickCaptureInput({
 
       if (caret === 0 && !hasSelection) {
         e.preventDefault();
-        setChip(null);
+
+        let remainingText = chip.label.split(':').slice(0, -2).join(':');
+        if (remainingText) {
+          setChip({ kind: 'trigger', label: remainingText + ':' });
+        } else {
+          setChip(null);
+        }
 
         queueMicrotask(() => {
           const input = inputRef.current;
@@ -124,6 +134,7 @@ export default function QuickCaptureInput({
     const raw = e.target.value;
 
     if (!chip && tiggerPattern.test(raw)) {
+      // New trigger detected
       const match = raw.match(tiggerPattern);
       const consumed = match?.[0]?.length || 0;
 
@@ -131,6 +142,17 @@ export default function QuickCaptureInput({
       const nextText = raw.slice(consumed);
 
       setChip(nextChip);
+      setContent(nextText);
+      return;
+    } else if (chip && argumentPattern.test(raw)) {
+      // Argument detected
+      const match = raw.match(argumentPattern);
+      const consumed = match?.[0]?.length || 0;
+
+      const updatedChip: Chip = { kind: 'trigger', label: chip.label + match?.[0].trim() };
+      const nextText = raw.slice(consumed);
+
+      setChip(updatedChip);
       setContent(nextText);
       return;
     }
