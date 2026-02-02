@@ -242,9 +242,12 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUp
                 <div>
                   <div className="text-xs text-gray-500 mb-0.5">Original capture:</div>
                   <p>{originalCapture}</p>
-                  <p className="text-xs text-gray-500">
-                    Captured: {new Date(originalCaptureDate || '').toLocaleString()}
-                  </p>
+                  {originalCaptureDate &&
+                    !Number.isNaN(new Date(originalCaptureDate).getTime()) && (
+                      <p className="text-xs text-gray-500">
+                        Captured: {new Date(originalCaptureDate).toLocaleString()}
+                      </p>
+                    )}
                 </div>
               )}
             </div>
