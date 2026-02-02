@@ -1,4 +1,4 @@
-import type { Capture, Template } from 'types';
+import type { Capture, Template, Tag } from 'types';
 import type { TodaySheetInput } from './types.js';
 import { z } from 'zod';
 
@@ -19,10 +19,20 @@ Your job is to:
   /**
    * Build the user prompt with captures and template
    */
-  protected buildOrganizePrompt(captures: Capture[], template: Template): string {
+  protected buildOrganizePrompt(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions: boolean = false): string {
     const captureList = captures
       .map((c, i) => `${i + 1}. [${new Date(c.timestamp).toLocaleString()}] ${c.content}`)
       .join('\n');
+
+    let tagsInstruction = '';
+    if (tags && tags.length > 0) {
+      const tagsList = tags
+        .map(tag => includeDescriptions && tag.description ? `${tag.name} (${tag.description})` : tag.name)
+        .join(', ');
+      tagsInstruction = `\nCategorization tags: Use the following tags to categorize notes: ${tagsList}.`;
+    } else {
+      tagsInstruction = '\nCategorization: Use your best judgment to categorize notes with tags.';
+    }
 
     return `Here are ${captures.length} captured notes to organize:
 
@@ -30,6 +40,7 @@ ${captureList}
 
 Organization instructions:
 ${template.prompt}
+${tagsInstruction}
 
 Please organize these notes and extract any todos. Return valid JSON only.`;
   }
@@ -57,6 +68,20 @@ Format:
   protected buildTodaySheetPrompt(input: TodaySheetInput): string {
     const remainingHours = Math.max(0, 17 - input.context.currentTimeOfDay); // 9-5 workday
 
+    // Build tags instruction if tags are provided
+    let tagsInstruction = 'Use your best judgment to assign tags to tasks.';
+    if (input.tags && input.tags.length > 0) {
+      const includeDescriptions = input.includeDescriptions ?? false;
+      const tagsList = input.tags
+        .map(tag => includeDescriptions && tag.description ? `${tag.name} (${tag.description})` : tag.name)
+        .join(', ');
+      tagsInstruction = `\nCATEGORIZATION TAGS:
+- Use the following tags to categorize tasks: ${tagsList}.
+- Assign appropriate tags to each task in the "tags" array field using only this list. Do not create new tags.
+- If no relevant tag exists, leave the "tags" array empty for that task.
+`;
+    }
+
     return `You are generating a Today Sheet - a focused daily action plan for a knowledge worker.
 
 CONTEXT:
@@ -74,7 +99,6 @@ EXISTING TODOS (${input.existingTodos.length}):
 ${input.existingTodos.map((t, i) =>
   `${i + 1}. ID: ${t.id} | ${t.content}${t.dueDate ? ` (Due: ${new Date(t.dueDate).toLocaleDateString()})` : ''}`
 ).join('\n')}
-
 YOUR TASK:
 1. Extract actionable tasks from captures (skip pure notes/info)
 2. Transform captures into clear, actionable task titles:
@@ -84,15 +108,18 @@ YOUR TASK:
   - Example: "auth middleware jwt" → Title: "Refactor authentication middleware for JWT support" / Description: "Update existing middleware to handle JWT tokens properly"
 3. Include relevant existing todos
 4. Prioritize by: due dates (today/overdue highest), importance, effort, available time
-5. Assign to sections:
-   - must_do_today: Due today/overdue, critical items (3-7 max)
+5. Assign to sections, balancing workload:
+   - must_do_today: Due today/overdue, critical items (3-4 max), don't overload
    - likely_today: Important, high-impact, fits capacity
    - opportunistic: Nice-to-have, quick wins, no urgency
-   - overflow: Defer to later this week
+   - overflow: Defer to later this week, use as backlog
 6. Time estimates: quick (<15min), medium (30-60min), long (>90min)
 7. Generate 1-2 sentence summary of day's focus
 8. Defer non-urgent, low-value tasks to future days
 9. Defer to user template instructions below for any additional formatting or organization rules
+10. Look for critical info like people, deadlines, project names to include in titles/descriptions
+
+${tagsInstruction}
 
 TITLE GUIDELINES:
   - Be specific and action-oriented (start with verbs: "Review", "Update", "Fix", "Implement")
@@ -112,6 +139,8 @@ CRITICAL RULE FOR sourceId:
 
 CRITICAL RULE FOR DUE DATES:
 - Do not assign dates before today's date (${input.context.currentDate})
+- Look for semantic clues in the capture/todo content for due dates
+- If no due date is indicated, or the capture is not clearly urgent, leave the dueDate field null or omit it
 
 OUTPUT FORMAT (valid JSON only):
 {

@@ -40,7 +40,12 @@
       "Bash(lsof:*)",
       "Bash(xargs kill -9)",
       "Bash(grep:*)",
-      "Bash(xargs -I {} sh -c \"echo \"\"=== {} ===\"\" && grep \"\"from \\\\.\\\\/\"\" {} | grep -v \"\"\\\\.js\"\"\")"
+      "Bash(xargs -I {} sh -c \"echo \"\"=== {} ===\"\" && grep \"\"from \\\\.\\\\/\"\" {} | grep -v \"\"\\\\.js\"\"\")",
+      "mcp__github__issue_read",
+      "mcp__github__pull_request_read",
+      "mcp__github__get_me",
+      "Bash(echo:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

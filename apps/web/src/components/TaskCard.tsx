@@ -52,6 +52,7 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUp
   const [showDescription, setShowDescription] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
   const [originalCapture, setOriginalCapture] = useState<string | null>(null);
+  const [originalCaptureDate, setOriginalCaptureDate] = useState<string | null>(null);
   const [isLoadingCapture, setIsLoadingCapture] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
@@ -68,6 +69,7 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUp
       const response = await fetch(`http://localhost:3000/api/v1/captures/${todo.captureId}`);
       const capture = await response.json();
       setOriginalCapture(capture.content);
+      setOriginalCaptureDate(capture.createdAt);
     } catch (error) {
       console.error('Failed to fetch capture:', error);
       setOriginalCapture('Failed to load original capture');
@@ -238,8 +240,14 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUp
                 <span>Loading original capture...</span>
               ) : (
                 <div>
-                  <div className="text-xs text-gray-500 mb-1">Original capture:</div>
+                  <div className="text-xs text-gray-500 mb-0.5">Original capture:</div>
                   <p>{originalCapture}</p>
+                  {originalCaptureDate &&
+                    !Number.isNaN(new Date(originalCaptureDate).getTime()) && (
+                      <p className="text-xs text-gray-500">
+                        Captured: {new Date(originalCaptureDate).toLocaleString()}
+                      </p>
+                    )}
                 </div>
               )}
             </div>

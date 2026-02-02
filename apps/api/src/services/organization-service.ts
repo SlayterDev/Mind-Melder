@@ -5,6 +5,7 @@ import {
   OrganizedNotesRepository,
   TodosRepository,
   TemplatesRepository,
+  TagsRepository,
 } from 'database';
 import type { OrganizationResult } from 'types';
 import { templateTools } from '../utils/template-tools.js';
@@ -14,6 +15,7 @@ export class OrganizationService {
   private notesRepo: OrganizedNotesRepository;
   private todosRepo: TodosRepository;
   private templatesRepo: TemplatesRepository;
+  private tagsRepo: TagsRepository;
 
   constructor(
     private db: Database,
@@ -23,6 +25,7 @@ export class OrganizationService {
     this.notesRepo = new OrganizedNotesRepository(db);
     this.todosRepo = new TodosRepository(db);
     this.templatesRepo = new TemplatesRepository(db);
+    this.tagsRepo = new TagsRepository(db);
   }
 
   /**
@@ -56,8 +59,11 @@ export class OrganizationService {
       template = activeTemplate || templateTools.defaultTemplate;
     }
 
+    // Fetch user's tags for categorization
+    const userTags = await this.tagsRepo.findByUserId(userId);
+
     // Use LLM to organize
-    const organized = await this.llmProvider.organize(captures, template);
+    const organized = await this.llmProvider.organize(captures, template, userTags);
 
     // Create organized notes
     const createdNotes = await Promise.all(

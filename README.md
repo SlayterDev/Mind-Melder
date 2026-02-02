@@ -9,6 +9,7 @@ A self-hosted productivity tool that captures quick notes throughout the day and
 - **[PROJECT_SPEC.md](./PROJECT_SPEC.md)** – Complete feature specification (One Prompt Template format)
 - **[AGENT_PROMPT.md](./AGENT_PROMPT.md)** – Engineering guidelines and constraints for Claude Code
 - **[TECH_STACK.md](./TECH_STACK.md)** – Technology choices and architecture decisions
+- **[TAGS.md](./docs/TAGS.md)** – Global tag management system documentation
 
 ---
 
@@ -82,6 +83,7 @@ Scripts in `./scripts` are available as manual Tilt resources and do not run on 
 
 - ⚡ Quick capture with keyboard shortcut (Cmd/Ctrl+Shift+N)
 - 🤖 LLM-powered organization (OpenAI, Anthropic, Ollama)
+- 🏷️ Global tag management for AI-guided categorization
 - 📝 User-defined templates for personalized structure
 - ✅ Automatic task extraction from natural language
 - 📅 Scheduled batch organization (future)
