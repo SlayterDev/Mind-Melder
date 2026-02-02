@@ -31,9 +31,9 @@ export function createNotesRouter(notesRepo: OrganizedNotesRepository): ExpressR
     validateBody(createOrganizedNoteSchema),
     asyncHandler(async (req, res) => {
       const userId = 'test-user-1'; // TODO: Get from auth context
-      const { content, category, date } = req.body;
+      const { title, content, category, date } = req.body;
 
-      const note = await notesRepo.create({ userId, content, category, date });
+      const note = await notesRepo.create({ userId, title, content, category, date });
       res.status(201).json(note);
     })
   );
@@ -59,9 +59,9 @@ export function createNotesRouter(notesRepo: OrganizedNotesRepository): ExpressR
     validateBody(updateOrganizedNoteSchema),
     asyncHandler(async (req, res) => {
       const { id } = req.params;
-      const { content, category } = req.body;
+      const { title, content, category } = req.body;
 
-      const note = await notesRepo.update(id, { content, category });
+      const note = await notesRepo.update(id, { title, content, category });
       if (!note) {
         throw new ApiError(404, 'Note not found');
       }

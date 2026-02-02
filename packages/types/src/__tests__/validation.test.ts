@@ -63,6 +63,7 @@ describe('Validation Schemas', () => {
   describe('createOrganizedNoteSchema', () => {
     it('should accept valid note input', () => {
       const result = createOrganizedNoteSchema.safeParse({
+        title: 'My Note Title',
         content: 'This is a structured note',
       });
       expect(result.success).toBe(true);
@@ -71,6 +72,7 @@ describe('Validation Schemas', () => {
     it('should accept note with category and date', () => {
       const date = new Date();
       const result = createOrganizedNoteSchema.safeParse({
+        title: 'Note Title',
         content: 'Note with category',
         category: 'work',
         date,
@@ -82,8 +84,38 @@ describe('Validation Schemas', () => {
       }
     });
 
+    it('should reject missing title', () => {
+      const result = createOrganizedNoteSchema.safeParse({
+        content: 'Content without title',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject empty title', () => {
+      const result = createOrganizedNoteSchema.safeParse({
+        title: '',
+        content: 'Valid content',
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors[0].message).toBe('Title is required');
+      }
+    });
+
+    it('should reject title exceeding max length', () => {
+      const result = createOrganizedNoteSchema.safeParse({
+        title: 'a'.repeat(201),
+        content: 'Valid content',
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors[0].message).toBe('Title too long');
+      }
+    });
+
     it('should reject empty content', () => {
       const result = createOrganizedNoteSchema.safeParse({
+        title: 'Valid title',
         content: '',
       });
       expect(result.success).toBe(false);
@@ -91,6 +123,7 @@ describe('Validation Schemas', () => {
 
     it('should reject content exceeding max length', () => {
       const result = createOrganizedNoteSchema.safeParse({
+        title: 'Valid title',
         content: 'a'.repeat(50001),
       });
       expect(result.success).toBe(false);
@@ -98,6 +131,7 @@ describe('Validation Schemas', () => {
 
     it('should reject category exceeding max length', () => {
       const result = createOrganizedNoteSchema.safeParse({
+        title: 'Valid title',
         content: 'Valid content',
         category: 'a'.repeat(101),
       });

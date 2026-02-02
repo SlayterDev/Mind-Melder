@@ -9,9 +9,6 @@ const mockRepos = {
     findUnorganized: vi.fn(),
     markAsOrganized: vi.fn(),
   },
-  notes: {
-    create: vi.fn(),
-  },
   todos: {
     create: vi.fn(),
   },
@@ -32,10 +29,6 @@ vi.mock('database', () => {
     markAsOrganized = mockRepos.captures.markAsOrganized;
   }
 
-  class MockOrganizedNotesRepository {
-    create = mockRepos.notes.create;
-  }
-
   class MockTodosRepository {
     create = mockRepos.todos.create;
   }
@@ -51,7 +44,6 @@ vi.mock('database', () => {
 
   return {
     CapturesRepository: MockCapturesRepository,
-    OrganizedNotesRepository: MockOrganizedNotesRepository,
     TodosRepository: MockTodosRepository,
     TemplatesRepository: MockTemplatesRepository,
     TagsRepository: MockTagsRepository,
@@ -93,7 +85,6 @@ const createMockTag = (overrides: Partial<Tag> = {}): Tag => ({
 });
 
 const createMockLLMOutput = (overrides: Partial<OrganizedOutput> = {}): OrganizedOutput => ({
-  notes: [{ content: 'Organized note', category: 'work' }],
   todos: [{ content: 'Action item', dueDate: '2025-01-20' }],
   ...overrides,
 });
@@ -131,7 +122,6 @@ describe('OrganizationService', () => {
 
       expect(result).toEqual({
         capturesProcessed: 0,
-        organizedNotesCount: 0,
         todosCount: 0,
       });
       expect(mockLLMProvider.organize).not.toHaveBeenCalled();
@@ -145,7 +135,7 @@ describe('OrganizationService', () => {
       mockRepos.templates.findById.mockResolvedValue(template);
       mockRepos.tags.findByUserId.mockResolvedValue([]);
       (mockLLMProvider.organize as ReturnType<typeof vi.fn>).mockResolvedValue(
-        createMockLLMOutput({ notes: [], todos: [] })
+        createMockLLMOutput({ todos: [] })
       );
 
       await service.organizeCaptures(userId, 'custom-template');
@@ -185,7 +175,7 @@ describe('OrganizationService', () => {
       mockRepos.templates.findActiveTemplate.mockResolvedValue(activeTemplate);
       mockRepos.tags.findByUserId.mockResolvedValue([]);
       (mockLLMProvider.organize as ReturnType<typeof vi.fn>).mockResolvedValue(
-        createMockLLMOutput({ notes: [], todos: [] })
+        createMockLLMOutput({ todos: [] })
       );
 
       await service.organizeCaptures(userId);
@@ -201,7 +191,7 @@ describe('OrganizationService', () => {
       mockRepos.templates.findActiveTemplate.mockResolvedValue(undefined);
       mockRepos.tags.findByUserId.mockResolvedValue([]);
       (mockLLMProvider.organize as ReturnType<typeof vi.fn>).mockResolvedValue(
-        createMockLLMOutput({ notes: [], todos: [] })
+        createMockLLMOutput({ todos: [] })
       );
 
       await service.organizeCaptures(userId);
@@ -225,7 +215,7 @@ describe('OrganizationService', () => {
       mockRepos.templates.findActiveTemplate.mockResolvedValue(template);
       mockRepos.tags.findByUserId.mockResolvedValue(tags);
       (mockLLMProvider.organize as ReturnType<typeof vi.fn>).mockResolvedValue(
-        createMockLLMOutput({ notes: [], todos: [] })
+        createMockLLMOutput({ todos: [] })
       );
 
       await service.organizeCaptures(userId);
@@ -234,42 +224,9 @@ describe('OrganizationService', () => {
       expect(mockLLMProvider.organize).toHaveBeenCalledWith(captures, template, tags);
     });
 
-    it('should create organized notes from LLM response', async () => {
-      const captures = [createMockCapture()];
-      const llmOutput = createMockLLMOutput({
-        notes: [
-          { content: 'Note 1', category: 'work' },
-          { content: 'Note 2', category: 'personal' },
-        ],
-        todos: [],
-      });
-
-      mockRepos.captures.findUnorganized.mockResolvedValue(captures);
-      mockRepos.templates.findActiveTemplate.mockResolvedValue(createMockTemplate());
-      mockRepos.tags.findByUserId.mockResolvedValue([]);
-      (mockLLMProvider.organize as ReturnType<typeof vi.fn>).mockResolvedValue(llmOutput);
-      mockRepos.notes.create.mockResolvedValue({});
-
-      const result = await service.organizeCaptures(userId);
-
-      expect(mockRepos.notes.create).toHaveBeenCalledTimes(2);
-      expect(mockRepos.notes.create).toHaveBeenCalledWith({
-        content: 'Note 1',
-        category: 'work',
-        userId,
-      });
-      expect(mockRepos.notes.create).toHaveBeenCalledWith({
-        content: 'Note 2',
-        category: 'personal',
-        userId,
-      });
-      expect(result.organizedNotesCount).toBe(2);
-    });
-
     it('should create todos from LLM response', async () => {
       const captures = [createMockCapture()];
       const llmOutput = createMockLLMOutput({
-        notes: [],
         todos: [
           { content: 'Todo 1', dueDate: '2025-01-20' },
           { content: 'Todo 2' },
@@ -309,7 +266,7 @@ describe('OrganizationService', () => {
       mockRepos.templates.findActiveTemplate.mockResolvedValue(createMockTemplate());
       mockRepos.tags.findByUserId.mockResolvedValue([]);
       (mockLLMProvider.organize as ReturnType<typeof vi.fn>).mockResolvedValue(
-        createMockLLMOutput({ notes: [], todos: [] })
+        createMockLLMOutput({ todos: [] })
       );
 
       const result = await service.organizeCaptures(userId);
@@ -324,7 +281,6 @@ describe('OrganizationService', () => {
     it('should return correct counts in result', async () => {
       const captures = [createMockCapture(), createMockCapture({ id: 'capture-2' })];
       const llmOutput = createMockLLMOutput({
-        notes: [{ content: 'Note 1' }, { content: 'Note 2' }, { content: 'Note 3' }],
         todos: [{ content: 'Todo 1' }],
       });
 
@@ -332,14 +288,12 @@ describe('OrganizationService', () => {
       mockRepos.templates.findActiveTemplate.mockResolvedValue(createMockTemplate());
       mockRepos.tags.findByUserId.mockResolvedValue([]);
       (mockLLMProvider.organize as ReturnType<typeof vi.fn>).mockResolvedValue(llmOutput);
-      mockRepos.notes.create.mockResolvedValue({});
       mockRepos.todos.create.mockResolvedValue({});
 
       const result = await service.organizeCaptures(userId);
 
       expect(result).toEqual({
         capturesProcessed: 2,
-        organizedNotesCount: 3,
         todosCount: 1,
       });
     });

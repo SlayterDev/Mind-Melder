@@ -7,12 +7,11 @@ export abstract class BaseLLMProvider {
    * Build the system prompt for organization
    */
   protected buildSystemPrompt(): string {
-    return `You are an AI assistant that helps organize notes and extract actionable tasks.
+    return `You are an AI assistant that helps extract actionable tasks from notes.
 Your job is to:
 1. Read through a batch of captured notes, which may be unstructured, messy, incomplete, or in short form
-2. Organize them into coherent, structured todos or notes grouped by theme or topic. This may involve rewriting for clarity and completeness.
-3. Extract any actionable tasks or todos from the content
-4. Follow the user's template instructions for organization style
+2. Extract any actionable tasks or todos from the content
+3. Follow the user's template instructions for organization style
 `;
   }
 
@@ -29,12 +28,12 @@ Your job is to:
       const tagsList = tags
         .map(tag => includeDescriptions && tag.description ? `${tag.name} (${tag.description})` : tag.name)
         .join(', ');
-      tagsInstruction = `\nCategorization tags: Use the following tags to categorize notes: ${tagsList}.`;
+      tagsInstruction = `\nCategorization tags: Use the following tags to categorize todos: ${tagsList}.`;
     } else {
-      tagsInstruction = '\nCategorization: Use your best judgment to categorize notes with tags.';
+      tagsInstruction = '\nCategorization: Use your best judgment to categorize todos with tags.';
     }
 
-    return `Here are ${captures.length} captured notes to organize:
+    return `Here are ${captures.length} captured notes to process:
 
 ${captureList}
 
@@ -42,7 +41,7 @@ Organization instructions:
 ${template.prompt}
 ${tagsInstruction}
 
-Please organize these notes and extract any todos. Return valid JSON only.`;
+Please extract todos from these notes. Return valid JSON only.`;
   }
 
   /**

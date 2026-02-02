@@ -10,12 +10,14 @@ export type CreateCaptureInput = z.infer<typeof createCaptureSchema>;
 
 // Organized Note validation schemas
 export const createOrganizedNoteSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
   content: z.string().min(1, 'Content is required').max(50000, 'Content too long'),
   category: z.string().max(100).optional(),
   date: z.date().optional(),
 });
 
 export const updateOrganizedNoteSchema = z.object({
+  title: z.string().min(1).max(200).optional(),
   content: z.string().min(1).max(50000).optional(),
   category: z.string().max(100).optional(),
 });

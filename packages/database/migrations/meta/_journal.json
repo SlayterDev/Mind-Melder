@@ -36,6 +36,13 @@
       "when": 1769978806870,
       "tag": "0004_flaky_redwing",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1770069440961,
+      "tag": "0005_aspiring_stardust",
+      "breakpoints": true
     }
   ]
 }
