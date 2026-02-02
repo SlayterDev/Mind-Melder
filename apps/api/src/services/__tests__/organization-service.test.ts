@@ -65,7 +65,7 @@ const createMockCapture = (overrides: Partial<Capture> = {}): Capture => ({
   timestamp: new Date('2025-01-15T10:00:00Z'),
   metadata: null,
   userId: 'user-1',
-  organizedAt: null,
+  organized: null,
   createdAt: new Date('2025-01-15T10:00:00Z'),
   updatedAt: new Date('2025-01-15T10:00:00Z'),
   ...overrides,
