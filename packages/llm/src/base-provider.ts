@@ -108,15 +108,16 @@ YOUR TASK:
   - Example: "auth middleware jwt" → Title: "Refactor authentication middleware for JWT support" / Description: "Update existing middleware to handle JWT tokens properly"
 3. Include relevant existing todos
 4. Prioritize by: due dates (today/overdue highest), importance, effort, available time
-5. Assign to sections:
-   - must_do_today: Due today/overdue, critical items (3-7 max)
+5. Assign to sections, balancing workload:
+   - must_do_today: Due today/overdue, critical items (3-4 max), don't overload
    - likely_today: Important, high-impact, fits capacity
    - opportunistic: Nice-to-have, quick wins, no urgency
-   - overflow: Defer to later this week
+   - overflow: Defer to later this week, use as backlog
 6. Time estimates: quick (<15min), medium (30-60min), long (>90min)
 7. Generate 1-2 sentence summary of day's focus
 8. Defer non-urgent, low-value tasks to future days
 9. Defer to user template instructions below for any additional formatting or organization rules
+10. Look for critical info like people, deadlines, project names to include in titles/descriptions
 
 ${tagsInstruction}
 
@@ -138,6 +139,8 @@ CRITICAL RULE FOR sourceId:
 
 CRITICAL RULE FOR DUE DATES:
 - Do not assign dates before today's date (${input.context.currentDate})
+- Look for semantic clues in the capture/todo content for due dates
+- If no due date is indicated, or the capture is not clearly urgent, leave the dueDate field null or omit it
 
 OUTPUT FORMAT (valid JSON only):
 {
