@@ -69,15 +69,16 @@ Format:
     const remainingHours = Math.max(0, 17 - input.context.currentTimeOfDay); // 9-5 workday
 
     // Build tags instruction if tags are provided
-    let tagsInstruction = '';
+    let tagsInstruction = 'Use your best judgment to assign tags to tasks.';
     if (input.tags && input.tags.length > 0) {
       const includeDescriptions = input.includeDescriptions ?? false;
       const tagsList = input.tags
         .map(tag => includeDescriptions && tag.description ? `${tag.name} (${tag.description})` : tag.name)
         .join(', ');
       tagsInstruction = `\nCATEGORIZATION TAGS:
-Use the following tags to categorize tasks: ${tagsList}.
-Assign appropriate tags to each task in the "tags" array field.
+- Use the following tags to categorize tasks: ${tagsList}.
+- Assign appropriate tags to each task in the "tags" array field using only this list. Do not create new tags.
+- If no relevant tag exists, leave the "tags" array empty for that task.
 `;
     }
 
@@ -98,7 +99,6 @@ EXISTING TODOS (${input.existingTodos.length}):
 ${input.existingTodos.map((t, i) =>
   `${i + 1}. ID: ${t.id} | ${t.content}${t.dueDate ? ` (Due: ${new Date(t.dueDate).toLocaleDateString()})` : ''}`
 ).join('\n')}
-${tagsInstruction}
 YOUR TASK:
 1. Extract actionable tasks from captures (skip pure notes/info)
 2. Transform captures into clear, actionable task titles:
@@ -117,6 +117,8 @@ YOUR TASK:
 7. Generate 1-2 sentence summary of day's focus
 8. Defer non-urgent, low-value tasks to future days
 9. Defer to user template instructions below for any additional formatting or organization rules
+
+${tagsInstruction}
 
 TITLE GUIDELINES:
   - Be specific and action-oriented (start with verbs: "Review", "Update", "Fix", "Implement")
