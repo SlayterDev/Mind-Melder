@@ -6,6 +6,7 @@ export type { OrganizedNote, NewOrganizedNote } from 'database';
 export type { Todo, NewTodo } from 'database';
 export type { Template, NewTemplate } from 'database';
 export type { Settings, NewSettings } from 'database';
+export type { Tag, NewTag } from 'database';
 
 // Export validation schemas and types
 export * from './validation.js';

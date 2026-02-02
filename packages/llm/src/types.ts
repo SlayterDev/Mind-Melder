@@ -1,4 +1,4 @@
-import type { Capture, Template, Todo } from 'types';
+import type { Capture, Template, Todo, Tag } from 'types';
 
 // Organization result from LLM
 export interface OrganizedOutput {
@@ -17,6 +17,8 @@ export interface TodaySheetInput {
   captures: Capture[];
   existingTodos: Todo[];
   template: Template;
+  tags?: Tag[]; // Optional user-defined tags for categorization
+  includeDescriptions?: boolean; // Whether to include tag descriptions in prompts (default: false)
   context: {
     currentTimeOfDay: number; // 0-23
     workingHoursMinutes: number;
@@ -52,9 +54,11 @@ export interface LLMProvider {
    * Organize a batch of captures into structured notes and todos
    * @param captures - Array of unorganized captures
    * @param template - User template with organization instructions
+   * @param tags - Optional array of user-defined category tags (with descriptions)
+   * @param includeDescriptions - Whether to include tag descriptions in prompts (default: false)
    * @returns Structured notes and todos
    */
-  organize(captures: Capture[], template: Template): Promise<OrganizedOutput>;
+  organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean): Promise<OrganizedOutput>;
 
   /**
    * Extract actionable tasks from text

@@ -71,6 +71,25 @@ export const templatesAPI = {
   delete: (id: string) => fetchAPI(`/templates/${id}`, { method: 'DELETE' }),
 };
 
+// Tags
+export interface Tag {
+  id: string;
+  name: string;
+  description: string | null;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const tagsAPI = {
+  list: () => fetchAPI<Tag[]>('/tags'),
+  create: (data: { name: string; description?: string }) =>
+    fetchAPI<Tag>('/tags', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: { name?: string; description?: string }) =>
+    fetchAPI<Tag>(`/tags/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  delete: (id: string) => fetchAPI(`/tags/${id}`, { method: 'DELETE' }),
+};
+
 // Organization
 export const organizeAPI = {
   trigger: (templateId?: string) =>

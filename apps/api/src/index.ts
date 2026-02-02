@@ -10,8 +10,9 @@ import {
   OrganizedNotesRepository,
   TemplatesRepository,
   SettingsRepository,
+  TagsRepository,
 } from 'database';
-import { createCapturesRouter, createTodosRouter, createNotesRouter, createTemplatesRouter, createSettingsRouter } from './routes/index.js';
+import { createCapturesRouter, createTodosRouter, createNotesRouter, createTemplatesRouter, createSettingsRouter, createTagsRouter } from './routes/index.js';
 import { createOrganizeRouter } from './routes/organize.js';
 import { createTodaySheetRouter } from './routes/today-sheet.js';
 import { errorHandler, requestLogger } from './middleware/index.js';
@@ -36,6 +37,7 @@ const todosRepo = new TodosRepository(db);
 const notesRepo = new OrganizedNotesRepository(db);
 const templatesRepo = new TemplatesRepository(db);
 const settingsRepo = new SettingsRepository(db);
+const tagsRepo = new TagsRepository(db);
 
 // Middleware
 app.use(cors());
@@ -53,6 +55,7 @@ app.use('/api/v1/todos', createTodosRouter(todosRepo));
 app.use('/api/v1/notes', createNotesRouter(notesRepo));
 app.use('/api/v1/templates', createTemplatesRouter(templatesRepo));
 app.use('/api/v1/settings', createSettingsRouter(settingsRepo));
+app.use('/api/v1/tags', createTagsRouter(tagsRepo));
 app.use('/api/v1/organize', createOrganizeRouter(db, settingsRepo));
 app.use('/api/v1/today-sheet', createTodaySheetRouter(db, settingsRepo));
 
