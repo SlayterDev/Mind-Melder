@@ -1,4 +1,4 @@
-import { eq, isNull, and } from 'drizzle-orm';
+import { eq, isNull, and, sql } from 'drizzle-orm';
 import { captures, type Capture, type NewCapture } from '../schema/captures.js';
 import type { Database } from '../client.js';
 
@@ -37,5 +37,24 @@ export class CapturesRepository {
 
   async delete(id: string): Promise<void> {
     await this.db.delete(captures).where(eq(captures.id, id));
+  }
+
+  async search(userId: string, query: string): Promise<Capture[]> {
+    if (!query.trim()) {
+      return [];
+    }
+
+    return this.db
+      .select()
+      .from(captures)
+      .where(
+        and(
+          eq(captures.userId, userId),
+          sql`${captures}.search_vector @@ plainto_tsquery('english', ${query})`
+        )
+      )
+      .orderBy(
+        sql`ts_rank(${captures}.search_vector, plainto_tsquery('english', ${query})) DESC`
+      );
   }
 }
