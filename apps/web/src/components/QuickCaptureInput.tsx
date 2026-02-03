@@ -37,7 +37,7 @@ export default function QuickCaptureInput({
   }, [trigger]);
 
   const argumentPattern = useMemo(() => {
-    return new RegExp(`^[a-zA-Z0-9\-]+:\\s`, 'i');
+    return new RegExp(`^[a-zA-Z0-9-]+:\\s`, 'i');
   }, [trigger]);
 
   const removeChip = () => {
@@ -125,7 +125,7 @@ export default function QuickCaptureInput({
       if (caret === 0 && !hasSelection) {
         e.preventDefault();
 
-        let remainingText = chip.label.split(':').slice(0, -2).join(':');
+        const remainingText = chip.label.split(':').slice(0, -2).join(':');
         if (remainingText) {
           setChip({ kind: 'trigger', label: remainingText + ':' });
         } else {
