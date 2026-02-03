@@ -120,7 +120,7 @@ export class TodosRepository {
     const [todo] = await this.db
       .update(todos)
       .set({
-        feedbackVote: vote as any,
+        feedbackVote: vote,
         feedbackText: feedbackText || null,
         feedbackTimestamp: new Date(),
         updatedAt: new Date()
