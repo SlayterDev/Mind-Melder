@@ -137,11 +137,13 @@ export class TodosRepository {
     userId: string,
     vote: 'thumbs_up' | 'thumbs_down' | 'none'
   ): Promise<Todo[]> {
+    // For 'none', sort by createdAt since feedbackTimestamp will be null
+    const orderColumn = vote === 'none' ? todos.createdAt : todos.feedbackTimestamp;
     return this.db
       .select()
       .from(todos)
       .where(and(eq(todos.userId, userId), eq(todos.feedbackVote, vote)))
-      .orderBy(desc(todos.feedbackTimestamp));
+      .orderBy(desc(orderColumn));
   }
 
   /**
