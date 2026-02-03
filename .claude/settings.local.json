@@ -46,7 +46,9 @@
       "mcp__github__get_me",
       "Bash(echo:*)",
       "Bash(npx tsc:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(ELECTRON=true pnpm vite build:*)",
+      "Bash(timeout 5 sh:*)"
     ]
   }
 }

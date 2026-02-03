@@ -1,7 +1,7 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+import { getApiUrl } from './config';
 
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const response = await fetch(`${getApiUrl()}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,

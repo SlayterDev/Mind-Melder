@@ -51,3 +51,6 @@ data/
 .cache/
 .temp/
 tmp/
+
+# Electron builds
+release/

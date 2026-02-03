@@ -22,7 +22,10 @@
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
     "docker:restart": "docker compose restart",
-    "docker:clean": "docker compose down -v"
+    "docker:clean": "docker compose down -v",
+    "desktop:dev": "pnpm --filter api dev & pnpm --filter web electron:dev",
+    "desktop:build": "pnpm --filter web electron:build",
+    "desktop:build:mac": "pnpm --filter web electron:build:mac"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",

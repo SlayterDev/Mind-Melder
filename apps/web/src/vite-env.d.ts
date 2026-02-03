@@ -7,3 +7,13 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+interface ElectronAPI {
+  closeQuickCapture: () => Promise<void>;
+  getPlatform: () => Promise<string>;
+  isElectron: boolean;
+}
+
+interface Window {
+  electronAPI?: ElectronAPI;
+}
