@@ -209,6 +209,7 @@ describe('BaseLLMProvider', () => {
     const createTodaySheetInput = (overrides: Partial<TodaySheetInput> = {}): TodaySheetInput => ({
       captures: [createMockCapture()],
       existingTodos: [],
+      feedbackTodos: [],
       template: createMockTemplate(),
       context: {
         currentTimeOfDay: 9,

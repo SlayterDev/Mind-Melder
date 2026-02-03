@@ -51,6 +51,7 @@ export class TodaySheetService {
     // 1. Gather inputs
     const captures = await this.capturesRepo.findUnorganized(userId);
     const existingTodos = await this.todosRepo.findByStatus(userId, 'pending');
+    const feedbackTodos = await this.todosRepo.findWithFeedback(userId);
 
     // 2. Get template (use provided ID or active template or default)
     let template;
@@ -74,6 +75,7 @@ export class TodaySheetService {
       aiResult = await this.llmProvider.generateTodaySheet({
         captures,
         existingTodos,
+        feedbackTodos,
         template,
         tags: userTags,
         context: {
@@ -141,6 +143,9 @@ export class TodaySheetService {
               priorityScore: item.priorityScore,
               tags: item.tags,
               dueDate: todo.dueDate || (item.dueDate ? new Date(item.dueDate) : null),
+              feedbackVote: 'none',
+              feedbackText: null,
+              feedbackTimestamp: null
             });
           }
         }
