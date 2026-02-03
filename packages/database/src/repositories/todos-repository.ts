@@ -1,4 +1,4 @@
-import { eq, and, desc, ne, asc, inArray } from 'drizzle-orm';
+import { eq, and, desc, ne, asc, inArray, sql } from 'drizzle-orm';
 import { todos, type Todo, type NewTodo } from '../schema/todos.js';
 import type { Database } from '../client.js';
 
@@ -166,5 +166,27 @@ export class TodosRepository {
       .from(todos)
       .where(and(eq(todos.userId, userId), eq(todos.feedbackVote, 'none')))
       .orderBy(desc(todos.createdAt));
+  }
+
+  /**
+   * Full-text search across todos
+   */
+  async search(userId: string, query: string): Promise<Todo[]> {
+    if (!query.trim()) {
+      return [];
+    }
+
+    return this.db
+      .select()
+      .from(todos)
+      .where(
+        and(
+          eq(todos.userId, userId),
+          sql`${todos}.search_vector @@ plainto_tsquery('english', ${query})`
+        )
+      )
+      .orderBy(
+        sql`ts_rank(${todos}.search_vector, plainto_tsquery('english', ${query})) DESC`
+      );
   }
 }

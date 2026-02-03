@@ -1,4 +1,4 @@
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import {
   organizedNotes,
   type OrganizedNote,
@@ -57,5 +57,24 @@ export class OrganizedNotesRepository {
 
   async delete(id: string): Promise<void> {
     await this.db.delete(organizedNotes).where(eq(organizedNotes.id, id));
+  }
+
+  async search(userId: string, query: string): Promise<OrganizedNote[]> {
+    if (!query.trim()) {
+      return [];
+    }
+
+    return this.db
+      .select()
+      .from(organizedNotes)
+      .where(
+        and(
+          eq(organizedNotes.userId, userId),
+          sql`${organizedNotes}.search_vector @@ plainto_tsquery('english', ${query})`
+        )
+      )
+      .orderBy(
+        sql`ts_rank(${organizedNotes}.search_vector, plainto_tsquery('english', ${query})) DESC`
+      );
   }
 }

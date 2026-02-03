@@ -12,7 +12,7 @@ import {
   SettingsRepository,
   TagsRepository,
 } from 'database';
-import { createCapturesRouter, createTodosRouter, createNotesRouter, createTemplatesRouter, createSettingsRouter, createTagsRouter } from './routes/index.js';
+import { createCapturesRouter, createTodosRouter, createNotesRouter, createTemplatesRouter, createSettingsRouter, createTagsRouter, createSearchRouter } from './routes/index.js';
 import { createOrganizeRouter } from './routes/organize.js';
 import { createTodaySheetRouter } from './routes/today-sheet.js';
 import { errorHandler, requestLogger } from './middleware/index.js';
@@ -56,6 +56,7 @@ app.use('/api/v1/notes', createNotesRouter(db, notesRepo));
 app.use('/api/v1/templates', createTemplatesRouter(templatesRepo));
 app.use('/api/v1/settings', createSettingsRouter(settingsRepo));
 app.use('/api/v1/tags', createTagsRouter(tagsRepo));
+app.use('/api/v1/search', createSearchRouter(capturesRepo, todosRepo, notesRepo));
 app.use('/api/v1/organize', createOrganizeRouter(db, settingsRepo));
 app.use('/api/v1/today-sheet', createTodaySheetRouter(db, settingsRepo));
 
