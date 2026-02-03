@@ -6,11 +6,13 @@ ALTER TABLE "captures" ADD COLUMN "search_vector" tsvector
 
 CREATE INDEX "captures_search_vector_idx" ON "captures" USING GIN ("search_vector");
 
--- Todos table: search on content (weight A) and description (weight B)
+-- Todos table: search on content (weight A), description (weight B), and tags (weight B)
+-- Note: tags is a JSONB array, we convert it to text for searching
 ALTER TABLE "todos" ADD COLUMN "search_vector" tsvector 
   GENERATED ALWAYS AS (
     setweight(to_tsvector('english', coalesce(content, '')), 'A') ||
-    setweight(to_tsvector('english', coalesce(description, '')), 'B')
+    setweight(to_tsvector('english', coalesce(description, '')), 'B') ||
+    setweight(to_tsvector('english', coalesce(tags::text, '')), 'B')
   ) STORED;
 
 CREATE INDEX "todos_search_vector_idx" ON "todos" USING GIN ("search_vector");

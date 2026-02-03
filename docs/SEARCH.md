@@ -15,8 +15,9 @@ Each searchable table now includes a `search_vector` column of type `tsvector` t
 - No weighting (single field)
 
 **Todos Table:**
-- Searches: `content` (weight A), `description` (weight B)
-- Title/content matches rank higher than description matches
+- Searches: `content` (weight A), `description` (weight B), `tags` (weight B)
+- Content matches rank higher than description/tag matches
+- Tags are JSONB arrays converted to searchable text
 
 **Organized Notes Table:**
 - Searches: `title` (weight A), `content` (weight B)
