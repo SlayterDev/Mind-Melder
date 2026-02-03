@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { settingsAPI, type Settings } from '../api/client';
-import { Cog, ChevronDown, ChevronUp } from 'lucide-react';
+import { Cog, ChevronDown, ChevronUp, Server, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { getServerUrl, setApiUrl, testConnection } from '../api/config';
+
+const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
 const PROVIDER_MODELS: Record<string, { label: string; models: { value: string; label: string }[] }> = {
   openai: {
@@ -42,6 +45,28 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Server connection state (Electron only)
+  const [serverUrl, setServerUrl] = useState(getServerUrl());
+  const [isTesting, setIsTesting] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    setConnectionStatus('idle');
+
+    const success = await testConnection(serverUrl);
+
+    setIsTesting(false);
+    setConnectionStatus(success ? 'success' : 'error');
+  };
+
+  const handleSaveConnection = () => {
+    setApiUrl(serverUrl);
+    setConnectionStatus('success');
+    // Reload to apply new API URL
+    window.location.reload();
+  };
 
   const loadSettings = async () => {
     setIsLoading(true);
@@ -259,6 +284,76 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* Server Connection (Electron only) */}
+        {isElectron && (
+          <div className="sheet-card p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Server className="w-5 h-5 text-gray-400" />
+              <h3 className="text-lg font-semibold">Server Connection</h3>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Server URL
+                </label>
+                <input
+                  type="url"
+                  value={serverUrl}
+                  onChange={(e) => {
+                    setServerUrl(e.target.value);
+                    setConnectionStatus('idle');
+                  }}
+                  placeholder="http://localhost:3000"
+                  className="input-accent w-full max-w-md"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  The URL where your Mind Melder API server is running
+                </p>
+              </div>
+
+              {connectionStatus === 'success' && (
+                <div className="flex items-center gap-2 text-green-400 text-sm">
+                  <Check className="w-4 h-4" />
+                  <span>Connection successful!</span>
+                </div>
+              )}
+
+              {connectionStatus === 'error' && (
+                <div className="flex items-center gap-2 text-red-400 text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Could not connect to server</span>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleTestConnection}
+                  disabled={isTesting || !serverUrl.trim()}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
+                >
+                  {isTesting ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Testing...
+                    </span>
+                  ) : (
+                    'Test Connection'
+                  )}
+                </button>
+
+                <button
+                  onClick={handleSaveConnection}
+                  disabled={connectionStatus !== 'success' || serverUrl === getServerUrl()}
+                  className="btn-accent"
+                >
+                  Save & Reconnect
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Info Card */}
         <div className="sheet-card-inner p-6">
