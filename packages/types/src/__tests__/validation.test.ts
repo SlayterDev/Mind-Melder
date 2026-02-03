@@ -12,6 +12,8 @@ import {
   updateSettingsSchema,
   createTagSchema,
   updateTagSchema,
+  feedbackVoteSchema,
+  submitFeedbackSchema,
 } from '../validation.js';
 
 describe('Validation Schemas', () => {
@@ -401,6 +403,96 @@ describe('Validation Schemas', () => {
     it('should accept empty object', () => {
       const result = updateTagSchema.safeParse({});
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe('feedbackVoteSchema', () => {
+    it('should accept valid feedback votes', () => {
+      expect(feedbackVoteSchema.safeParse('thumbs_up').success).toBe(true);
+      expect(feedbackVoteSchema.safeParse('thumbs_down').success).toBe(true);
+      expect(feedbackVoteSchema.safeParse('none').success).toBe(true);
+    });
+
+    it('should reject invalid feedback vote', () => {
+      const result = feedbackVoteSchema.safeParse('invalid');
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('submitFeedbackSchema', () => {
+    it('should accept feedback with thumbs up', () => {
+      const result = submitFeedbackSchema.safeParse({
+        vote: 'thumbs_up',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept feedback with thumbs down', () => {
+      const result = submitFeedbackSchema.safeParse({
+        vote: 'thumbs_down',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept feedback with none', () => {
+      const result = submitFeedbackSchema.safeParse({
+        vote: 'none',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept feedback with text', () => {
+      const result = submitFeedbackSchema.safeParse({
+        vote: 'thumbs_down',
+        feedbackText: 'Task is not clear enough',
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.feedbackText).toBe('Task is not clear enough');
+      }
+    });
+
+    it('should accept feedback without text', () => {
+      const result = submitFeedbackSchema.safeParse({
+        vote: 'thumbs_up',
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.feedbackText).toBeUndefined();
+      }
+    });
+
+    it('should reject feedback text exceeding 100 characters', () => {
+      const result = submitFeedbackSchema.safeParse({
+        vote: 'thumbs_down',
+        feedbackText: 'a'.repeat(101),
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors[0].message).toBe('Feedback text must be 100 characters or less');
+      }
+    });
+
+    it('should accept feedback text at exactly 100 characters', () => {
+      const result = submitFeedbackSchema.safeParse({
+        vote: 'thumbs_down',
+        feedbackText: 'a'.repeat(100),
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject invalid vote', () => {
+      const result = submitFeedbackSchema.safeParse({
+        vote: 'invalid_vote',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject missing vote', () => {
+      const result = submitFeedbackSchema.safeParse({
+        feedbackText: 'Some feedback',
+      });
+      expect(result.success).toBe(false);
     });
   });
 });
