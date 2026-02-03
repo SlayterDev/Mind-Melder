@@ -4,6 +4,7 @@ export const organizedNotes = pgTable(
   'organized_notes',
   {
     id: uuid('id').defaultRandom().primaryKey(),
+    title: text('title').notNull(),
     content: text('content').notNull(),
     category: text('category'),
     date: timestamp('date', { withTimezone: true }).notNull().defaultNow(),
