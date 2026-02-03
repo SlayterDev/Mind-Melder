@@ -2,7 +2,6 @@ import type { LLMProvider } from 'llm';
 import type { Database } from 'database';
 import {
   CapturesRepository,
-  OrganizedNotesRepository,
   TodosRepository,
   TemplatesRepository,
   TagsRepository,
@@ -12,7 +11,6 @@ import { templateTools } from '../utils/template-tools.js';
 
 export class OrganizationService {
   private capturesRepo: CapturesRepository;
-  private notesRepo: OrganizedNotesRepository;
   private todosRepo: TodosRepository;
   private templatesRepo: TemplatesRepository;
   private tagsRepo: TagsRepository;
@@ -22,7 +20,6 @@ export class OrganizationService {
     private llmProvider: LLMProvider
   ) {
     this.capturesRepo = new CapturesRepository(db);
-    this.notesRepo = new OrganizedNotesRepository(db);
     this.todosRepo = new TodosRepository(db);
     this.templatesRepo = new TemplatesRepository(db);
     this.tagsRepo = new TagsRepository(db);
@@ -41,7 +38,6 @@ export class OrganizationService {
     if (captures.length === 0) {
       return {
         capturesProcessed: 0,
-        organizedNotesCount: 0,
         todosCount: 0,
       };
     }
@@ -62,19 +58,8 @@ export class OrganizationService {
     // Fetch user's tags for categorization
     const userTags = await this.tagsRepo.findByUserId(userId);
 
-    // Use LLM to organize
+    // Use LLM to extract todos
     const organized = await this.llmProvider.organize(captures, template, userTags);
-
-    // Create organized notes
-    const createdNotes = await Promise.all(
-      organized.notes.map((note) =>
-        this.notesRepo.create({
-          content: note.content,
-          category: note.category,
-          userId,
-        })
-      )
-    );
 
     // Create todos
     const createdTodos = await Promise.all(
@@ -92,7 +77,6 @@ export class OrganizationService {
 
     return {
       capturesProcessed: captures.length,
-      organizedNotesCount: createdNotes.length,
       todosCount: createdTodos.length,
     };
   }

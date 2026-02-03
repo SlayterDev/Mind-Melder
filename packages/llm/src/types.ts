@@ -2,10 +2,6 @@ import type { Capture, Template, Todo, Tag } from 'types';
 
 // Organization result from LLM
 export interface OrganizedOutput {
-  notes: {
-    content: string;
-    category?: string;
-  }[];
   todos: {
     content: string;
     dueDate?: string; // ISO date string
@@ -51,12 +47,12 @@ export interface TodaySheetOutput {
 // LLM Provider interface
 export interface LLMProvider {
   /**
-   * Organize a batch of captures into structured notes and todos
+   * Organize a batch of captures by extracting actionable todos
    * @param captures - Array of unorganized captures
    * @param template - User template with organization instructions
    * @param tags - Optional array of user-defined category tags (with descriptions)
    * @param includeDescriptions - Whether to include tag descriptions in prompts (default: false)
-   * @returns Structured notes and todos
+   * @returns Extracted todos
    */
   organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean): Promise<OrganizedOutput>;
 

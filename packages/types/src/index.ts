@@ -13,7 +13,6 @@ export * from './validation.js';
 
 // API Response types
 export interface OrganizationResult {
-  organizedNotesCount: number;
   todosCount: number;
   capturesProcessed: number;
 }
