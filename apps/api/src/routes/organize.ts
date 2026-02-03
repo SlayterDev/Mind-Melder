@@ -37,7 +37,7 @@ export function createOrganizeRouter(db: Database, settingsRepo: SettingsReposit
         res.json({
           success: true,
           result,
-          message: `Organized ${result.capturesProcessed} captures into ${result.organizedNotesCount} notes and ${result.todosCount} todos`,
+          message: `Processed ${result.capturesProcessed} captures and created ${result.todosCount} todos`,
         });
       } catch (error) {
         if (error instanceof Error) {

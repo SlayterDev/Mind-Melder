@@ -105,7 +105,7 @@
     border: 1px solid rgb(114 97 175 / 0.2);
   }
 
-  .input-accent:focus {
+  .input-accent:focus-within {
     @apply outline-none border-transparent;
     box-shadow: 0 0 0 2px rgb(114 97 175 / 0.5);
   }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { notesAPI } from '../api/client';
-import { FileText, X } from 'lucide-react';
+import { FileText, X, Plus } from 'lucide-react';
 
 export default function NotesPage() {
   const [notes, setNotes] = useState<any[]>([]);
@@ -44,33 +45,47 @@ export default function NotesPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold mb-2">Organized Notes</h2>
+          <h2 className="text-3xl font-bold mb-2">Notes</h2>
           <p className="text-gray-400">{notes.length} notes</p>
         </div>
 
-        {categories.length > 0 && (
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="input-accent px-4 py-2"
+        <div className="flex items-center gap-3">
+          {categories.length > 0 && (
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="input-accent px-4 py-2"
+            >
+              <option value="">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <Link
+            to="/notes/new"
+            className="btn-accent px-4 py-2 flex items-center gap-2"
           >
-            <option value="">All Categories</option>
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        )}
+            <Plus className="w-4 h-4" />
+            New Note
+          </Link>
+        </div>
       </div>
 
       {notes.length === 0 ? (
         <div className="sheet-card-inner p-12 text-center">
           <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-          <h3 className="text-xl font-semibold text-gray-300 mb-2">No organized notes yet</h3>
-          <p className="text-gray-500">
-            Capture some notes and click "Organize Now" in the Inbox
+          <h3 className="text-xl font-semibold text-gray-300 mb-2">No notes yet</h3>
+          <p className="text-gray-500 mb-6">
+            Create your first note to get started
           </p>
+          <Link to="/notes/new" className="btn-accent px-6 py-3 inline-flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            New Note
+          </Link>
         </div>
       ) : (
         <div className="space-y-4">
@@ -81,13 +96,19 @@ export default function NotesPage() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  {note.category && (
-                    <span className="badge-accent px-3 py-1 mb-3 inline-block shadow-inner">
-                      {note.category}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-3 mb-2">
+                    {note.category && (
+                      <span className="badge-accent px-3 py-1 shadow-inner text-xs">
+                        {note.category}
+                      </span>
+                    )}
+                  </div>
 
-                  <p className="text-gray-100 leading-relaxed whitespace-pre-wrap">
+                  <h3 className="text-lg font-semibold text-gray-100 mb-2">
+                    {note.title || 'Untitled'}
+                  </h3>
+
+                  <p className="text-gray-400 leading-relaxed whitespace-pre-wrap">
                     {note.content}
                   </p>
 

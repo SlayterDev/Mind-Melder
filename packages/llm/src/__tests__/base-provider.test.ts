@@ -71,12 +71,12 @@ describe('BaseLLMProvider', () => {
   const provider = new TestLLMProvider();
 
   describe('buildSystemPrompt', () => {
-    it('should return a system prompt for organization', () => {
+    it('should return a system prompt for task extraction', () => {
       const prompt = provider.testBuildSystemPrompt();
 
       expect(prompt).toContain('AI assistant');
-      expect(prompt).toContain('organize');
-      expect(prompt).toContain('todos');
+      expect(prompt).toContain('extract');
+      expect(prompt).toContain('tasks');
       expect(prompt).toContain('template');
     });
   });
@@ -105,6 +105,15 @@ describe('BaseLLMProvider', () => {
       expect(prompt).toContain('Custom organization rules here');
     });
 
+    it('should request todos extraction', () => {
+      const captures = [createMockCapture()];
+      const template = createMockTemplate();
+
+      const prompt = provider.testBuildOrganizePrompt(captures, template);
+
+      expect(prompt).toContain('extract todos');
+    });
+
     it('should include tags when provided', () => {
       const captures = [createMockCapture()];
       const template = createMockTemplate();
@@ -117,7 +126,7 @@ describe('BaseLLMProvider', () => {
 
       expect(prompt).toContain('work');
       expect(prompt).toContain('personal');
-      expect(prompt).toContain('Use the following tags to categorize notes');
+      expect(prompt).toContain('Use the following tags to categorize todos');
     });
 
     it('should include tag descriptions when includeDescriptions is true', () => {
@@ -153,7 +162,7 @@ describe('BaseLLMProvider', () => {
 
       const prompt = provider.testBuildOrganizePrompt(captures, template);
 
-      expect(prompt).toContain('Use your best judgment to categorize notes');
+      expect(prompt).toContain('Use your best judgment to categorize todos');
     });
 
     it('should use default categorization instruction when tags array is empty', () => {
@@ -162,7 +171,7 @@ describe('BaseLLMProvider', () => {
 
       const prompt = provider.testBuildOrganizePrompt(captures, template, []);
 
-      expect(prompt).toContain('Use your best judgment to categorize notes');
+      expect(prompt).toContain('Use your best judgment to categorize todos');
     });
 
     it('should request JSON output', () => {

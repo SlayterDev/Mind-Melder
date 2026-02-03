@@ -45,7 +45,8 @@
       "mcp__github__pull_request_read",
       "mcp__github__get_me",
       "Bash(echo:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(ls:*)"
     ]
   }
 }
