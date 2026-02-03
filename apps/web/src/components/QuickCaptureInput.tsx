@@ -64,9 +64,15 @@ export default function QuickCaptureInput({
     }
 
     const args = chip.label.split(':').slice(1).filter((s) => s !== '');
-    const cat = args.length ? args[0].trim().replace(/-+/g, ' ') : undefined;
+    let title = args.length ? args[0].trim().replace(/-+/g, ' ') : null;
 
-    await notesAPI.create({ content: data.content, category: cat });
+    if (!title) {
+      // Derive title from content: use first line or first 50 chars
+      const firstLine = data.content.split('\n')[0];
+      title = firstLine.length > 50 ? firstLine.slice(0, 50) + '...' : firstLine;
+    }
+
+    await notesAPI.create({ title: title, content: data.content});
   }
 
   const queryClient = useQueryClient();
