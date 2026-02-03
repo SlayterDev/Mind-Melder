@@ -1,9 +1,16 @@
 import { Router, type Router as ExpressRouter } from 'express';
+import { z } from 'zod';
 import { Database, OrganizedNotesRepository } from 'database';
 import { createOrganizedNoteSchema, updateOrganizedNoteSchema } from 'types';
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, ApiError } from '../middleware/index.js';
 import { NotesService } from '../services/notes-service.js';
+
+// Route-specific validation schemas
+const appendNoteSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
+  contentToAppend: z.string().min(1, 'Content to append is required').max(50000, 'Content too long'),
+});
 
 export function createNotesRouter(db: Database, notesRepo: OrganizedNotesRepository): ExpressRouter {
   const router = Router();
@@ -42,13 +49,10 @@ export function createNotesRouter(db: Database, notesRepo: OrganizedNotesReposit
   // POST /api/v1/notes/append - Append content to existing note or create new
   router.post(
     '/append',
+    validateBody(appendNoteSchema),
     asyncHandler(async (req, res) => {
       const userId = 'test-user-1'; // TODO: Get from auth context
       const { title, contentToAppend } = req.body;
-
-      if (typeof title !== 'string' || typeof contentToAppend !== 'string') {
-        throw new ApiError(400, 'Invalid request body');
-      }
 
       const notesService = new NotesService(db);
       const updatedNote = await notesService.appendToNote(userId, title, contentToAppend);
