@@ -129,7 +129,48 @@ await todosRepository.submitFeedback(
   'thumbs_down',
   'Optional feedback text'
 );
+
+// Get todos by feedback vote
+const thumbsUpTodos = await todosRepository.findByFeedbackVote(
+  userId,
+  'thumbs_up'
+);
+
+// Get all todos with feedback (thumbs up or down)
+const todosWithFeedback = await todosRepository.findWithFeedback(userId);
+
+// Get todos without feedback
+const todosWithoutFeedback = await todosRepository.findWithoutFeedback(userId);
 ```
+
+### Available Repository Methods
+
+**`submitFeedback(id, vote, feedbackText?)`**
+- Submit or update feedback for a todo
+- Parameters:
+  - `id` (string): Todo ID
+  - `vote` ('thumbs_up' | 'thumbs_down' | 'none'): Feedback vote
+  - `feedbackText` (string, optional): Feedback text (max 100 chars)
+- Returns: Updated todo with feedback
+
+**`findByFeedbackVote(userId, vote)`**
+- Get todos filtered by specific feedback vote
+- Parameters:
+  - `userId` (string): User ID
+  - `vote` ('thumbs_up' | 'thumbs_down' | 'none'): Feedback vote to filter by
+- Returns: Array of todos ordered by feedback timestamp (most recent first)
+
+**`findWithFeedback(userId)`**
+- Get todos that have any feedback (thumbs up or down, excluding 'none')
+- Parameters:
+  - `userId` (string): User ID
+- Returns: Array of todos with feedback ordered by feedback timestamp (most recent first)
+
+**`findWithoutFeedback(userId)`**
+- Get todos without feedback (feedback vote is 'none')
+- Parameters:
+  - `userId` (string): User ID
+- Returns: Array of todos without feedback ordered by creation date (most recent first)
 
 ## Testing
 
@@ -152,4 +193,4 @@ This script tests:
 As per issue #38, future work includes:
 - Feeding feedback back to LLM flows for reinforcement learning
 - Analytics dashboard to track feedback trends
-- Filtering todos by feedback status
+- API endpoints to expose feedback filtering to the frontend

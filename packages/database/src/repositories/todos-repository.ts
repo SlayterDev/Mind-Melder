@@ -129,4 +129,40 @@ export class TodosRepository {
       .returning();
     return todo;
   }
+
+  /**
+   * Get todos by feedback vote status
+   */
+  async findByFeedbackVote(
+    userId: string,
+    vote: 'thumbs_up' | 'thumbs_down' | 'none'
+  ): Promise<Todo[]> {
+    return this.db
+      .select()
+      .from(todos)
+      .where(and(eq(todos.userId, userId), eq(todos.feedbackVote, vote)))
+      .orderBy(desc(todos.feedbackTimestamp));
+  }
+
+  /**
+   * Get todos that have feedback (thumbs up or down, not 'none')
+   */
+  async findWithFeedback(userId: string): Promise<Todo[]> {
+    return this.db
+      .select()
+      .from(todos)
+      .where(and(eq(todos.userId, userId), ne(todos.feedbackVote, 'none')))
+      .orderBy(desc(todos.feedbackTimestamp));
+  }
+
+  /**
+   * Get todos without feedback (feedback vote is 'none')
+   */
+  async findWithoutFeedback(userId: string): Promise<Todo[]> {
+    return this.db
+      .select()
+      .from(todos)
+      .where(and(eq(todos.userId, userId), eq(todos.feedbackVote, 'none')))
+      .orderBy(desc(todos.createdAt));
+  }
 }
