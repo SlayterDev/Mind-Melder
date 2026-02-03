@@ -35,6 +35,14 @@ export class OrganizedNotesRepository {
       .orderBy(desc(organizedNotes.date));
   }
 
+  async findByTitle(userId: string, title: string): Promise<OrganizedNote[]> {
+    return this.db
+      .select()
+      .from(organizedNotes)
+      .where(and(eq(organizedNotes.userId, userId), eq(organizedNotes.title, title)))
+      .orderBy(desc(organizedNotes.date));
+  }
+
   async update(
     id: string,
     data: Partial<Omit<OrganizedNote, 'id' | 'createdAt'>>
