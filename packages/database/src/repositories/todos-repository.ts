@@ -108,4 +108,25 @@ export class TodosRepository {
       })
       .where(inArray(todos.id, ids));
   }
+
+  /**
+   * Submit feedback for a todo (thumbs up/down with optional text)
+   */
+  async submitFeedback(
+    id: string,
+    vote: 'thumbs_up' | 'thumbs_down' | 'none',
+    feedbackText?: string
+  ): Promise<Todo | undefined> {
+    const [todo] = await this.db
+      .update(todos)
+      .set({
+        feedbackVote: vote as any,
+        feedbackText: feedbackText || null,
+        feedbackTimestamp: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(todos.id, id))
+      .returning();
+    return todo;
+  }
 }

@@ -31,6 +31,13 @@ export const createTodoSchema = z.object({
 
 export const timeEstimateSchema = z.enum(['quick', 'medium', 'long', 'none']);
 
+export const feedbackVoteSchema = z.enum(['thumbs_up', 'thumbs_down', 'none']);
+
+export const submitFeedbackSchema = z.object({
+  vote: feedbackVoteSchema,
+  feedbackText: z.string().max(100, 'Feedback text must be 100 characters or less').optional(),
+});
+
 export const updateTodoSchema = z.object({
   content: z.string().min(1).max(1000).optional(),
   description: z.string().max(5000).optional(),
@@ -40,6 +47,9 @@ export const updateTodoSchema = z.object({
 });
 
 export type TimeEstimate = z.infer<typeof timeEstimateSchema>;
+
+export type FeedbackVote = z.infer<typeof feedbackVoteSchema>;
+export type SubmitFeedbackInput = z.infer<typeof submitFeedbackSchema>;
 
 export type CreateTodoInput = z.infer<typeof createTodoSchema>;
 export type UpdateTodoInput = z.infer<typeof updateTodoSchema>;

@@ -1,6 +1,6 @@
 import { Router, type Router as ExpressRouter } from 'express';
 import { TodosRepository } from 'database';
-import { createTodoSchema, updateTodoSchema } from 'types';
+import { createTodoSchema, updateTodoSchema, submitFeedbackSchema } from 'types';
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, ApiError } from '../middleware/index.js';
 
@@ -89,6 +89,23 @@ export function createTodosRouter(todosRepo: TodosRepository): ExpressRouter {
       const { id } = req.params;
 
       const todo = await todosRepo.markAsCompleted(id);
+      if (!todo) {
+        throw new ApiError(404, 'Todo not found');
+      }
+
+      res.json(todo);
+    })
+  );
+
+  // PATCH /api/v1/todos/:id/feedback - Submit feedback
+  router.patch(
+    '/:id/feedback',
+    validateBody(submitFeedbackSchema),
+    asyncHandler(async (req, res) => {
+      const { id } = req.params;
+      const { vote, feedbackText } = req.body;
+
+      const todo = await todosRepo.submitFeedback(id, vote, feedbackText);
       if (!todo) {
         throw new ApiError(404, 'Todo not found');
       }

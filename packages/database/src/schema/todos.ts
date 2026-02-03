@@ -19,6 +19,12 @@ export const timeEstimateEnum = pgEnum('time_estimate', [
   'none'     // Not estimated
 ]);
 
+export const feedbackVoteEnum = pgEnum('feedback_vote', [
+  'thumbs_up',
+  'thumbs_down',
+  'none'
+]);
+
 export const todos = pgTable(
   'todos',
   {
@@ -37,6 +43,10 @@ export const todos = pgTable(
     priorityScore: integer('priority_score'),
     tags: jsonb('tags').$type<string[]>().default([]),
     captureId: uuid('capture_id').references(() => captures.id, { onDelete: 'set null' }),
+    // Feedback fields for AI quality assessment
+    feedbackVote: feedbackVoteEnum('feedback_vote').default('none'),
+    feedbackText: text('feedback_text'),
+    feedbackTimestamp: timestamp('feedback_timestamp', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
