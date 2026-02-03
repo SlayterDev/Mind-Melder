@@ -72,7 +72,7 @@ export default function QuickCaptureInput({
       title = firstLine.length > 50 ? firstLine.slice(0, 50) + '...' : firstLine;
     }
 
-    await notesAPI.create({ title: title, content: data.content});
+    await notesAPI.append({ title, contentToAppend: data.content });
   }
 
   const queryClient = useQueryClient();

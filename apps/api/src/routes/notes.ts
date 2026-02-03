@@ -1,10 +1,11 @@
 import { Router, type Router as ExpressRouter } from 'express';
-import { OrganizedNotesRepository } from 'database';
+import { Database, OrganizedNotesRepository } from 'database';
 import { createOrganizedNoteSchema, updateOrganizedNoteSchema } from 'types';
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, ApiError } from '../middleware/index.js';
+import { NotesService } from '../services/notes-service.js';
 
-export function createNotesRouter(notesRepo: OrganizedNotesRepository): ExpressRouter {
+export function createNotesRouter(db: Database, notesRepo: OrganizedNotesRepository): ExpressRouter {
   const router = Router();
 
   // GET /api/v1/notes - List notes (optional: filter by category)
@@ -35,6 +36,24 @@ export function createNotesRouter(notesRepo: OrganizedNotesRepository): ExpressR
 
       const note = await notesRepo.create({ userId, title, content, category, date });
       res.status(201).json(note);
+    })
+  );
+
+  // POST /api/v1/notes/append - Append content to existing note or create new
+  router.post(
+    '/append',
+    asyncHandler(async (req, res) => {
+      const userId = 'test-user-1'; // TODO: Get from auth context
+      const { title, contentToAppend } = req.body;
+
+      if (typeof title !== 'string' || typeof contentToAppend !== 'string') {
+        throw new ApiError(400, 'Invalid request body');
+      }
+
+      const notesService = new NotesService(db);
+      const updatedNote = await notesService.appendToNote(userId, title, contentToAppend);
+
+      res.status(200).json(updatedNote);
     })
   );
 
