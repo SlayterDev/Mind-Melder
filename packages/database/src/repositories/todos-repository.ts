@@ -108,4 +108,63 @@ export class TodosRepository {
       })
       .where(inArray(todos.id, ids));
   }
+
+  /**
+   * Submit feedback for a todo (thumbs up/down with optional text)
+   */
+  async submitFeedback(
+    id: string,
+    vote: 'thumbs_up' | 'thumbs_down' | 'none',
+    feedbackText?: string
+  ): Promise<Todo | undefined> {
+    const [todo] = await this.db
+      .update(todos)
+      .set({
+        feedbackVote: vote,
+        feedbackText: feedbackText || null,
+        feedbackTimestamp: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(todos.id, id))
+      .returning();
+    return todo;
+  }
+
+  /**
+   * Get todos by feedback vote status
+   */
+  async findByFeedbackVote(
+    userId: string,
+    vote: 'thumbs_up' | 'thumbs_down' | 'none'
+  ): Promise<Todo[]> {
+    // For 'none', sort by createdAt since feedbackTimestamp will be null
+    const orderColumn = vote === 'none' ? todos.createdAt : todos.feedbackTimestamp;
+    return this.db
+      .select()
+      .from(todos)
+      .where(and(eq(todos.userId, userId), eq(todos.feedbackVote, vote)))
+      .orderBy(desc(orderColumn));
+  }
+
+  /**
+   * Get todos that have feedback (thumbs up or down, not 'none')
+   */
+  async findWithFeedback(userId: string): Promise<Todo[]> {
+    return this.db
+      .select()
+      .from(todos)
+      .where(and(eq(todos.userId, userId), ne(todos.feedbackVote, 'none')))
+      .orderBy(desc(todos.feedbackTimestamp));
+  }
+
+  /**
+   * Get todos without feedback (feedback vote is 'none')
+   */
+  async findWithoutFeedback(userId: string): Promise<Todo[]> {
+    return this.db
+      .select()
+      .from(todos)
+      .where(and(eq(todos.userId, userId), eq(todos.feedbackVote, 'none')))
+      .orderBy(desc(todos.createdAt));
+  }
 }

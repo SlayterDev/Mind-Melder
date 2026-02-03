@@ -1,6 +1,6 @@
 {
-  "id": "e8e859df-bd84-4380-b0d4-678be2006250",
-  "prevId": "0a37f731-18a3-460e-abd0-a6c05a765cb6",
+  "id": "42caa398-3b73-4708-9039-3aed83540c9a",
+  "prevId": "e8e859df-bd84-4380-b0d4-678be2006250",
   "version": "5",
   "dialect": "pg",
   "tables": {
@@ -357,6 +357,25 @@
           "primaryKey": false,
           "notNull": false
         },
+        "feedback_vote": {
+          "name": "feedback_vote",
+          "type": "feedback_vote",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'none'"
+        },
+        "feedback_text": {
+          "name": "feedback_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "feedback_timestamp": {
+          "name": "feedback_timestamp",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -673,6 +692,14 @@
     }
   },
   "enums": {
+    "feedback_vote": {
+      "name": "feedback_vote",
+      "values": {
+        "thumbs_up": "thumbs_up",
+        "thumbs_down": "thumbs_down",
+        "none": "none"
+      }
+    },
     "time_estimate": {
       "name": "time_estimate",
       "values": {

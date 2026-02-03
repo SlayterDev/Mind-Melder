@@ -118,6 +118,11 @@ YOUR TASK:
 9. Defer to user template instructions below for any additional formatting or organization rules
 10. Look for critical info like people, deadlines, project names to include in titles/descriptions
 
+PREVIOUS USER FEEDBACK:
+${input.feedbackTodos.length > 0 ? input.feedbackTodos.map((t, i) =>
+  `${i + 1}. ID: ${t.id} | ${t.content} | ${t.dueDate ? new Date(t.dueDate).toLocaleDateString() : 'No due date'} | Tags: [${t.tags?.join(', ')}] | Feedback: ${t.feedbackVote === 'thumbs_up' ? 'Helpful' : 'Not Helpful'}${t.feedbackText ? ` | Comments: ${t.feedbackText}` : ''}`
+).join('\n') : 'No feedback provided.'}
+
 ${tagsInstruction}
 
 TITLE GUIDELINES:
@@ -177,7 +182,10 @@ Total should not exceed ${input.context.workingHoursMinutes} minutes.`;
       const jsonMatch = response.match(/```json\n?([\s\S]*?)\n?```/);
       const jsonStr = jsonMatch ? jsonMatch[1] : response;
 
-      const parsed = JSON.parse(jsonStr.trim());
+      let parsed = JSON.parse(jsonStr.trim());
+
+      // Normalize null values to undefined for optional fields
+      parsed = this.normalizeNullValues(parsed);
 
       // Validate against schema if provided
       if (schema) {
@@ -192,5 +200,25 @@ Total should not exceed ${input.context.workingHoursMinutes} minutes.`;
     } catch (error) {
       throw new Error(`Failed to parse LLM response: ${error}`);
     }
+  }
+
+  /**
+   * Recursively normalize null values to undefined
+   */
+  private normalizeNullValues(obj: any): any {
+    if (obj === null) {
+      return undefined;
+    }
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.normalizeNullValues(item));
+    }
+    if (typeof obj === 'object' && obj !== null) {
+      const normalized: any = {};
+      for (const key in obj) {
+        normalized[key] = this.normalizeNullValues(obj[key]);
+      }
+      return normalized;
+    }
+    return obj;
   }
 }

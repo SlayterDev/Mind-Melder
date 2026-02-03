@@ -12,6 +12,7 @@ export interface OrganizedOutput {
 export interface TodaySheetInput {
   captures: Capture[];
   existingTodos: Todo[];
+  feedbackTodos: Todo[];
   template: Template;
   tags?: Tag[]; // Optional user-defined tags for categorization
   includeDescriptions?: boolean; // Whether to include tag descriptions in prompts (default: false)

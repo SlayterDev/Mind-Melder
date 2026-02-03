@@ -7,7 +7,7 @@ import {
   closestCorners,
 } from '@dnd-kit/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { todaySheetAPI } from '../api/client';
+import { todaySheetAPI, todosAPI } from '../api/client';
 import TodaySheetSection from '../components/TodaySheetSection';
 import TaskCard from '../components/TaskCard';
 import QuickCaptureInput from '../components/QuickCaptureInput';
@@ -15,6 +15,7 @@ import { useInboxCount } from '../api/queries';
 import { ClipboardList, Sparkles, Flame, Target, Lightbulb, Package, Loader2 } from 'lucide-react';
 
 type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
+type FeedbackVote = 'thumbs_up' | 'thumbs_down' | 'none';
 
 interface Todo {
   id: string;
@@ -28,6 +29,8 @@ interface Todo {
   priorityScore?: number;
   description?: string;
   captureId?: string;
+  feedbackVote?: FeedbackVote;
+  feedbackText?: string;
 }
 
 interface TodaySheet {
@@ -226,6 +229,29 @@ export default function TodaySheetPage() {
       await todaySheetAPI.updateTodo(id, { timeEstimate });
     } catch (error) {
       console.error('Failed to update time estimate:', error);
+      // Revert on error
+      loadSheet();
+    }
+  };
+
+  const handleSubmitFeedback = async (id: string, vote: FeedbackVote, feedbackText?: string) => {
+    // Optimistic update
+    if (sheet) {
+      const updatedSheet = { ...sheet };
+      Object.keys(updatedSheet.sections).forEach((sectionKey) => {
+        const section = sectionKey as keyof typeof updatedSheet.sections;
+        updatedSheet.sections[section] = updatedSheet.sections[section].map((t) =>
+          t.id === id ? { ...t, feedbackVote: vote, feedbackText: vote === 'none' ? undefined : feedbackText } : t
+        );
+      });
+      setSheet(updatedSheet);
+    }
+
+    // API call
+    try {
+      await todosAPI.submitFeedback(id, { vote, feedbackText });
+    } catch (error) {
+      console.error('Failed to submit feedback:', error);
       // Revert on error
       loadSheet();
     }
@@ -467,6 +493,7 @@ export default function TodaySheetPage() {
                     onUpdateDescription={handleUpdateDescription}
                     onUpdateContent={handleUpdateContent}
                     onUpdateTimeEstimate={handleUpdateTimeEstimate}
+                    onSubmitFeedback={handleSubmitFeedback}
                   />
                 </div>
                 <div className="animate-fade-in" style={{ animationDelay: '150ms' }}>
@@ -480,6 +507,7 @@ export default function TodaySheetPage() {
                     onUpdateDescription={handleUpdateDescription}
                     onUpdateContent={handleUpdateContent}
                     onUpdateTimeEstimate={handleUpdateTimeEstimate}
+                    onSubmitFeedback={handleSubmitFeedback}
                   />
                 </div>
                 <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
@@ -493,6 +521,7 @@ export default function TodaySheetPage() {
                     onUpdateDescription={handleUpdateDescription}
                     onUpdateContent={handleUpdateContent}
                     onUpdateTimeEstimate={handleUpdateTimeEstimate}
+                    onSubmitFeedback={handleSubmitFeedback}
                   />
                 </div>
                 <div className="animate-fade-in" style={{ animationDelay: '450ms' }}>
@@ -506,6 +535,7 @@ export default function TodaySheetPage() {
                     onUpdateDescription={handleUpdateDescription}
                     onUpdateContent={handleUpdateContent}
                     onUpdateTimeEstimate={handleUpdateTimeEstimate}
+                    onSubmitFeedback={handleSubmitFeedback}
                   />
                 </div>
               </div>
