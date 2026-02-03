@@ -20,5 +20,5 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     '@typescript-eslint/no-explicit-any': 'warn',
   },
-  ignorePatterns: ['dist', 'build', 'node_modules'],
+  ignorePatterns: ['dist', 'build', 'node_modules', 'dist-electron'],
 };
