@@ -3,8 +3,9 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
   Zap, Clock, Hourglass, GripVertical, Check, ChevronDown, ChevronRight, FileText, Pencil, Save, X,
-  Calendar
+  Calendar, ThumbsUp, ThumbsDown
  } from 'lucide-react';
+import { capturesAPI } from '../api/client';
 
 type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
 
@@ -14,6 +15,8 @@ const TIME_ESTIMATE_OPTIONS: { value: TimeEstimate; label: string; icon: typeof 
   { value: 'long', label: '>90 min', icon: Hourglass },
   { value: 'none', label: 'None', icon: Clock },
 ];
+
+type FeedbackVote = 'thumbs_up' | 'thumbs_down' | 'none';
 
 interface TaskCardProps {
   todo: {
@@ -26,15 +29,18 @@ interface TaskCardProps {
     priorityScore?: number;
     description?: string;
     captureId?: string;
+    feedbackVote?: FeedbackVote;
+    feedbackText?: string;
   };
   onToggleComplete: (id: string, status: string) => void;
   onUpdateDueDate?: (id: string, dueDate: string | null) => void;
   onUpdateDescription?: (id: string, description: string) => void;
   onUpdateContent?: (id: string, content: string) => void;
   onUpdateTimeEstimate?: (id: string, timeEstimate: TimeEstimate) => void;
+  onSubmitFeedback?: (id: string, vote: FeedbackVote, feedbackText?: string) => void;
 }
 
-export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUpdateDescription, onUpdateContent, onUpdateTimeEstimate }: TaskCardProps) {
+export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUpdateDescription, onUpdateContent, onUpdateTimeEstimate, onSubmitFeedback }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -61,13 +67,14 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUp
   const [isEditingContent, setIsEditingContent] = useState(false);
   const [editedContent, setEditedContent] = useState(todo.content);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showFeedbackInput, setShowFeedbackInput] = useState(false);
+  const [feedbackText, setFeedbackText] = useState('');
 
   const fetchOriginalCapture = async () => {
     if (!todo.captureId || originalCapture) return;
     setIsLoadingCapture(true);
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/captures/${todo.captureId}`);
-      const capture = await response.json();
+      const capture = await capturesAPI.get(todo.captureId);
       setOriginalCapture(capture.content);
       setOriginalCaptureDate(capture.createdAt);
     } catch (error) {
@@ -221,8 +228,63 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUp
               </div>
             )}
 
-            {/* Original capture icon - subtle and on the right */}
+            {/* AI Utils */}
             {!isEditingContent && todo.captureId && (
+            <div className="flex items-center gap-2 ml-2">
+              {/* Feedback Buttons */}
+              <button
+                onClick={() => {
+                  if (onSubmitFeedback) {
+                    if (todo.feedbackVote === 'thumbs_up') {
+                      onSubmitFeedback(todo.id, 'none');
+                    } else {
+                      onSubmitFeedback(todo.id, 'thumbs_up');
+                      setShowFeedbackInput(false);
+                    }
+                  }
+                }}
+                className={`flex-shrink-0 mt-0.5 transition-opacity ${
+                  todo.feedbackVote === 'thumbs_up' ? 'opacity-100' : 'opacity-40 hover:opacity-100'
+                }`}
+                title="Thumbs Up"
+              >
+                <ThumbsUp className={`w-3.5 h-3.5 ${
+                  todo.feedbackVote === 'thumbs_up' ? 'text-green-400' : 'text-gray-400 hover:text-green-400'
+                }`} />
+              </button>
+              <div className="relative group/feedback">
+                <button
+                  onClick={() => {
+                    if (todo.feedbackVote === 'thumbs_down') {
+                      // Toggle off
+                      if (onSubmitFeedback) {
+                        onSubmitFeedback(todo.id, 'none');
+                      }
+                      setShowFeedbackInput(false);
+                      setFeedbackText('');
+                    } else {
+                      // Show input for feedback text
+                      setShowFeedbackInput(true);
+                      setFeedbackText(todo.feedbackText || '');
+                    }
+                  }}
+                  className={`flex-shrink-0 mt-0.5 transition-opacity ${
+                    todo.feedbackVote === 'thumbs_down' ? 'opacity-100' : 'opacity-40 hover:opacity-100'
+                  }`}
+                  title={todo.feedbackVote === 'thumbs_down' && todo.feedbackText ? todo.feedbackText : 'Thumbs Down'}
+                >
+                  <ThumbsDown className={`w-3.5 h-3.5 ${
+                    todo.feedbackVote === 'thumbs_down' ? 'text-red-400' : 'text-gray-400 hover:text-red-400'
+                  }`} />
+                </button>
+                {/* Tooltip for feedback text */}
+                {todo.feedbackVote === 'thumbs_down' && todo.feedbackText && !showFeedbackInput && (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs text-gray-300 whitespace-nowrap opacity-0 group-hover/feedback:opacity-100 transition-opacity pointer-events-none z-10 max-w-xs">
+                    {todo.feedbackText}
+                  </div>
+                )}
+              </div>
+              {/* Original capture icon - subtle and on the right */}
               <button
                 onClick={toggleOriginal}
                 className="flex-shrink-0 mt-0.5 opacity-40 hover:opacity-100 transition-opacity"
@@ -230,8 +292,56 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUp
               >
                 <FileText className="w-3.5 h-3.5 text-gray-400" />
               </button>
+            </div>
             )}
           </div>
+
+          {/* Feedback text input */}
+          {showFeedbackInput && (
+            <div className="mt-3 flex items-center gap-2">
+              <input
+                type="text"
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value.slice(0, 100))}
+                placeholder="What went wrong? (optional, ESC to cancel)"
+                maxLength={100}
+                className="flex-1 px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm text-gray-200 focus:outline-none focus:border-red-500 placeholder-gray-500"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (onSubmitFeedback) {
+                      onSubmitFeedback(todo.id, 'thumbs_down', feedbackText || undefined);
+                    }
+                    setShowFeedbackInput(false);
+                  } else if (e.key === 'Escape') {
+                    setShowFeedbackInput(false);
+                    setFeedbackText('');
+                  }
+                }}
+              />
+              <span className="text-xs text-gray-500">{feedbackText.length}/100</span>
+              <button
+                onClick={() => {
+                  if (onSubmitFeedback) {
+                    onSubmitFeedback(todo.id, 'thumbs_down', feedbackText || undefined);
+                  }
+                  setShowFeedbackInput(false);
+                }}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors"
+              >
+                Submit
+              </button>
+              <button
+                onClick={() => {
+                  setShowFeedbackInput(false);
+                  setFeedbackText('');
+                }}
+                className="px-2 py-1.5 text-gray-400 hover:text-gray-200 text-xs transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Expanded original capture */}
           {showOriginal && todo.captureId && (

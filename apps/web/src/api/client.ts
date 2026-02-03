@@ -32,6 +32,7 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
 export const capturesAPI = {
   list: () => fetchAPI<any[]>('/captures'),
   listUnorganized: () => fetchAPI<any[]>('/captures/unorganized'),
+  get: (id: string) => fetchAPI<any>(`/captures/${id}`),
   create: (data: { content: string; metadata?: Record<string, unknown> }) =>
     fetchAPI('/captures', { method: 'POST', body: JSON.stringify(data) }),
   delete: (id: string) => fetchAPI(`/captures/${id}`, { method: 'DELETE' }),
@@ -48,6 +49,8 @@ export const todosAPI = {
   update: (id: string, data: { content?: string; status?: string; dueDate?: string | null; description?: string; timeEstimate?: TimeEstimate }) =>
     fetchAPI(`/todos/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   markComplete: (id: string) => fetchAPI(`/todos/${id}/complete`, { method: 'PATCH' }),
+  submitFeedback: (id: string, data: { vote: 'thumbs_up' | 'thumbs_down' | 'none'; feedbackText?: string }) =>
+    fetchAPI<any>(`/todos/${id}/feedback`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => fetchAPI(`/todos/${id}`, { method: 'DELETE' }),
 };
 

@@ -4,6 +4,9 @@ import { useDroppable } from '@dnd-kit/core';
 import TaskCard from './TaskCard';
 import { ChevronRight, ChevronDown, LucideIcon } from 'lucide-react';
 
+type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
+type FeedbackVote = 'thumbs_up' | 'thumbs_down' | 'none';
+
 interface Todo {
   id: string;
   content: string;
@@ -12,9 +15,11 @@ interface Todo {
   dueDate?: string;
   tags?: string[];
   priorityScore?: number;
+  description?: string;
+  captureId?: string;
+  feedbackVote?: FeedbackVote;
+  feedbackText?: string;
 }
-
-type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
 
 interface SectionProps {
   id: string;
@@ -26,6 +31,7 @@ interface SectionProps {
   onUpdateDescription?: (id: string, description: string) => void;
   onUpdateContent?: (id: string, content: string) => void;
   onUpdateTimeEstimate?: (id: string, timeEstimate: TimeEstimate) => void;
+  onSubmitFeedback?: (id: string, vote: FeedbackVote, feedbackText?: string) => void;
 }
 
 export default function TodaySheetSection({
@@ -38,6 +44,7 @@ export default function TodaySheetSection({
   onUpdateDescription,
   onUpdateContent,
   onUpdateTimeEstimate,
+  onSubmitFeedback,
 }: SectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { setNodeRef } = useDroppable({ id });
@@ -77,6 +84,7 @@ export default function TodaySheetSection({
                   onUpdateDescription={onUpdateDescription}
                   onUpdateContent={onUpdateContent}
                   onUpdateTimeEstimate={onUpdateTimeEstimate}
+                  onSubmitFeedback={onSubmitFeedback}
                 />
               ))}
             </SortableContext>
