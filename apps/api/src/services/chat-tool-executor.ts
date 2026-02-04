@@ -60,24 +60,21 @@ export class ChatToolExecutor {
         if (results.captures) {
             output += `\nCaptures:\n`;
             results.captures.slice(0, input.limit || 8).forEach((capture, index) => {
-                const createdAt = capture.createdAt instanceof Date ? capture.createdAt : new Date(capture.createdAt as string);
-                output += `${index + 1}. (${createdAt.toISOString()}) ${capture.content}\n`;
+                output += `${index + 1}. (${capture.createdAt.toISOString()}) ${capture.content}\n`;
             });
         }
 
         if (results.todos) {
             output += `\nTodos:\n`;
             results.todos.slice(0, input.limit || 8).forEach((todo, index) => {
-                const dueDate = todo.dueDate ? (todo.dueDate instanceof Date ? todo.dueDate : new Date(todo.dueDate as string)) : null;
-                output += `${index + 1}. (${dueDate ? "Due: " + dueDate.toISOString() : 'No due date'}) ${todo.content} - ${todo.status === 'completed' ? 'Completed' : 'Pending'}${todo.description ? ' - ' + todo.description : ''}\n`;
+                output += `${index + 1}. (${todo.dueDate ? "Due: " + todo.dueDate?.toISOString() : 'No due date'}) ${todo.content} - ${todo.status === 'completed' ? 'Completed' : 'Pending'}${todo.description ? ' - ' + todo.description : ''}\n`;
             });
         }
 
         if (results.notes) {
             output += `\nNotes:\n`;
             results.notes.slice(0, input.limit || 8).forEach((note, index) => {
-                const contentPreview = note.content instanceof String ? note.content : String(note.content);
-                output += `${index + 1}. ${note.title} - ${contentPreview.slice(0, 100)}\n`;
+                output += `${index + 1}. ${note.title} - ${note.content.slice(0, 100)}\n`;
             });
         }
 
