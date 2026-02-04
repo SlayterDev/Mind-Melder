@@ -16,18 +16,30 @@ export class CapturesRepository {
   }
 
   async findByUserId(userId: string, limit?: number): Promise<Capture[]> {
-    return this.db
+    const query = this.db
       .select()
       .from(captures)
       .where(eq(captures.userId, userId))
-      .limit(limit || 1000);
+      .orderBy(sql`${captures.createdAt} DESC`);
+    
+    return limit !== undefined ? query.limit(limit) : query;
   }
 
-  async findUnorganized(userId: string): Promise<Capture[]> {
+  async findUnorganized(userId: string, since?: Date): Promise<Capture[]> {
+    const conditions = [
+      eq(captures.userId, userId),
+      isNull(captures.organized)
+    ];
+    
+    if (since) {
+      conditions.push(sql`${captures.createdAt} >= ${since}`);
+    }
+    
     return this.db
       .select()
       .from(captures)
-      .where(and(eq(captures.userId, userId), isNull(captures.organized)))
+      .where(and(...conditions))
+      .orderBy(sql`${captures.createdAt} DESC`);
   }
 
   async markAsOrganized(id: string): Promise<Capture | undefined> {

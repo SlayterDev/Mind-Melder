@@ -5,6 +5,7 @@ import { ChatToolExecutor } from '../chat-tool-executor.js';
 const mockRepos = {
   captures: {
     findByUserId: vi.fn(),
+    findUnorganized: vi.fn(),
     search: vi.fn(),
   },
   todos: {
@@ -20,6 +21,7 @@ const mockRepos = {
 vi.mock('database', () => {
   class MockCapturesRepository {
     findByUserId = mockRepos.captures.findByUserId;
+    findUnorganized = mockRepos.captures.findUnorganized;
     search = mockRepos.captures.search;
   }
 
@@ -85,10 +87,10 @@ describe('ChatToolExecutor', () => {
         todos: [
           {
             id: 'todo-1',
-            title: 'Test todo',
+            content: 'Test todo',
             description: 'Test description',
             dueDate: new Date('2025-01-16T10:00:00Z'),
-            completed: false,
+            status: 'pending',
             type: 'todo',
           },
         ],
@@ -137,10 +139,10 @@ describe('ChatToolExecutor', () => {
         todos: [
           {
             id: 'todo-1',
-            title: 'Test todo',
+            content: 'Test todo',
             description: 'Description',
             dueDate: null,
-            completed: false,
+            status: 'pending',
             type: 'todo',
           },
         ],
@@ -229,7 +231,7 @@ describe('ChatToolExecutor', () => {
 
   describe('get_recent_captures', () => {
     it('should return formatted recent captures', async () => {
-      mockRepos.captures.findByUserId.mockResolvedValue([
+      mockRepos.captures.findUnorganized.mockResolvedValue([
         {
           id: 'cap-1',
           content: 'First capture',
@@ -247,11 +249,11 @@ describe('ChatToolExecutor', () => {
       expect(result).toContain('Recent Captures:');
       expect(result).toContain('First capture');
       expect(result).toContain('Second capture');
-      expect(mockRepos.captures.findByUserId).toHaveBeenCalledWith(userId, 10);
+      expect(mockRepos.captures.findUnorganized).toHaveBeenCalledWith(userId, undefined);
     });
 
     it('should return no captures message when empty', async () => {
-      mockRepos.captures.findByUserId.mockResolvedValue([]);
+      mockRepos.captures.findUnorganized.mockResolvedValue([]);
 
       const result = await executor.executeTool(userId, 'get_recent_captures', {});
 
@@ -259,11 +261,18 @@ describe('ChatToolExecutor', () => {
     });
 
     it('should respect limit parameter', async () => {
-      mockRepos.captures.findByUserId.mockResolvedValue([]);
+      const manyCaptures = Array.from({ length: 20 }, (_, i) => ({
+        id: `cap-${i}`,
+        content: `Capture ${i}`,
+        createdAt: new Date(),
+      }));
+      mockRepos.captures.findUnorganized.mockResolvedValue(manyCaptures);
 
-      await executor.executeTool(userId, 'get_recent_captures', { limit: 5 });
+      const result = await executor.executeTool(userId, 'get_recent_captures', { limit: 5 });
 
-      expect(mockRepos.captures.findByUserId).toHaveBeenCalledWith(userId, 5);
+      // Should only show 5 captures
+      const captureMatches = result.match(/Capture \d+/g);
+      expect(captureMatches?.length).toBe(5);
     });
   });
 });
