@@ -1,4 +1,4 @@
-import { eq, and, desc, ne, asc, inArray, sql } from 'drizzle-orm';
+import { eq, and, desc, ne, asc, inArray, sql, lt } from 'drizzle-orm';
 import { todos, type Todo, type NewTodo } from '../schema/todos.js';
 import type { Database } from '../client.js';
 
@@ -32,6 +32,25 @@ export class TodosRepository {
       .from(todos)
       .where(and(eq(todos.userId, userId), eq(todos.status, status)))
       .orderBy(desc(todos.createdAt));
+  }
+
+  async findDueToday(userId: string, includeCompleted: boolean = false): Promise<Todo[]> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return this.db
+      .select()
+      .from(todos)
+      .where(
+        and(
+          eq(todos.userId, userId),
+          includeCompleted ? inArray(todos.status, ['pending', 'completed']) : eq(todos.status, 'pending'),
+          lt(todos.dueDate, tomorrow)
+        )
+      )
+      .orderBy(asc(todos.dueDate));
   }
 
   async update(
