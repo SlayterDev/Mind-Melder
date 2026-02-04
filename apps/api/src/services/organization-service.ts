@@ -61,9 +61,10 @@ export class OrganizationService {
     // Use LLM to extract todos
     const organized = await this.llmProvider.organize(captures, template, userTags);
 
-    // Create todos
+    // Create todos - handle case where todos might be undefined or missing
+    const todos = organized.todos || [];
     const createdTodos = await Promise.all(
-      organized.todos.map((todo) =>
+      todos.map((todo) =>
         this.todosRepo.create({
           content: todo.content,
           dueDate: todo.dueDate ? new Date(todo.dueDate) : undefined,

@@ -1,6 +1,7 @@
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
 import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types.js';
+import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
 
 interface OllamaResponse {
   message: {
@@ -49,7 +50,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     }
 
     const data = (await response.json()) as OllamaResponse;
-    return this.parseResponse<OrganizedOutput>(data.message.content);
+    return this.parseResponse<OrganizedOutput>(data.message.content, organizedOutputSchema);
   }
 
   async extractTasks(text: string): Promise<{ content: string; dueDate?: string }[]> {
@@ -113,6 +114,6 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     }
 
     const data = (await response.json()) as OllamaResponse;
-    return this.parseResponse<TodaySheetOutput>(data.message.content);
+    return this.parseResponse<TodaySheetOutput>(data.message.content, todaySheetOutputSchema);
   }
 }

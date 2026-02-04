@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
 import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types.js';
+import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
 
 export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
   private client: Anthropic;
@@ -42,7 +43,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       throw new Error('Unexpected response type from Anthropic');
     }
 
-    return this.parseResponse<OrganizedOutput>(content.text);
+    return this.parseResponse<OrganizedOutput>(content.text, organizedOutputSchema);
   }
 
   async extractTasks(text: string): Promise<{ content: string; dueDate?: string }[]> {
@@ -91,6 +92,6 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       throw new Error('Unexpected response type from Anthropic');
     }
 
-    return this.parseResponse<TodaySheetOutput>(content.text);
+    return this.parseResponse<TodaySheetOutput>(content.text, todaySheetOutputSchema);
   }
 }

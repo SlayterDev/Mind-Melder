@@ -297,5 +297,45 @@ describe('OrganizationService', () => {
         todosCount: 1,
       });
     });
+
+    it('should handle empty todos array gracefully', async () => {
+      const captures = [createMockCapture()];
+      const llmOutput = createMockLLMOutput({
+        todos: [],
+      });
+
+      mockRepos.captures.findUnorganized.mockResolvedValue(captures);
+      mockRepos.templates.findActiveTemplate.mockResolvedValue(createMockTemplate());
+      mockRepos.tags.findByUserId.mockResolvedValue([]);
+      (mockLLMProvider.organize as ReturnType<typeof vi.fn>).mockResolvedValue(llmOutput);
+
+      const result = await service.organizeCaptures(userId);
+
+      expect(mockRepos.todos.create).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        capturesProcessed: 1,
+        todosCount: 0,
+      });
+    });
+
+    it('should handle undefined todos array gracefully', async () => {
+      const captures = [createMockCapture()];
+      const llmOutput = {
+        todos: undefined as any, // Simulate malformed LLM response
+      };
+
+      mockRepos.captures.findUnorganized.mockResolvedValue(captures);
+      mockRepos.templates.findActiveTemplate.mockResolvedValue(createMockTemplate());
+      mockRepos.tags.findByUserId.mockResolvedValue([]);
+      (mockLLMProvider.organize as ReturnType<typeof vi.fn>).mockResolvedValue(llmOutput);
+
+      const result = await service.organizeCaptures(userId);
+
+      expect(mockRepos.todos.create).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        capturesProcessed: 1,
+        todosCount: 0,
+      });
+    });
   });
 });
