@@ -54,6 +54,10 @@ export default function SettingsPage() {
   // Local state for text inputs to prevent defocus on keystroke
   const [localOllamaUrl, setLocalOllamaUrl] = useState('');
   const [localSchedule, setLocalSchedule] = useState('');
+  
+  // Track which fields are currently being edited to avoid overwriting user input
+  const [isEditingOllamaUrl, setIsEditingOllamaUrl] = useState(false);
+  const [isEditingSchedule, setIsEditingSchedule] = useState(false);
 
   const handleTestConnection = async () => {
     setIsTesting(true);
@@ -79,8 +83,8 @@ export default function SettingsPage() {
       const data = await settingsAPI.get();
       setSettings(data);
       // Initialize local state from loaded settings
-      setLocalOllamaUrl(data.ollamaBaseUrl);
-      setLocalSchedule(data.organizationSchedule);
+      setLocalOllamaUrl(data.ollamaBaseUrl ?? 'http://localhost:11434');
+      setLocalSchedule(data.organizationSchedule ?? '0 17 * * *');
     } catch (err) {
       setError('Failed to load settings');
       console.error('Failed to load settings:', err);
@@ -93,13 +97,17 @@ export default function SettingsPage() {
     loadSettings();
   }, []);
 
-  // Sync local state when settings change
+  // Sync local state when settings change (but don't overwrite active edits)
   useEffect(() => {
     if (settings) {
-      setLocalOllamaUrl(settings.ollamaBaseUrl);
-      setLocalSchedule(settings.organizationSchedule);
+      if (!isEditingOllamaUrl) {
+        setLocalOllamaUrl(settings.ollamaBaseUrl ?? 'http://localhost:11434');
+      }
+      if (!isEditingSchedule) {
+        setLocalSchedule(settings.organizationSchedule ?? '0 17 * * *');
+      }
     }
-  }, [settings]);
+  }, [settings, isEditingOllamaUrl, isEditingSchedule]);
 
   const handleUpdate = async (updates: Partial<Settings>) => {
     if (!settings) return;
@@ -245,7 +253,9 @@ export default function SettingsPage() {
                     type="url"
                     value={localOllamaUrl}
                     onChange={(e) => setLocalOllamaUrl(e.target.value)}
+                    onFocus={() => setIsEditingOllamaUrl(true)}
                     onBlur={(e) => {
+                      setIsEditingOllamaUrl(false);
                       if (e.target.value !== settings.ollamaBaseUrl) {
                         handleUpdate({ ollamaBaseUrl: e.target.value });
                       }
@@ -294,7 +304,9 @@ export default function SettingsPage() {
                 type="text"
                 value={localSchedule}
                 onChange={(e) => setLocalSchedule(e.target.value)}
+                onFocus={() => setIsEditingSchedule(true)}
                 onBlur={(e) => {
+                  setIsEditingSchedule(false);
                   if (e.target.value !== settings.organizationSchedule) {
                     handleUpdate({ organizationSchedule: e.target.value });
                   }
