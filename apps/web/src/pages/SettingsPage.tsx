@@ -256,7 +256,8 @@ export default function SettingsPage() {
                     onFocus={() => setIsEditingOllamaUrl(true)}
                     onBlur={() => {
                       setIsEditingOllamaUrl(false);
-                      if (localOllamaUrl !== settings.ollamaBaseUrl) {
+                      const currentValue = settings.ollamaBaseUrl ?? 'http://localhost:11434';
+                      if (localOllamaUrl !== currentValue) {
                         handleUpdate({ ollamaBaseUrl: localOllamaUrl });
                       }
                     }}
@@ -307,7 +308,8 @@ export default function SettingsPage() {
                 onFocus={() => setIsEditingSchedule(true)}
                 onBlur={() => {
                   setIsEditingSchedule(false);
-                  if (localSchedule !== settings.organizationSchedule) {
+                  const currentValue = settings.organizationSchedule ?? '0 17 * * *';
+                  if (localSchedule !== currentValue) {
                     handleUpdate({ organizationSchedule: localSchedule });
                   }
                 }}
