@@ -398,7 +398,7 @@ export default function TodaySheetPage() {
               <h1 className="text-2xl md:text-3xl font-bold text-gray-100 mb-1">Today's Plan</h1>
               <p className="text-gray-400 text-sm font-serif italic">{dateStr}</p>
             </div>
-            <div className="grid grid-cols-1 justify-end w-full md:w-auto gap-2">
+            <div className="flex flex-col items-end gap-2">
               <button
                 onClick={() => handleGenerate.mutateAsync()}
                 disabled={isGenerating}
@@ -426,7 +426,6 @@ export default function TodaySheetPage() {
               <TemplateSelector
                 value={selectedTemplateId}
                 onChange={setSelectedTemplateId}
-                className="w-full md:w-64"
               />
               {inboxCount > 0 && (
                 <div className="mt-2 text-sm text-gray-400 italic text-right pr-1">

@@ -88,7 +88,6 @@ export default function InboxPage() {
             <TemplateSelector
               value={selectedTemplateId}
               onChange={setSelectedTemplateId}
-              className="w-full md:w-64"
             />
           </div>
         )}
