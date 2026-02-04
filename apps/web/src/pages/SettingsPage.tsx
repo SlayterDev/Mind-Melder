@@ -5,6 +5,10 @@ import { getServerUrl, setApiUrl, testConnection } from '../api/config';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
+// Default values for settings fields
+const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
+const DEFAULT_SCHEDULE = '0 17 * * *';
+
 const PROVIDER_MODELS: Record<string, { label: string; models: { value: string; label: string }[] }> = {
   openai: {
     label: 'OpenAI',
@@ -83,8 +87,8 @@ export default function SettingsPage() {
       const data = await settingsAPI.get();
       setSettings(data);
       // Initialize local state from loaded settings
-      setLocalOllamaUrl(data.ollamaBaseUrl ?? 'http://localhost:11434');
-      setLocalSchedule(data.organizationSchedule ?? '0 17 * * *');
+      setLocalOllamaUrl(data.ollamaBaseUrl ?? DEFAULT_OLLAMA_URL);
+      setLocalSchedule(data.organizationSchedule ?? DEFAULT_SCHEDULE);
     } catch (err) {
       setError('Failed to load settings');
       console.error('Failed to load settings:', err);
@@ -101,10 +105,10 @@ export default function SettingsPage() {
   useEffect(() => {
     if (settings) {
       if (!isEditingOllamaUrl) {
-        setLocalOllamaUrl(settings.ollamaBaseUrl ?? 'http://localhost:11434');
+        setLocalOllamaUrl(settings.ollamaBaseUrl ?? DEFAULT_OLLAMA_URL);
       }
       if (!isEditingSchedule) {
-        setLocalSchedule(settings.organizationSchedule ?? '0 17 * * *');
+        setLocalSchedule(settings.organizationSchedule ?? DEFAULT_SCHEDULE);
       }
     }
   }, [settings, isEditingOllamaUrl, isEditingSchedule]);
@@ -256,13 +260,13 @@ export default function SettingsPage() {
                     onFocus={() => setIsEditingOllamaUrl(true)}
                     onBlur={() => {
                       setIsEditingOllamaUrl(false);
-                      const currentValue = settings.ollamaBaseUrl ?? 'http://localhost:11434';
+                      const currentValue = settings.ollamaBaseUrl ?? DEFAULT_OLLAMA_URL;
                       if (localOllamaUrl !== currentValue) {
                         handleUpdate({ ollamaBaseUrl: localOllamaUrl });
                       }
                     }}
                     disabled={isSaving}
-                    placeholder="http://localhost:11434"
+                    placeholder={DEFAULT_OLLAMA_URL}
                     className="input-accent w-full max-w-md"
                   />
                 </div>
@@ -308,13 +312,13 @@ export default function SettingsPage() {
                 onFocus={() => setIsEditingSchedule(true)}
                 onBlur={() => {
                   setIsEditingSchedule(false);
-                  const currentValue = settings.organizationSchedule ?? '0 17 * * *';
+                  const currentValue = settings.organizationSchedule ?? DEFAULT_SCHEDULE;
                   if (localSchedule !== currentValue) {
                     handleUpdate({ organizationSchedule: localSchedule });
                   }
                 }}
                 disabled={isSaving || !settings.scheduleEnabled}
-                placeholder="0 17 * * *"
+                placeholder={DEFAULT_SCHEDULE}
                 className="input-accent w-full max-w-md font-mono"
               />
               <p className="text-xs text-gray-500 mt-1">
