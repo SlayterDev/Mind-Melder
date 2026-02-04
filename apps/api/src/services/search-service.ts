@@ -4,13 +4,18 @@ import {
   TodosRepository,
   OrganizedNotesRepository,
 } from 'database';
+import type { Capture, Todo, OrganizedNote } from 'database';
 
 export type SearchType = 'captures' | 'todos' | 'notes' | 'all';
 
+export type CaptureSearchResult = Capture & { type: 'capture' };
+export type TodoSearchResult = Todo & { type: 'todo' };
+export type NoteSearchResult = OrganizedNote & { type: 'note' };
+
 export interface SearchResults {
-  captures?: Array<{ type: 'capture'; [key: string]: unknown }>;
-  todos?: Array<{ type: 'todo'; [key: string]: unknown }>;
-  notes?: Array<{ type: 'note'; [key: string]: unknown }>;
+  captures?: CaptureSearchResult[];
+  todos?: TodoSearchResult[];
+  notes?: NoteSearchResult[];
 }
 
 export class SearchService {

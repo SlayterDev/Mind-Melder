@@ -14,14 +14,6 @@ export const chatTools = [
           enum: ['captures', 'todos', 'notes', 'all'],
           description: 'Filter by content type: captures, todos, notes, or all. Omit to search all types.'
         },
-        date_from: {
-          type: 'string',
-          description: 'ISO date string to search from (e.g., "2024-01-20")'
-        },
-        date_to: {
-          type: 'string',
-          description: 'ISO date string to search until'
-        },
         limit: {
           type: 'number',
           description: 'Maximum results to return (default: 8, max: 20)'

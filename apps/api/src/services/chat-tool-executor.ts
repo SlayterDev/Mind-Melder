@@ -4,8 +4,6 @@ import { SearchService } from "./search-service.js";
 interface SearchToolInput {
     query: string;
     type?: 'captures' | 'todos' | 'notes' | 'all';
-    date_from?: string;
-    date_to?: string;
     limit?: number;
 }
 
@@ -48,7 +46,7 @@ export class ChatToolExecutor {
 
     private async handleSearchContent(
         userId: string,
-        input: { query: string; type?: 'captures' | 'todos' | 'notes' | 'all', date_from?: string; date_to?: string; limit?: number }
+        input: { query: string; type?: 'captures' | 'todos' | 'notes' | 'all', limit?: number }
     ): Promise<string> {
         const results = await this.searchService.search(userId, input.query, input.type || 'all');
 
@@ -71,7 +69,7 @@ export class ChatToolExecutor {
             output += `\nTodos:\n`;
             results.todos.slice(0, input.limit || 8).forEach((todo, index) => {
                 const dueDate = todo.dueDate ? (todo.dueDate instanceof Date ? todo.dueDate : new Date(todo.dueDate as string)) : null;
-                output += `${index + 1}. (${dueDate ? "Due: " + dueDate.toISOString() : 'No due date'}) ${todo.title} - ${todo.completed ? 'Completed' : 'Pending'} - ${todo.description}\n`;
+                output += `${index + 1}. (${dueDate ? "Due: " + dueDate.toISOString() : 'No due date'}) ${todo.content} - ${todo.status === 'completed' ? 'Completed' : 'Pending'}${todo.description ? ' - ' + todo.description : ''}\n`;
             });
         }
 
@@ -109,16 +107,55 @@ export class ChatToolExecutor {
         input: GetRecentCapturesInput
     ): Promise<string> {
         const limit = input.limit || 10;
+        const hours = input.hours;
 
-        const captures = await this.captureRepository.findByUserId(userId, limit);
+        // Compute optional cutoff time if hours is provided and positive
+        const cutoff: Date | null =
+            typeof hours === 'number' && hours > 0
+                ? new Date(Date.now() - hours * 60 * 60 * 1000)
+                : null;
 
-        if (captures.length === 0) {
+        // Fetch all unorganized captures for the user
+        const allCaptures = await this.captureRepository.findUnorganized(userId);
+
+        // Filter by timestamp cutoff if provided and sort by createdAt descending
+        const filteredCaptures = allCaptures
+            .filter((capture) => {
+                if (!cutoff) {
+                    return true;
+                }
+
+                const createdAt =
+                    capture.createdAt instanceof Date
+                        ? capture.createdAt
+                        : new Date(capture.createdAt as string);
+
+                return createdAt >= cutoff;
+            })
+            .sort((a, b) => {
+                const aCreated =
+                    a.createdAt instanceof Date
+                        ? a.createdAt
+                        : new Date(a.createdAt as string);
+                const bCreated =
+                    b.createdAt instanceof Date
+                        ? b.createdAt
+                        : new Date(b.createdAt as string);
+
+                return bCreated.getTime() - aCreated.getTime();
+            })
+            .slice(0, limit);
+
+        if (filteredCaptures.length === 0) {
             return 'No recent captures found.';
         }
 
         let output = 'Recent Captures:\n';
-        captures.forEach((capture, index) => {
-            const createdAt = capture.createdAt instanceof Date ? capture.createdAt : new Date(capture.createdAt as string);
+        filteredCaptures.forEach((capture, index) => {
+            const createdAt =
+                capture.createdAt instanceof Date
+                    ? capture.createdAt
+                    : new Date(capture.createdAt as string);
             output += `${index + 1}. (${createdAt.toISOString()}) ${capture.content}\n`;
         });
 

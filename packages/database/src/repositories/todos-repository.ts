@@ -1,4 +1,4 @@
-import { eq, and, desc, ne, asc, inArray, sql, gte, lt } from 'drizzle-orm';
+import { eq, and, desc, ne, asc, inArray, sql, lt } from 'drizzle-orm';
 import { todos, type Todo, type NewTodo } from '../schema/todos.js';
 import type { Database } from '../client.js';
 
@@ -47,7 +47,6 @@ export class TodosRepository {
         and(
           eq(todos.userId, userId),
           includeCompleted ? inArray(todos.status, ['pending', 'completed']) : eq(todos.status, 'pending'),
-          gte(todos.dueDate, today),
           lt(todos.dueDate, tomorrow)
         )
       )
