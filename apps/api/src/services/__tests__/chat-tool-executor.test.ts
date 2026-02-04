@@ -249,7 +249,7 @@ describe('ChatToolExecutor', () => {
       expect(result).toContain('Recent Captures:');
       expect(result).toContain('First capture');
       expect(result).toContain('Second capture');
-      expect(mockRepos.captures.findUnorganized).toHaveBeenCalledWith(userId);
+      expect(mockRepos.captures.findUnorganized).toHaveBeenCalledWith(userId, undefined);
     });
 
     it('should return no captures message when empty', async () => {

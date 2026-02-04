@@ -110,48 +110,23 @@ export class ChatToolExecutor {
         const hours = input.hours;
 
         // Compute optional cutoff time if hours is provided and positive
-        const cutoff: Date | null =
+        const cutoff: Date | undefined =
             typeof hours === 'number' && hours > 0
                 ? new Date(Date.now() - hours * 60 * 60 * 1000)
-                : null;
+                : undefined;
 
-        // Fetch all unorganized captures for the user
-        const allCaptures = await this.captureRepository.findUnorganized(userId);
+        // Fetch unorganized captures, filtered and sorted by the database
+        const captures = await this.captureRepository.findUnorganized(userId, cutoff);
+        
+        // Apply limit after database returns sorted results
+        const limitedCaptures = captures.slice(0, limit);
 
-        // Filter by timestamp cutoff if provided and sort by createdAt descending
-        const filteredCaptures = allCaptures
-            .filter((capture) => {
-                if (!cutoff) {
-                    return true;
-                }
-
-                const createdAt =
-                    capture.createdAt instanceof Date
-                        ? capture.createdAt
-                        : new Date(capture.createdAt as string);
-
-                return createdAt >= cutoff;
-            })
-            .sort((a, b) => {
-                const aCreated =
-                    a.createdAt instanceof Date
-                        ? a.createdAt
-                        : new Date(a.createdAt as string);
-                const bCreated =
-                    b.createdAt instanceof Date
-                        ? b.createdAt
-                        : new Date(b.createdAt as string);
-
-                return bCreated.getTime() - aCreated.getTime();
-            })
-            .slice(0, limit);
-
-        if (filteredCaptures.length === 0) {
+        if (limitedCaptures.length === 0) {
             return 'No recent captures found.';
         }
 
         let output = 'Recent Captures:\n';
-        filteredCaptures.forEach((capture, index) => {
+        limitedCaptures.forEach((capture, index) => {
             const createdAt =
                 capture.createdAt instanceof Date
                     ? capture.createdAt
