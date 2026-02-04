@@ -11,6 +11,7 @@ import { todaySheetAPI, todosAPI } from '../api/client';
 import TodaySheetSection from '../components/TodaySheetSection';
 import TaskCard from '../components/TaskCard';
 import QuickCaptureInput from '../components/QuickCaptureInput';
+import TemplateSelector from '../components/TemplateSelector';
 import { useInboxCount } from '../api/queries';
 import { ClipboardList, Sparkles, Flame, Target, Lightbulb, Package, Loader2 } from 'lucide-react';
 
@@ -52,6 +53,7 @@ export default function TodaySheetPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
   const { data: inboxCount = 0 } = useInboxCount();
 
   const queryClient = useQueryClient();
@@ -82,7 +84,7 @@ export default function TodaySheetPage() {
       setIsGenerating(true);
       setShowSuccess(false);
       try {
-        const { sheet: newSheet } = await todaySheetAPI.generate();
+        const { sheet: newSheet } = await todaySheetAPI.generate(selectedTemplateId);
         setSheet(newSheet);
         // Show success animation
         setShowSuccess(true);
@@ -396,11 +398,11 @@ export default function TodaySheetPage() {
               <h1 className="text-2xl md:text-3xl font-bold text-gray-100 mb-1">Today's Plan</h1>
               <p className="text-gray-400 text-sm font-serif italic">{dateStr}</p>
             </div>
-            <div className="grid grid-cols-1 justify-end w-full md:w-auto">
+            <div className="flex flex-col items-end gap-2">
               <button
                 onClick={() => handleGenerate.mutateAsync()}
                 disabled={isGenerating}
-                className={`btn-accent flex items-center justify-center gap-2 w-full md:w-auto transition-all ${
+                className={`btn-accent flex items-center justify-center gap-2 transition-all ${
                   isGenerating ? 'btn-generating' : ''
                 } ${showSuccess ? 'btn-success-flash' : ''}`}
               >
@@ -421,6 +423,10 @@ export default function TodaySheetPage() {
                   </>
                 )}
               </button>
+              <TemplateSelector
+                value={selectedTemplateId}
+                onChange={setSelectedTemplateId}
+              />
               {inboxCount > 0 && (
                 <div className="mt-2 text-sm text-gray-400 italic text-right pr-1">
                   <span className="text-accent-highlight">{inboxCount}</span> items unorganized

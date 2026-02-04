@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { capturesAPI, organizeAPI } from '../api/client';
 import { Zap, MailOpen, X } from 'lucide-react';
+import TemplateSelector from '../components/TemplateSelector';
 
 export default function InboxPage() {
   const [captures, setCaptures] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [message, setMessage] = useState('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
   const queryClient = useQueryClient();
 
   const loadCaptures = async () => {
@@ -33,7 +35,7 @@ export default function InboxPage() {
     setMessage('');
 
     try {
-      const result = await organizeAPI.trigger();
+      const result = await organizeAPI.trigger(selectedTemplateId);
       setMessage(result.message);
       await loadCaptures(); // Reload to show empty inbox
       // Invalidate inbox count query
@@ -74,14 +76,20 @@ export default function InboxPage() {
         </div>
 
         {captures.length > 0 && (
-          <button
-            onClick={handleOrganize}
-            disabled={isOrganizing}
-            className="btn-accent-lg flex items-center gap-2"
-          >
-            <Zap className="w-5 h-5" />
-            {isOrganizing ? 'Organizing...' : 'Organize Now'}
-          </button>
+          <div className="flex flex-col items-end gap-2">
+            <button
+              onClick={handleOrganize}
+              disabled={isOrganizing}
+              className="btn-accent-lg flex items-center gap-2"
+            >
+              <Zap className="w-5 h-5" />
+              {isOrganizing ? 'Organizing...' : 'Organize Now'}
+            </button>
+            <TemplateSelector
+              value={selectedTemplateId}
+              onChange={setSelectedTemplateId}
+            />
+          </div>
         )}
       </div>
 

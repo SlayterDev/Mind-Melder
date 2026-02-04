@@ -379,11 +379,11 @@ export default function TemplatesPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* Radio button for active selection */}
+                    {/* Radio button for default selection */}
                     <button
                       onClick={() => handleSetActive(template.id)}
                       className="flex items-center gap-2 px-3 py-1 rounded hover:bg-gray-800 transition-colors"
-                      title="Set as active template"
+                      title="Set as default template"
                     >
                       <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
                         template.isActive
@@ -395,7 +395,7 @@ export default function TemplatesPage() {
                         )}
                       </div>
                       <span className={`text-sm ${template.isActive ? 'text-accent' : 'text-gray-500'}`}>
-                        {template.isActive ? 'Active' : 'Set Active'}
+                        {template.isActive ? 'Default' : 'Set Default'}
                       </span>
                     </button>
 
