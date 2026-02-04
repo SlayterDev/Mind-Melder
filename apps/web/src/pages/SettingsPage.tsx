@@ -5,6 +5,10 @@ import { getServerUrl, setApiUrl, testConnection } from '../api/config';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
+// Default values for settings fields
+const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
+const DEFAULT_SCHEDULE = '0 17 * * *';
+
 const PROVIDER_MODELS: Record<string, { label: string; models: { value: string; label: string }[] }> = {
   openai: {
     label: 'OpenAI',
@@ -51,6 +55,14 @@ export default function SettingsPage() {
   const [isTesting, setIsTesting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
+  // Local state for text inputs to prevent defocus on keystroke
+  const [localOllamaUrl, setLocalOllamaUrl] = useState('');
+  const [localSchedule, setLocalSchedule] = useState('');
+  
+  // Track which fields are currently being edited to avoid overwriting user input
+  const [isEditingOllamaUrl, setIsEditingOllamaUrl] = useState(false);
+  const [isEditingSchedule, setIsEditingSchedule] = useState(false);
+
   const handleTestConnection = async () => {
     setIsTesting(true);
     setConnectionStatus('idle');
@@ -74,6 +86,9 @@ export default function SettingsPage() {
     try {
       const data = await settingsAPI.get();
       setSettings(data);
+      // Initialize local state from loaded settings
+      setLocalOllamaUrl(data.ollamaBaseUrl ?? DEFAULT_OLLAMA_URL);
+      setLocalSchedule(data.organizationSchedule ?? DEFAULT_SCHEDULE);
     } catch (err) {
       setError('Failed to load settings');
       console.error('Failed to load settings:', err);
@@ -85,6 +100,18 @@ export default function SettingsPage() {
   useEffect(() => {
     loadSettings();
   }, []);
+
+  // Sync local state when settings change (but don't overwrite active edits)
+  useEffect(() => {
+    if (settings) {
+      if (!isEditingOllamaUrl) {
+        setLocalOllamaUrl(settings.ollamaBaseUrl ?? DEFAULT_OLLAMA_URL);
+      }
+      if (!isEditingSchedule) {
+        setLocalSchedule(settings.organizationSchedule ?? DEFAULT_SCHEDULE);
+      }
+    }
+  }, [settings, isEditingOllamaUrl, isEditingSchedule]);
 
   const handleUpdate = async (updates: Partial<Settings>) => {
     if (!settings) return;
@@ -228,10 +255,18 @@ export default function SettingsPage() {
                   </label>
                   <input
                     type="url"
-                    value={settings.ollamaBaseUrl}
-                    onChange={(e) => handleUpdate({ ollamaBaseUrl: e.target.value })}
+                    value={localOllamaUrl}
+                    onChange={(e) => setLocalOllamaUrl(e.target.value)}
+                    onFocus={() => setIsEditingOllamaUrl(true)}
+                    onBlur={() => {
+                      setIsEditingOllamaUrl(false);
+                      const currentValue = settings.ollamaBaseUrl ?? DEFAULT_OLLAMA_URL;
+                      if (localOllamaUrl !== currentValue) {
+                        handleUpdate({ ollamaBaseUrl: localOllamaUrl });
+                      }
+                    }}
                     disabled={isSaving}
-                    placeholder="http://localhost:11434"
+                    placeholder={DEFAULT_OLLAMA_URL}
                     className="input-accent w-full max-w-md"
                   />
                 </div>
@@ -272,10 +307,18 @@ export default function SettingsPage() {
               </label>
               <input
                 type="text"
-                value={settings.organizationSchedule}
-                onChange={(e) => handleUpdate({ organizationSchedule: e.target.value })}
+                value={localSchedule}
+                onChange={(e) => setLocalSchedule(e.target.value)}
+                onFocus={() => setIsEditingSchedule(true)}
+                onBlur={() => {
+                  setIsEditingSchedule(false);
+                  const currentValue = settings.organizationSchedule ?? DEFAULT_SCHEDULE;
+                  if (localSchedule !== currentValue) {
+                    handleUpdate({ organizationSchedule: localSchedule });
+                  }
+                }}
                 disabled={isSaving || !settings.scheduleEnabled}
-                placeholder="0 17 * * *"
+                placeholder={DEFAULT_SCHEDULE}
                 className="input-accent w-full max-w-md font-mono"
               />
               <p className="text-xs text-gray-500 mt-1">
