@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, index, jsonb } from 'drizzle-orm/pg-core';
 
 export const organizedNotes = pgTable(
   'organized_notes',
@@ -6,7 +6,7 @@ export const organizedNotes = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     title: text('title').notNull(),
     content: text('content').notNull(),
-    category: text('category'),
+    tags: jsonb('tags').$type<string[]>().default([]),
     date: timestamp('date', { withTimezone: true }).notNull().defaultNow(),
     userId: text('user_id').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -15,7 +15,6 @@ export const organizedNotes = pgTable(
   (table) => ({
     userIdIdx: index('organized_notes_user_id_idx').on(table.userId),
     dateIdx: index('organized_notes_date_idx').on(table.date),
-    categoryIdx: index('organized_notes_category_idx').on(table.category),
   })
 );
 

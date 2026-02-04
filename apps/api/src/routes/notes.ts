@@ -15,16 +15,16 @@ const appendNoteSchema = z.object({
 export function createNotesRouter(db: Database, notesRepo: OrganizedNotesRepository): ExpressRouter {
   const router = Router();
 
-  // GET /api/v1/notes - List notes (optional: filter by category)
+  // GET /api/v1/notes - List notes (optional: filter by tag)
   router.get(
     '/',
     asyncHandler(async (req, res) => {
       const userId = 'test-user-1'; // TODO: Get from auth context
-      const { category } = req.query;
+      const { tag } = req.query;
 
       let notes;
-      if (category && typeof category === 'string') {
-        notes = await notesRepo.findByCategory(userId, category);
+      if (tag && typeof tag === 'string') {
+        notes = await notesRepo.findByTag(userId, tag);
       } else {
         notes = await notesRepo.findByUserId(userId);
       }
@@ -39,9 +39,9 @@ export function createNotesRouter(db: Database, notesRepo: OrganizedNotesReposit
     validateBody(createOrganizedNoteSchema),
     asyncHandler(async (req, res) => {
       const userId = 'test-user-1'; // TODO: Get from auth context
-      const { title, content, category, date } = req.body;
+      const { title, content, tags, date } = req.body;
 
-      const note = await notesRepo.create({ userId, title, content, category, date });
+      const note = await notesRepo.create({ userId, title, content, tags, date });
       res.status(201).json(note);
     })
   );
@@ -82,9 +82,9 @@ export function createNotesRouter(db: Database, notesRepo: OrganizedNotesReposit
     validateBody(updateOrganizedNoteSchema),
     asyncHandler(async (req, res) => {
       const { id } = req.params;
-      const { title, content, category } = req.body;
+      const { title, content, tags } = req.body;
 
-      const note = await notesRepo.update(id, { title, content, category });
+      const note = await notesRepo.update(id, { title, content, tags });
       if (!note) {
         throw new ApiError(404, 'Note not found');
       }

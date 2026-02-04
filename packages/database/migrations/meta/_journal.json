@@ -54,8 +54,15 @@
     {
       "idx": 7,
       "version": "5",
-      "when": 1738613000000,
+      "when": 1770217500000,
       "tag": "0007_add_search_vectors",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1770303900000,
+      "tag": "0008_replace_category_with_tags",
       "breakpoints": true
     }
   ]

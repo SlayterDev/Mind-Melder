@@ -27,11 +27,29 @@ export class OrganizedNotesRepository {
       .orderBy(desc(organizedNotes.date));
   }
 
-  async findByCategory(userId: string, category: string): Promise<OrganizedNote[]> {
+  async findByTag(userId: string, tag: string): Promise<OrganizedNote[]> {
     return this.db
       .select()
       .from(organizedNotes)
-      .where(and(eq(organizedNotes.userId, userId), eq(organizedNotes.category, category)))
+      .where(
+        and(
+          eq(organizedNotes.userId, userId),
+          sql`${organizedNotes.tags} @> ${JSON.stringify([tag])}::jsonb`
+        )
+      )
+      .orderBy(desc(organizedNotes.date));
+  }
+
+  async findByTags(userId: string, tags: string[]): Promise<OrganizedNote[]> {
+    return this.db
+      .select()
+      .from(organizedNotes)
+      .where(
+        and(
+          eq(organizedNotes.userId, userId),
+          sql`${organizedNotes.tags} ?| ${tags}::text[]`
+        )
+      )
       .orderBy(desc(organizedNotes.date));
   }
 
