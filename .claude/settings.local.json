@@ -48,7 +48,8 @@
       "Bash(npx tsc:*)",
       "Bash(ls:*)",
       "Bash(ELECTRON=true pnpm vite build:*)",
-      "Bash(timeout 5 sh:*)"
+      "Bash(timeout 5 sh:*)",
+      "Bash(git add:*)"
     ]
   }
 }

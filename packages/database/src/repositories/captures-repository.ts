@@ -15,15 +15,19 @@ export class CapturesRepository {
     return capture;
   }
 
-  async findByUserId(userId: string): Promise<Capture[]> {
-    return this.db.select().from(captures).where(eq(captures.userId, userId));
+  async findByUserId(userId: string, limit?: number): Promise<Capture[]> {
+    return this.db
+      .select()
+      .from(captures)
+      .where(eq(captures.userId, userId))
+      .limit(limit || 1000);
   }
 
   async findUnorganized(userId: string): Promise<Capture[]> {
     return this.db
       .select()
       .from(captures)
-      .where(and(eq(captures.userId, userId), isNull(captures.organized)));
+      .where(and(eq(captures.userId, userId), isNull(captures.organized)))
   }
 
   async markAsOrganized(id: string): Promise<Capture | undefined> {
