@@ -36,7 +36,6 @@ export default function TemplateSelector({ value, onChange, className = '' }: Te
 
   // Find the active template
   const activeTemplate = templates.find((t) => t.isActive);
-  const selectedTemplate = value ? templates.find((t) => t.id === value) : activeTemplate;
 
   return (
     <div className={`relative ${className}`}>
