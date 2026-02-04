@@ -9,13 +9,10 @@ export const chatTools = [
           type: 'string',
           description: 'Search query (keywords or natural language question)'
         },
-        types: {
-          type: 'array',
-          items: {
-            type: 'string',
-            enum: ['capture', 'note', 'todo']
-          },
-          description: 'Filter by content type. Omit to search all types.'
+        type: {
+          type: 'string',
+          enum: ['captures', 'todos', 'notes', 'all'],
+          description: 'Filter by content type: captures, todos, notes, or all. Omit to search all types.'
         },
         date_from: {
           type: 'string',
