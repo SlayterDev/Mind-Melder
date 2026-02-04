@@ -85,6 +85,7 @@ const createMockTag = (overrides: Partial<Tag> = {}): Tag => ({
 });
 
 const createMockLLMOutput = (overrides: Partial<OrganizedOutput> = {}): OrganizedOutput => ({
+  notes: [],
   todos: [{ content: 'Action item', dueDate: '2025-01-20' }],
   ...overrides,
 });
@@ -295,6 +296,48 @@ describe('OrganizationService', () => {
       expect(result).toEqual({
         capturesProcessed: 2,
         todosCount: 1,
+      });
+    });
+
+    it('should handle empty todos array gracefully', async () => {
+      const captures = [createMockCapture()];
+      const llmOutput = createMockLLMOutput({
+        notes: [],
+        todos: [],
+      });
+
+      mockRepos.captures.findUnorganized.mockResolvedValue(captures);
+      mockRepos.templates.findActiveTemplate.mockResolvedValue(createMockTemplate());
+      mockRepos.tags.findByUserId.mockResolvedValue([]);
+      (mockLLMProvider.organize as ReturnType<typeof vi.fn>).mockResolvedValue(llmOutput);
+
+      const result = await service.organizeCaptures(userId);
+
+      expect(mockRepos.todos.create).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        capturesProcessed: 1,
+        todosCount: 0,
+      });
+    });
+
+    it('should handle undefined todos array gracefully', async () => {
+      const captures = [createMockCapture()];
+      const llmOutput = {
+        notes: [],
+        todos: undefined as any, // Simulate malformed LLM response
+      };
+
+      mockRepos.captures.findUnorganized.mockResolvedValue(captures);
+      mockRepos.templates.findActiveTemplate.mockResolvedValue(createMockTemplate());
+      mockRepos.tags.findByUserId.mockResolvedValue([]);
+      (mockLLMProvider.organize as ReturnType<typeof vi.fn>).mockResolvedValue(llmOutput);
+
+      const result = await service.organizeCaptures(userId);
+
+      expect(mockRepos.todos.create).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        capturesProcessed: 1,
+        todosCount: 0,
       });
     });
   });
