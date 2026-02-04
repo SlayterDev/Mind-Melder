@@ -384,5 +384,45 @@ describe('BaseLLMProvider', () => {
       expect(result.summary).toBe('Focus on code review');
       expect(result.sections.must_do_today).toHaveLength(1);
     });
+
+    it('should validate organize output with notes and todos', () => {
+      const schema = z.object({
+        notes: z.array(z.object({
+          content: z.string(),
+          tags: z.array(z.string()).optional(),
+        })),
+        todos: z.array(z.object({
+          content: z.string(),
+          dueDate: z.string().optional(),
+        })),
+      });
+      const validJson = '{"notes": [{"content": "Note 1", "tags": ["work"]}], "todos": [{"content": "Task 1", "dueDate": "2025-01-20"}]}';
+
+      const result = provider.testParseResponse(validJson, schema);
+
+      expect(result.notes).toHaveLength(1);
+      expect(result.notes[0].content).toBe('Note 1');
+      expect(result.todos).toHaveLength(1);
+      expect(result.todos[0].content).toBe('Task 1');
+    });
+
+    it('should allow empty notes and todos arrays', () => {
+      const schema = z.object({
+        notes: z.array(z.object({
+          content: z.string(),
+          tags: z.array(z.string()).optional(),
+        })),
+        todos: z.array(z.object({
+          content: z.string(),
+          dueDate: z.string().optional(),
+        })),
+      });
+      const validJson = '{"notes": [], "todos": []}';
+
+      const result = provider.testParseResponse(validJson, schema);
+
+      expect(result.notes).toEqual([]);
+      expect(result.todos).toEqual([]);
+    });
   });
 });
