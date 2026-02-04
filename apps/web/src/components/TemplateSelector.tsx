@@ -41,16 +41,12 @@ export default function TemplateSelector({ value, onChange, className = '' }: Te
     <div className={`relative ${className}`}>
       <select
         value={value || ''}
-        onChange={(e) => onChange(e.target.value || undefined)}
+        onChange={(e) => onChange(e.target.value === '' ? undefined : e.target.value)}
         disabled={isLoading}
         className="input-accent pr-10 appearance-none cursor-pointer text-sm"
       >
         <option value="">
-          {isLoading
-            ? 'Loading templates...'
-            : activeTemplate
-            ? `Default (${activeTemplate.name})`
-            : 'Default Template'}
+          {activeTemplate ? `Default (${activeTemplate.name})` : 'Default Template'}
         </option>
         {templates.map((template) => (
           <option key={template.id} value={template.id}>
