@@ -51,6 +51,10 @@ export default function SettingsPage() {
   const [isTesting, setIsTesting] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
+  // Local state for text inputs to prevent defocus on keystroke
+  const [localOllamaUrl, setLocalOllamaUrl] = useState('');
+  const [localSchedule, setLocalSchedule] = useState('');
+
   const handleTestConnection = async () => {
     setIsTesting(true);
     setConnectionStatus('idle');
@@ -74,6 +78,9 @@ export default function SettingsPage() {
     try {
       const data = await settingsAPI.get();
       setSettings(data);
+      // Initialize local state from loaded settings
+      setLocalOllamaUrl(data.ollamaBaseUrl);
+      setLocalSchedule(data.organizationSchedule);
     } catch (err) {
       setError('Failed to load settings');
       console.error('Failed to load settings:', err);
@@ -85,6 +92,14 @@ export default function SettingsPage() {
   useEffect(() => {
     loadSettings();
   }, []);
+
+  // Sync local state when settings change
+  useEffect(() => {
+    if (settings) {
+      setLocalOllamaUrl(settings.ollamaBaseUrl);
+      setLocalSchedule(settings.organizationSchedule);
+    }
+  }, [settings]);
 
   const handleUpdate = async (updates: Partial<Settings>) => {
     if (!settings) return;
@@ -228,8 +243,13 @@ export default function SettingsPage() {
                   </label>
                   <input
                     type="url"
-                    value={settings.ollamaBaseUrl}
-                    onChange={(e) => handleUpdate({ ollamaBaseUrl: e.target.value })}
+                    value={localOllamaUrl}
+                    onChange={(e) => setLocalOllamaUrl(e.target.value)}
+                    onBlur={(e) => {
+                      if (e.target.value !== settings.ollamaBaseUrl) {
+                        handleUpdate({ ollamaBaseUrl: e.target.value });
+                      }
+                    }}
                     disabled={isSaving}
                     placeholder="http://localhost:11434"
                     className="input-accent w-full max-w-md"
@@ -272,8 +292,13 @@ export default function SettingsPage() {
               </label>
               <input
                 type="text"
-                value={settings.organizationSchedule}
-                onChange={(e) => handleUpdate({ organizationSchedule: e.target.value })}
+                value={localSchedule}
+                onChange={(e) => setLocalSchedule(e.target.value)}
+                onBlur={(e) => {
+                  if (e.target.value !== settings.organizationSchedule) {
+                    handleUpdate({ organizationSchedule: e.target.value });
+                  }
+                }}
                 disabled={isSaving || !settings.scheduleEnabled}
                 placeholder="0 17 * * *"
                 className="input-accent w-full max-w-md font-mono"
