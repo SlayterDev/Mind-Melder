@@ -56,7 +56,7 @@ app.use('/api/v1/notes', createNotesRouter(db, notesRepo));
 app.use('/api/v1/templates', createTemplatesRouter(templatesRepo));
 app.use('/api/v1/settings', createSettingsRouter(settingsRepo));
 app.use('/api/v1/tags', createTagsRouter(tagsRepo));
-app.use('/api/v1/search', createSearchRouter(capturesRepo, todosRepo, notesRepo));
+app.use('/api/v1/search', createSearchRouter(db));
 app.use('/api/v1/organize', createOrganizeRouter(db, settingsRepo));
 app.use('/api/v1/today-sheet', createTodaySheetRouter(db, settingsRepo));
 
