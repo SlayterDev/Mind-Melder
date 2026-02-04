@@ -254,10 +254,10 @@ export default function SettingsPage() {
                     value={localOllamaUrl}
                     onChange={(e) => setLocalOllamaUrl(e.target.value)}
                     onFocus={() => setIsEditingOllamaUrl(true)}
-                    onBlur={(e) => {
+                    onBlur={() => {
                       setIsEditingOllamaUrl(false);
-                      if (e.target.value !== settings.ollamaBaseUrl) {
-                        handleUpdate({ ollamaBaseUrl: e.target.value });
+                      if (localOllamaUrl !== settings.ollamaBaseUrl) {
+                        handleUpdate({ ollamaBaseUrl: localOllamaUrl });
                       }
                     }}
                     disabled={isSaving}
@@ -305,10 +305,10 @@ export default function SettingsPage() {
                 value={localSchedule}
                 onChange={(e) => setLocalSchedule(e.target.value)}
                 onFocus={() => setIsEditingSchedule(true)}
-                onBlur={(e) => {
+                onBlur={() => {
                   setIsEditingSchedule(false);
-                  if (e.target.value !== settings.organizationSchedule) {
-                    handleUpdate({ organizationSchedule: e.target.value });
+                  if (localSchedule !== settings.organizationSchedule) {
+                    handleUpdate({ organizationSchedule: localSchedule });
                   }
                 }}
                 disabled={isSaving || !settings.scheduleEnabled}
