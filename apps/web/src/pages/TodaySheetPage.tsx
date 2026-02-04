@@ -399,15 +399,10 @@ export default function TodaySheetPage() {
               <p className="text-gray-400 text-sm font-serif italic">{dateStr}</p>
             </div>
             <div className="grid grid-cols-1 justify-end w-full md:w-auto gap-2">
-              <TemplateSelector
-                value={selectedTemplateId}
-                onChange={setSelectedTemplateId}
-                className="w-full md:w-64"
-              />
               <button
                 onClick={() => handleGenerate.mutateAsync()}
                 disabled={isGenerating}
-                className={`btn-accent flex items-center justify-center gap-2 w-full md:w-auto transition-all ${
+                className={`btn-accent flex items-center justify-center gap-2 transition-all ${
                   isGenerating ? 'btn-generating' : ''
                 } ${showSuccess ? 'btn-success-flash' : ''}`}
               >
@@ -428,6 +423,11 @@ export default function TodaySheetPage() {
                   </>
                 )}
               </button>
+              <TemplateSelector
+                value={selectedTemplateId}
+                onChange={setSelectedTemplateId}
+                className="w-full md:w-64"
+              />
               {inboxCount > 0 && (
                 <div className="mt-2 text-sm text-gray-400 italic text-right pr-1">
                   <span className="text-accent-highlight">{inboxCount}</span> items unorganized

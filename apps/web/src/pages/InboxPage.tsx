@@ -77,11 +77,6 @@ export default function InboxPage() {
 
         {captures.length > 0 && (
           <div className="flex flex-col items-end gap-2">
-            <TemplateSelector
-              value={selectedTemplateId}
-              onChange={setSelectedTemplateId}
-              className="w-full md:w-64"
-            />
             <button
               onClick={handleOrganize}
               disabled={isOrganizing}
@@ -90,6 +85,11 @@ export default function InboxPage() {
               <Zap className="w-5 h-5" />
               {isOrganizing ? 'Organizing...' : 'Organize Now'}
             </button>
+            <TemplateSelector
+              value={selectedTemplateId}
+              onChange={setSelectedTemplateId}
+              className="w-full md:w-64"
+            />
           </div>
         )}
       </div>
