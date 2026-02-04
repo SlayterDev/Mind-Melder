@@ -5,7 +5,7 @@ export const organizedOutputSchema = z.object({
   notes: z.array(
     z.object({
       content: z.string(),
-      category: z.string().optional(),
+      tags: z.array(z.string()).optional().default([]),
     })
   ),
   todos: z.array(

@@ -71,17 +71,17 @@ describe('Validation Schemas', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should accept note with category and date', () => {
+    it('should accept note with tags and date', () => {
       const date = new Date();
       const result = createOrganizedNoteSchema.safeParse({
         title: 'Note Title',
-        content: 'Note with category',
-        category: 'work',
+        content: 'Note with tags',
+        tags: ['work', 'important'],
         date,
       });
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.category).toBe('work');
+        expect(result.data.tags).toEqual(['work', 'important']);
         expect(result.data.date).toEqual(date);
       }
     });
@@ -131,11 +131,20 @@ describe('Validation Schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject category exceeding max length', () => {
+    it('should reject tags exceeding max count', () => {
       const result = createOrganizedNoteSchema.safeParse({
         title: 'Valid title',
         content: 'Valid content',
-        category: 'a'.repeat(101),
+        tags: Array(11).fill('tag'),
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject tag exceeding max length', () => {
+      const result = createOrganizedNoteSchema.safeParse({
+        title: 'Valid title',
+        content: 'Valid content',
+        tags: ['a'.repeat(51)],
       });
       expect(result.success).toBe(false);
     });
@@ -144,7 +153,7 @@ describe('Validation Schemas', () => {
   describe('updateOrganizedNoteSchema', () => {
     it('should accept partial updates', () => {
       const result = updateOrganizedNoteSchema.safeParse({
-        category: 'personal',
+        tags: ['personal', 'finance'],
       });
       expect(result.success).toBe(true);
     });

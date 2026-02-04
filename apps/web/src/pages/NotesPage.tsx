@@ -6,12 +6,12 @@ import { FileText, X, Plus } from 'lucide-react';
 export default function NotesPage() {
   const [notes, setNotes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedTag, setSelectedTag] = useState<string>('');
 
-  const loadNotes = async (category?: string) => {
+  const loadNotes = async (tag?: string) => {
     setIsLoading(true);
     try {
-      const data = await notesAPI.list(category);
+      const data = await notesAPI.list(tag);
       setNotes(data);
     } catch (error) {
       console.error('Failed to load notes:', error);
@@ -21,8 +21,8 @@ export default function NotesPage() {
   };
 
   useEffect(() => {
-    loadNotes(selectedCategory || undefined);
-  }, [selectedCategory]);
+    loadNotes(selectedTag || undefined);
+  }, [selectedTag]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this note?')) return;
@@ -35,7 +35,7 @@ export default function NotesPage() {
     }
   };
 
-  const categories = Array.from(new Set(notes.map((n) => n.category).filter(Boolean)));
+  const allTags = Array.from(new Set(notes.flatMap((n) => n.tags || []))).sort();
 
   if (isLoading) {
     return <div className="text-gray-400 text-center py-12">Loading...</div>;
@@ -50,16 +50,16 @@ export default function NotesPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {categories.length > 0 && (
+          {allTags.length > 0 && (
             <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              value={selectedTag}
+              onChange={(e) => setSelectedTag(e.target.value)}
               className="input-accent px-4 py-2"
             >
-              <option value="">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+              <option value="">All Tags</option>
+              {allTags.map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
                 </option>
               ))}
             </select>
@@ -96,13 +96,18 @@ export default function NotesPage() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    {note.category && (
-                      <span className="badge-accent px-3 py-1 shadow-inner text-xs">
-                        {note.category}
-                      </span>
-                    )}
-                  </div>
+                  {note.tags && note.tags.length > 0 && (
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      {note.tags.map((tag: string) => (
+                        <span
+                          key={tag}
+                          className="badge-accent px-3 py-1 shadow-inner text-xs"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   <h3 className="text-lg font-semibold text-gray-100 mb-2">
                     {note.title || 'Untitled'}

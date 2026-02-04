@@ -56,13 +56,13 @@ export const todosAPI = {
 
 // Organized Notes
 export const notesAPI = {
-  list: (category?: string) =>
-    fetchAPI<any[]>(`/notes${category ? `?category=${category}` : ''}`),
-  create: (data: { title: string; content: string; category?: string }) =>
+  list: (tag?: string) =>
+    fetchAPI<any[]>(`/notes${tag ? `?tag=${tag}` : ''}`),
+  create: (data: { title: string; content: string; tags?: string[] }) =>
     fetchAPI('/notes', { method: 'POST', body: JSON.stringify(data) }),
   append: (data: {title: string, contentToAppend: string}) =>
     fetchAPI('/notes/append', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: { title?: string; content?: string; category?: string }) =>
+  update: (id: string, data: { title?: string; content?: string; tags?: string[] }) =>
     fetchAPI(`/notes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => fetchAPI(`/notes/${id}`, { method: 'DELETE' }),
 };
