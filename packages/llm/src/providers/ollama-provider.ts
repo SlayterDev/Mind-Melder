@@ -9,6 +9,11 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
   private client: Ollama;
   private model: string;
   private temperature: number;
+  
+  // Cache converted JSON schemas to avoid repeated conversions
+  private organizedOutputJsonSchema: ReturnType<typeof zodToJsonSchema>;
+  private todaySheetOutputJsonSchema: ReturnType<typeof zodToJsonSchema>;
+  private taskExtractionJsonSchema: object;
 
   constructor(config: ProviderConfig) {
     super();
@@ -17,36 +22,13 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     this.client = new Ollama({ host: baseURL });
     this.model = config.model || 'mistral';
     this.temperature = config.temperature ?? 0.7;
-  }
-
-  async organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean): Promise<OrganizedOutput> {
-    const systemPrompt = this.buildSystemPrompt();
-    const userPrompt = this.buildOrganizePrompt(captures, template, tags, includeDescriptions ?? false);
-
-    // Convert Zod schema to JSON schema for Ollama structured output
-    const jsonSchema = zodToJsonSchema(organizedOutputSchema, 'organizedOutput');
-
-    const response = await this.client.chat({
-      model: this.model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      stream: false,
-      format: jsonSchema,
-      options: {
-        temperature: this.temperature,
-      },
-    });
-
-    return this.parseResponse<OrganizedOutput>(response.message.content, organizedOutputSchema);
-  }
-
-  async extractTasks(text: string): Promise<{ content: string; dueDate?: string }[]> {
-    const prompt = this.buildTaskExtractionPrompt(text);
-
-    // Create a simple JSON schema for task extraction
-    const taskExtractionSchema = {
+    
+    // Pre-convert schemas once during construction
+    this.organizedOutputJsonSchema = zodToJsonSchema(organizedOutputSchema, 'organizedOutput');
+    this.todaySheetOutputJsonSchema = zodToJsonSchema(todaySheetOutputSchema, 'todaySheetOutput');
+    
+    // Define task extraction schema
+    this.taskExtractionJsonSchema = {
       type: 'object',
       properties: {
         todos: {
@@ -63,6 +45,30 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       },
       required: ['todos'],
     };
+  }
+
+  async organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean): Promise<OrganizedOutput> {
+    const systemPrompt = this.buildSystemPrompt();
+    const userPrompt = this.buildOrganizePrompt(captures, template, tags, includeDescriptions ?? false);
+
+    const response = await this.client.chat({
+      model: this.model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      stream: false,
+      format: this.organizedOutputJsonSchema,
+      options: {
+        temperature: this.temperature,
+      },
+    });
+
+    return this.parseResponse<OrganizedOutput>(response.message.content, organizedOutputSchema);
+  }
+
+  async extractTasks(text: string): Promise<{ content: string; dueDate?: string }[]> {
+    const prompt = this.buildTaskExtractionPrompt(text);
 
     const response = await this.client.chat({
       model: this.model,
@@ -71,7 +77,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
         { role: 'user', content: prompt },
       ],
       stream: false,
-      format: taskExtractionSchema,
+      format: this.taskExtractionJsonSchema,
       options: {
         temperature: Math.min(this.temperature, 0.5),
       },
@@ -87,9 +93,6 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     const systemPrompt = this.buildSystemPrompt();
     const userPrompt = this.buildTodaySheetPrompt(input);
 
-    // Convert Zod schema to JSON schema for Ollama structured output
-    const jsonSchema = zodToJsonSchema(todaySheetOutputSchema, 'todaySheetOutput');
-
     const response = await this.client.chat({
       model: this.model,
       messages: [
@@ -97,7 +100,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
         { role: 'user', content: userPrompt },
       ],
       stream: false,
-      format: jsonSchema,
+      format: this.todaySheetOutputJsonSchema,
       options: {
         temperature: Math.min(this.temperature, 0.5),
       },
