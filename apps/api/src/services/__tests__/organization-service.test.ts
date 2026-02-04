@@ -85,7 +85,6 @@ const createMockTag = (overrides: Partial<Tag> = {}): Tag => ({
 });
 
 const createMockLLMOutput = (overrides: Partial<OrganizedOutput> = {}): OrganizedOutput => ({
-  notes: [],
   todos: [{ content: 'Action item', dueDate: '2025-01-20' }],
   ...overrides,
 });
@@ -302,7 +301,6 @@ describe('OrganizationService', () => {
     it('should handle empty todos array gracefully', async () => {
       const captures = [createMockCapture()];
       const llmOutput = createMockLLMOutput({
-        notes: [],
         todos: [],
       });
 
@@ -323,7 +321,6 @@ describe('OrganizationService', () => {
     it('should handle undefined todos array gracefully', async () => {
       const captures = [createMockCapture()];
       const llmOutput = {
-        notes: [],
         todos: undefined as any, // Simulate malformed LLM response
       };
 

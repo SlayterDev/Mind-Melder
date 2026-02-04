@@ -293,19 +293,19 @@ describe('BaseLLMProvider', () => {
 
   describe('parseResponse', () => {
     it('should parse valid JSON', () => {
-      const json = '{"notes": [], "todos": []}';
+      const json = '{"todos": []}';
 
       const result = provider.testParseResponse(json);
 
-      expect(result).toEqual({ notes: [], todos: [] });
+      expect(result).toEqual({ todos: [] });
     });
 
     it('should extract JSON from markdown code blocks', () => {
-      const response = '```json\n{"notes": [{"content": "test"}], "todos": []}\n```';
+      const response = '```json\n{"todos": [{"content": "test"}]}\n```';
 
       const result = provider.testParseResponse(response);
 
-      expect(result).toEqual({ notes: [{ content: 'test' }], todos: [] });
+      expect(result).toEqual({ todos: [{ content: 'test' }] });
     });
 
     it('should handle JSON with surrounding whitespace', () => {
@@ -323,29 +323,27 @@ describe('BaseLLMProvider', () => {
     });
 
     it('should throw on incomplete JSON', () => {
-      const incomplete = '{"notes": [';
+      const incomplete = '{"todos": [';
 
       expect(() => provider.testParseResponse(incomplete)).toThrow('Failed to parse LLM response');
     });
 
     it('should validate against schema when provided', () => {
       const schema = z.object({
-        notes: z.array(z.object({ content: z.string() })),
         todos: z.array(z.object({ content: z.string() })),
       });
-      const validJson = '{"notes": [{"content": "note"}], "todos": []}';
+      const validJson = '{"todos": [{"content": "task"}]}';
 
       const result = provider.testParseResponse(validJson, schema);
 
-      expect(result).toEqual({ notes: [{ content: 'note' }], todos: [] });
+      expect(result).toEqual({ todos: [{ content: 'task' }] });
     });
 
     it('should throw on schema validation failure', () => {
       const schema = z.object({
-        notes: z.array(z.object({ content: z.string() })),
         todos: z.array(z.object({ content: z.string() })),
       });
-      const invalidJson = '{"notes": "not an array", "todos": []}';
+      const invalidJson = '{"todos": "not an array"}';
 
       expect(() => provider.testParseResponse(invalidJson, schema)).toThrow(
         'LLM response validation failed'
@@ -354,10 +352,9 @@ describe('BaseLLMProvider', () => {
 
     it('should throw when required field is missing per schema', () => {
       const schema = z.object({
-        notes: z.array(z.object({ content: z.string() })),
         todos: z.array(z.object({ content: z.string() })),
       });
-      const missingField = '{"notes": []}';
+      const missingField = '{}';
 
       expect(() => provider.testParseResponse(missingField, schema)).toThrow(
         'LLM response validation failed'
@@ -385,43 +382,32 @@ describe('BaseLLMProvider', () => {
       expect(result.sections.must_do_today).toHaveLength(1);
     });
 
-    it('should validate organize output with notes and todos', () => {
+    it('should validate organize output with todos', () => {
       const schema = z.object({
-        notes: z.array(z.object({
-          content: z.string(),
-          tags: z.array(z.string()).optional(),
-        })),
         todos: z.array(z.object({
           content: z.string(),
           dueDate: z.string().optional(),
         })),
       });
-      const validJson = '{"notes": [{"content": "Note 1", "tags": ["work"]}], "todos": [{"content": "Task 1", "dueDate": "2025-01-20"}]}';
+      const validJson = '{"todos": [{"content": "Task 1", "dueDate": "2025-01-20"}]}';
 
       const result = provider.testParseResponse(validJson, schema);
 
-      expect(result.notes).toHaveLength(1);
-      expect(result.notes[0].content).toBe('Note 1');
       expect(result.todos).toHaveLength(1);
       expect(result.todos[0].content).toBe('Task 1');
     });
 
-    it('should allow empty notes and todos arrays', () => {
+    it('should allow empty todos array', () => {
       const schema = z.object({
-        notes: z.array(z.object({
-          content: z.string(),
-          tags: z.array(z.string()).optional(),
-        })),
         todos: z.array(z.object({
           content: z.string(),
           dueDate: z.string().optional(),
         })),
       });
-      const validJson = '{"notes": [], "todos": []}';
+      const validJson = '{"todos": []}';
 
       const result = provider.testParseResponse(validJson, schema);
 
-      expect(result.notes).toEqual([]);
       expect(result.todos).toEqual([]);
     });
   });

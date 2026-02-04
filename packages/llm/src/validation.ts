@@ -2,12 +2,6 @@ import { z } from 'zod';
 
 // Validation schema for OrganizedOutput
 export const organizedOutputSchema = z.object({
-  notes: z.array(
-    z.object({
-      content: z.string(),
-      tags: z.array(z.string()).optional().default([]),
-    })
-  ),
   todos: z.array(
     z.object({
       content: z.string(),

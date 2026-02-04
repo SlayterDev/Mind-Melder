@@ -2,10 +2,6 @@ import type { Capture, Template, Todo, Tag } from 'types';
 
 // Organization result from LLM
 export interface OrganizedOutput {
-  notes: {
-    content: string;
-    tags?: string[];
-  }[];
   todos: {
     content: string;
     dueDate?: string; // ISO date string
