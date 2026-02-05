@@ -51,9 +51,7 @@ jobs:
           ELECTRON: 'true'
 
       - name: Build Electron app
-        run: pnpm --filter web exec electron-builder ${{ matrix.build_args }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm --filter web exec electron-builder ${{ matrix.build_args }} --publish never
 
       - name: Upload artifacts (macOS)
         if: matrix.platform == 'mac'
