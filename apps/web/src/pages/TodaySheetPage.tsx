@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -14,6 +14,7 @@ import QuickCaptureInput from '../components/QuickCaptureInput';
 import TemplateSelector from '../components/TemplateSelector';
 import { useInboxCount } from '../api/queries';
 import { ClipboardList, Sparkles, Flame, Target, Lightbulb, Package, Loader2 } from 'lucide-react';
+import { triggerSmallConfetti, triggerLargeConfetti } from '../utils/confetti';
 
 type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
 type FeedbackVote = 'thumbs_up' | 'thumbs_down' | 'none';
@@ -56,6 +57,10 @@ export default function TodaySheetPage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
   const { data: inboxCount = 0 } = useInboxCount();
 
+  // Track previous completion states to detect when completion happens
+  const prevMustDoCompletedRef = useRef(false);
+  const prevAllCompletedRef = useRef(false);
+
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -68,6 +73,9 @@ export default function TodaySheetPage() {
       const data = await todaySheetAPI.get();
       console.log('Today sheet data:', data);
       setSheet(data);
+      // Reset confetti tracking when loading a new sheet
+      prevMustDoCompletedRef.current = false;
+      prevAllCompletedRef.current = false;
     } catch (error: any) {
       if (error.message.includes('404')) {
         setSheet(null);
@@ -86,6 +94,9 @@ export default function TodaySheetPage() {
       try {
         const { sheet: newSheet } = await todaySheetAPI.generate(selectedTemplateId);
         setSheet(newSheet);
+        // Reset confetti tracking when generating a new sheet
+        prevMustDoCompletedRef.current = false;
+        prevAllCompletedRef.current = false;
         // Show success animation
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 1000);
@@ -115,6 +126,17 @@ export default function TodaySheetPage() {
   const handleToggleComplete = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
 
+    // Check completion state before update
+    const wasMustDoCompleted = sheet
+      ? sheet.sections.must_do_today.length > 0 &&
+        sheet.sections.must_do_today.every((t) => t.status === 'completed')
+      : false;
+    const wasAllCompleted = sheet
+      ? Object.values(sheet.sections).every((section) =>
+          section.length === 0 || section.every((t) => t.status === 'completed')
+        )
+      : false;
+
     // Optimistic update
     if (sheet) {
       const updatedSheet = { ...sheet };
@@ -125,6 +147,33 @@ export default function TodaySheetPage() {
         );
       });
       setSheet(updatedSheet);
+
+      // Check completion state after update
+      const isMustDoCompleted =
+        updatedSheet.sections.must_do_today.length > 0 &&
+        updatedSheet.sections.must_do_today.every((t) => t.status === 'completed');
+      const isAllCompleted = Object.values(updatedSheet.sections).every((section) =>
+        section.length === 0 || section.every((t) => t.status === 'completed')
+      );
+
+      // Trigger confetti when completing (not when uncompleting)
+      if (newStatus === 'completed') {
+        // Check if we just completed all must-do tasks
+        if (isMustDoCompleted && !wasMustDoCompleted && !prevMustDoCompletedRef.current) {
+          triggerSmallConfetti();
+          prevMustDoCompletedRef.current = true;
+        }
+
+        // Check if we just completed the entire today sheet
+        if (isAllCompleted && !wasAllCompleted && !prevAllCompletedRef.current) {
+          triggerLargeConfetti();
+          prevAllCompletedRef.current = true;
+        }
+      } else {
+        // Reset flags when uncompleting
+        prevMustDoCompletedRef.current = false;
+        prevAllCompletedRef.current = false;
+      }
     }
 
     // API call
