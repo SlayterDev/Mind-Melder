@@ -123,19 +123,27 @@ export default function TodaySheetPage() {
     },
   });
 
+  // Helper function to check completion states
+  const checkCompletionStates = (
+    sheetData: TodaySheet | null
+  ): { isMustDoCompleted: boolean; isAllCompleted: boolean } => {
+    if (!sheetData) {
+      return { isMustDoCompleted: false, isAllCompleted: false };
+    }
+
+    const isMustDoCompleted =
+      sheetData.sections.must_do_today.length > 0 &&
+      sheetData.sections.must_do_today.every((t) => t.status === 'completed');
+
+    const isAllCompleted = Object.values(sheetData.sections).every((section) =>
+      section.length === 0 || section.every((t) => t.status === 'completed')
+    );
+
+    return { isMustDoCompleted, isAllCompleted };
+  };
+
   const handleToggleComplete = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
-
-    // Check completion state before update
-    const wasMustDoCompleted = sheet
-      ? sheet.sections.must_do_today.length > 0 &&
-        sheet.sections.must_do_today.every((t) => t.status === 'completed')
-      : false;
-    const wasAllCompleted = sheet
-      ? Object.values(sheet.sections).every((section) =>
-          section.length === 0 || section.every((t) => t.status === 'completed')
-        )
-      : false;
 
     // Optimistic update
     if (sheet) {
@@ -148,25 +156,21 @@ export default function TodaySheetPage() {
       });
       setSheet(updatedSheet);
 
-      // Check completion state after update
-      const isMustDoCompleted =
-        updatedSheet.sections.must_do_today.length > 0 &&
-        updatedSheet.sections.must_do_today.every((t) => t.status === 'completed');
-      const isAllCompleted = Object.values(updatedSheet.sections).every((section) =>
-        section.length === 0 || section.every((t) => t.status === 'completed')
-      );
-
       // Trigger confetti when completing (not when uncompleting)
       if (newStatus === 'completed') {
+        // Only check completion states when completing a task
+        const beforeStates = checkCompletionStates(sheet);
+        const afterStates = checkCompletionStates(updatedSheet);
+
         // Check if we just completed the entire today sheet
-        if (isAllCompleted && !wasAllCompleted && !prevAllCompletedRef.current) {
+        if (afterStates.isAllCompleted && !beforeStates.isAllCompleted && !prevAllCompletedRef.current) {
           triggerLargeConfetti();
           prevAllCompletedRef.current = true;
           // Also mark must-do as completed to avoid double confetti
           prevMustDoCompletedRef.current = true;
         }
         // Check if we just completed all must-do tasks (but not the entire sheet)
-        else if (isMustDoCompleted && !wasMustDoCompleted && !prevMustDoCompletedRef.current) {
+        else if (afterStates.isMustDoCompleted && !beforeStates.isMustDoCompleted && !prevMustDoCompletedRef.current) {
           triggerSmallConfetti();
           prevMustDoCompletedRef.current = true;
         }
