@@ -66,8 +66,12 @@ export class OrganizationService {
     const createdTodos = await Promise.all(
       todos.map((todo) =>
         this.todosRepo.create({
-          content: todo.content,
+          content: todo.title,
+          description: todo.description,
           dueDate: todo.dueDate ? new Date(todo.dueDate) : undefined,
+          timeEstimate: todo.timeEstimate,
+          priorityScore: todo.priorityScore,
+          tags: todo.tags,
           userId,
         })
       )

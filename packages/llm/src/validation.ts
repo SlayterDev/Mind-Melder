@@ -1,15 +1,5 @@
 import { z } from 'zod';
 
-// Validation schema for OrganizedOutput
-export const organizedOutputSchema = z.object({
-  todos: z.array(
-    z.object({
-      content: z.string(),
-      dueDate: z.string().optional(),
-    })
-  ),
-});
-
 // Validation schema for TodaySheetTaskItem
 export const todaySheetTaskItemSchema = z.object({
   title: z.string(),
@@ -20,6 +10,11 @@ export const todaySheetTaskItemSchema = z.object({
   sourceType: z.enum(['capture', 'todo']),
   sourceId: z.string().uuid(),
   dueDate: z.string().optional(),
+});
+
+// Validation schema for OrganizedOutput
+export const organizedOutputSchema = z.object({
+  todos: z.array(todaySheetTaskItemSchema)
 });
 
 // Validation schema for TodaySheetOutput

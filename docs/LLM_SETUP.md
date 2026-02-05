@@ -6,9 +6,17 @@ This guide explains how to configure and use the LLM-powered organization featur
 
 Mind Melder uses Large Language Models (LLMs) to automatically organize your captured notes into structured content and extract actionable todos. The system supports three providers:
 
-- **OpenAI** (GPT-4o-mini, GPT-4, etc.)
-- **Anthropic** (Claude 3.5 Sonnet, Claude 3 Opus, etc.)
-- **Ollama** (Local models like Llama 3.1, Mistral, etc.)
+- **OpenAI** (GPT-4o-mini, GPT-4, etc.) - Uses native structured outputs
+- **Anthropic** (Claude 3.5 Sonnet, Claude 3 Opus, etc.) - Uses prompt engineering for JSON
+- **Ollama** (Local models like Mistral, Llama 3.1, etc.) - **Now uses structured outputs (JSON schema)** for improved reliability
+
+### Recent Improvements
+
+**Ollama Integration (v1.1)**
+- Migrated from raw HTTP to official Ollama Node.js SDK
+- Implemented structured outputs using JSON Schema for better consistency
+- Reduced hallucinations and malformed responses
+- Automatic validation using Zod schemas
 
 ## Configuration
 
@@ -53,10 +61,13 @@ OLLAMA_BASE_URL=http://localhost:11434
 ```
 
 1. Install Ollama: https://ollama.com/download
-2. Pull a model: `ollama pull llama3.1`
+2. Pull a model: `ollama pull mistral` (or `llama3.1`, `qwen2.5`, etc.)
 3. Start Ollama (usually runs automatically)
+4. Verify with: `ollama list` to see installed models
 
-Default model: `llama3.1`
+Default model: `mistral`
+
+**Important:** Ollama now uses structured outputs (JSON schema) for better reliability. Make sure you're using a recent version of Ollama (v0.1.26+) that supports the `format` parameter with JSON schemas.
 
 ### 3. Optional: Override Model
 
@@ -167,7 +178,9 @@ Create a template first using the `/api/v1/templates` endpoint.
 
 1. Check if Ollama is running: `ollama list`
 2. Verify the base URL matches: `http://localhost:11434`
-3. Make sure you've pulled a model: `ollama pull llama3.1`
+3. Make sure you've pulled a model: `ollama pull mistral`
+4. Ensure you're using Ollama v0.1.26+ (structured outputs support)
+5. Test with: `cd packages/llm && pnpm tsx test-ollama-structured.ts`
 
 ### Poor Organization Results
 

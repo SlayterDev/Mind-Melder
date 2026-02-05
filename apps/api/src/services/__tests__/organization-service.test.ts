@@ -84,8 +84,19 @@ const createMockTag = (overrides: Partial<Tag> = {}): Tag => ({
   ...overrides,
 });
 
+const createMockTodoItem = (overrides: Partial<OrganizedOutput['todos'][0]> = {}): OrganizedOutput['todos'][0] => ({
+  title: 'Action item',
+  timeEstimate: 'medium',
+  priorityScore: 50,
+  tags: [],
+  sourceType: 'capture',
+  sourceId: 'capture-1',
+  dueDate: '2025-01-20',
+  ...overrides,
+});
+
 const createMockLLMOutput = (overrides: Partial<OrganizedOutput> = {}): OrganizedOutput => ({
-  todos: [{ content: 'Action item', dueDate: '2025-01-20' }],
+  todos: [createMockTodoItem()],
   ...overrides,
 });
 
@@ -228,8 +239,8 @@ describe('OrganizationService', () => {
       const captures = [createMockCapture()];
       const llmOutput = createMockLLMOutput({
         todos: [
-          { content: 'Todo 1', dueDate: '2025-01-20' },
-          { content: 'Todo 2' },
+          createMockTodoItem({ title: 'Todo 1', dueDate: '2025-01-20' }),
+          createMockTodoItem({ title: 'Todo 2', dueDate: undefined }),
         ],
       });
 
@@ -244,12 +255,20 @@ describe('OrganizationService', () => {
       expect(mockRepos.todos.create).toHaveBeenCalledTimes(2);
       expect(mockRepos.todos.create).toHaveBeenCalledWith({
         content: 'Todo 1',
+        description: undefined,
         dueDate: expect.any(Date),
+        timeEstimate: 'medium',
+        priorityScore: 50,
+        tags: [],
         userId,
       });
       expect(mockRepos.todos.create).toHaveBeenCalledWith({
         content: 'Todo 2',
+        description: undefined,
         dueDate: undefined,
+        timeEstimate: 'medium',
+        priorityScore: 50,
+        tags: [],
         userId,
       });
       expect(result.todosCount).toBe(2);
@@ -281,7 +300,7 @@ describe('OrganizationService', () => {
     it('should return correct counts in result', async () => {
       const captures = [createMockCapture(), createMockCapture({ id: 'capture-2' })];
       const llmOutput = createMockLLMOutput({
-        todos: [{ content: 'Todo 1' }],
+        todos: [createMockTodoItem({ title: 'Todo 1' })],
       });
 
       mockRepos.captures.findUnorganized.mockResolvedValue(captures);
