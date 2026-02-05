@@ -158,16 +158,17 @@ export default function TodaySheetPage() {
 
       // Trigger confetti when completing (not when uncompleting)
       if (newStatus === 'completed') {
-        // Check if we just completed all must-do tasks
-        if (isMustDoCompleted && !wasMustDoCompleted && !prevMustDoCompletedRef.current) {
-          triggerSmallConfetti();
-          prevMustDoCompletedRef.current = true;
-        }
-
         // Check if we just completed the entire today sheet
         if (isAllCompleted && !wasAllCompleted && !prevAllCompletedRef.current) {
           triggerLargeConfetti();
           prevAllCompletedRef.current = true;
+          // Also mark must-do as completed to avoid double confetti
+          prevMustDoCompletedRef.current = true;
+        }
+        // Check if we just completed all must-do tasks (but not the entire sheet)
+        else if (isMustDoCompleted && !wasMustDoCompleted && !prevMustDoCompletedRef.current) {
+          triggerSmallConfetti();
+          prevMustDoCompletedRef.current = true;
         }
       } else {
         // Reset flags when uncompleting
