@@ -144,7 +144,9 @@ export default function TodaySheetPage() {
       return section.length === 0 || section.every((t) => t.status === 'completed');
     });
 
-    const isAllCompleted = isMustDoCompleted && otherSectionsCompleted;
+    // All sections complete if: (must_do_today is complete OR empty) AND other sections complete
+    const isAllCompleted =
+      (isMustDoCompleted || sheetData.sections.must_do_today.length === 0) && otherSectionsCompleted;
 
     return { isMustDoCompleted, isAllCompleted };
   };
