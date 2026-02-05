@@ -123,9 +123,29 @@ export class TodaySheetService {
       overflow: [],
     };
 
+    // Build sets of valid IDs for validation
+    const validCaptureIds = new Set(captures.map(c => c.id));
+    const validTodoIds = new Set(existingTodos.map(t => t.id));
+
     for (const [section, items] of Object.entries(aiResult.sections)) {
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
+
+        // Validate sourceId exists in our input data
+        if (item.sourceType === 'capture' && !validCaptureIds.has(item.sourceId)) {
+          console.warn(
+            `Skipping item "${item.title}": LLM returned invalid capture sourceId "${item.sourceId}" ` +
+            `(not in ${validCaptureIds.size} valid captures)`
+          );
+          continue;
+        }
+        if (item.sourceType === 'todo' && !validTodoIds.has(item.sourceId)) {
+          console.warn(
+            `Skipping item "${item.title}": LLM returned invalid todo sourceId "${item.sourceId}" ` +
+            `(not in ${validTodoIds.size} valid todos)`
+          );
+          continue;
+        }
 
         // Check if this todo already exists (from existingTodos)
         let todo;

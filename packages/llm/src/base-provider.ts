@@ -98,6 +98,7 @@ EXISTING TODOS (${input.existingTodos.length}):
 ${input.existingTodos.map((t, i) =>
   `${i + 1}. ID: ${t.id} | ${t.content}${t.dueDate ? ` (Due: ${new Date(t.dueDate).toLocaleDateString()})` : ''}`
 ).join('\n')}
+
 YOUR TASK:
 1. Extract actionable tasks from captures (skip pure notes/info)
 2. Transform captures into clear, actionable task titles:
@@ -146,7 +147,7 @@ CRITICAL RULE FOR DUE DATES:
 - Look for semantic clues in the capture/todo content for due dates
 - If no due date is indicated, or the capture is not clearly urgent, leave the dueDate field null or omit it
 
-OUTPUT FORMAT (valid JSON only):
+OUTPUT FORMAT (valid JSON only, use as a reference for structure and field names, actual content will vary based on input):
 {
   "summary": "Focus on completing security PR review and finalizing Q4 report.",
   "sections": {
@@ -158,7 +159,7 @@ OUTPUT FORMAT (valid JSON only):
         "priorityScore": 95,
         "tags": ["security", "code-review"],
         "sourceType": "capture",
-        "sourceId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "sourceId": "<INSERT_ID_FROM_LIST_ABOVE>",
         "dueDate": "${input.context.currentDate}"
       }
     ],

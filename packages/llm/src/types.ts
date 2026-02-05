@@ -1,13 +1,5 @@
 import type { Capture, Template, Todo, Tag } from 'types';
 
-// Organization result from LLM
-export interface OrganizedOutput {
-  todos: {
-    content: string;
-    dueDate?: string; // ISO date string
-  }[];
-}
-
 // Today Sheet types
 export interface TodaySheetInput {
   captures: Capture[];
@@ -43,6 +35,11 @@ export interface TodaySheetOutput {
     overflow: TodaySheetTaskItem[];
   };
   totalEstimatedMinutes: number;
+}
+
+// Organization result from LLM
+export interface OrganizedOutput {
+  todos: TodaySheetTaskItem[];
 }
 
 // LLM Provider interface
