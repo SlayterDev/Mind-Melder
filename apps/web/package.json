@@ -2,6 +2,10 @@
   "name": "web",
   "version": "1.0.0",
   "private": true,
+  "author": {
+    "name": "SlayterDev",
+    "email": "bslayter@protonmail.com"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/SlayterDev/Mind-Melder.git"
