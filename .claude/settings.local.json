@@ -50,7 +50,8 @@
       "Bash(ELECTRON=true pnpm vite build:*)",
       "Bash(timeout 5 sh:*)",
       "Bash(git add:*)",
-      "Bash(npx vitest run:*)"
+      "Bash(npx vitest run:*)",
+      "Bash(git remote get-url:*)"
     ]
   }
 }
