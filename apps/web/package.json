@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "electron:dev": "ELECTRON=true vite",
     "electron:build": "ELECTRON=true vite build && electron-builder",
-    "electron:build:mac": "ELECTRON=true vite build && electron-builder --mac"
+    "electron:build:mac": "ELECTRON=true vite build && electron-builder --mac",
+    "electron:build:win": "ELECTRON=true vite build && electron-builder --win",
+    "electron:build:linux": "ELECTRON=true vite build && electron-builder --linux"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
