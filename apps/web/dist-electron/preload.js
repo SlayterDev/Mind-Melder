@@ -1,1 +1,0 @@
-"use strict";const e=require("electron");e.contextBridge.exposeInMainWorld("electronAPI",{closeQuickCapture:()=>e.ipcRenderer.invoke("close-quick-capture"),getPlatform:()=>e.ipcRenderer.invoke("get-platform"),isElectron:!0});

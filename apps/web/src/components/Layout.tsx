@@ -3,6 +3,8 @@ import { ReactNode, useState } from 'react';
 import { useInboxCount } from '../api/queries';
 import { PenLine, CalendarDays, Inbox, FileText, ListChecks, Layers, Cog, Menu, X } from 'lucide-react';
 
+const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
+
 interface LayoutProps {
   children: ReactNode;
 }
@@ -31,7 +33,14 @@ export default function Layout({ children }: LayoutProps) {
     <div className="flex h-screen bg-gray-950 text-gray-100 overflow-hidden">
       {/* Sidebar - Desktop */}
       <aside className="hidden md:block w-64 bg-gray-900 border-r border-gray-800 shadow-2xl flex-shrink-0">
-        <div className="p-6">
+        {/* Draggable title bar region for Electron */}
+        {isElectron && (
+          <div
+            className="h-8 w-full"
+            style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+          />
+        )}
+        <div className={`p-6 ${isElectron ? 'pt-2' : ''}`}>
           <h1 className="text-2xl font-bold text-gray-100">Mind Melder</h1>
           <p className="text-sm text-gray-400 mt-1">Quick Capture & AI Organizer</p>
         </div>
@@ -67,11 +76,15 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Mobile Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-900 border-b border-gray-800 z-50">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div
+          className="flex items-center justify-between px-4 py-3"
+          style={isElectron ? { WebkitAppRegion: 'drag' } as React.CSSProperties : undefined}
+        >
           <h1 className="text-lg font-bold text-gray-100">Mind Melder</h1>
           <button
             onClick={() => setIsDrawerOpen(true)}
             className="p-2 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800"
+            style={isElectron ? { WebkitAppRegion: 'no-drag' } as React.CSSProperties : undefined}
           >
             <Menu className="w-6 h-6" />
           </button>
@@ -134,6 +147,13 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Main content */}
       <main className="flex-1 overflow-auto pt-14 md:pt-0">
+        {/* Draggable title bar region for Electron - main content area */}
+        {isElectron && (
+          <div
+            className="hidden md:block h-8 w-full sticky top-0 bg-gray-950 z-10"
+            style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+          />
+        )}
         <div className="max-w-5xl mx-auto p-4 md:p-8">{children}</div>
       </main>
     </div>

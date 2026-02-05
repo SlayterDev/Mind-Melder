@@ -54,3 +54,4 @@ tmp/
 
 # Electron builds
 release/
+dist-electron/
