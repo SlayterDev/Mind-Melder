@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { settingsAPI, type Settings } from '../api/client';
-import { Cog, ChevronDown, ChevronUp, Server, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { settingsAPI, ollamaAPI, type Settings, type OllamaModel } from '../api/client';
+import { Cog, ChevronDown, ChevronUp, Server, Check, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { getServerUrl, setApiUrl, testConnection } from '../api/config';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
@@ -32,14 +32,7 @@ const PROVIDER_MODELS: Record<string, { label: string; models: { value: string; 
   },
   ollama: {
     label: 'Ollama (Local)',
-    models: [
-      { value: '', label: 'Default (mistral)' },
-      { value: 'mistral', label: 'Mistral' },
-      { value: 'llama3.1', label: 'Llama 3.1' },
-      { value: 'llama3.1:70b', label: 'Llama 3.1 70B' },
-      { value: 'codellama', label: 'Code Llama' },
-      { value: 'mixtral', label: 'Mixtral' },
-    ],
+    models: [], // Populated dynamically
   },
 };
 
@@ -62,6 +55,39 @@ export default function SettingsPage() {
   // Track which fields are currently being edited to avoid overwriting user input
   const [isEditingOllamaUrl, setIsEditingOllamaUrl] = useState(false);
   const [isEditingSchedule, setIsEditingSchedule] = useState(false);
+
+  // Ollama models state
+  const [ollamaModels, setOllamaModels] = useState<OllamaModel[]>([]);
+  const [isLoadingOllamaModels, setIsLoadingOllamaModels] = useState(false);
+  const [ollamaModelsError, setOllamaModelsError] = useState<string | null>(null);
+
+  const fetchOllamaModels = useCallback(async (autoSelectFirst = false) => {
+    setIsLoadingOllamaModels(true);
+    setOllamaModelsError(null);
+    try {
+      const response = await ollamaAPI.listModels();
+      setOllamaModels(response.models);
+      if (response.error) {
+        setOllamaModelsError(response.error);
+      }
+      // Auto-select first model if none selected and models available
+      if (autoSelectFirst && response.models.length > 0 && !settings?.llmModel) {
+        handleUpdate({ llmModel: response.models[0].name });
+      }
+    } catch (err) {
+      setOllamaModelsError('Failed to fetch Ollama models');
+      console.error('Failed to fetch Ollama models:', err);
+    } finally {
+      setIsLoadingOllamaModels(false);
+    }
+  }, [settings?.llmModel]);
+
+  // Fetch Ollama models when provider is ollama
+  useEffect(() => {
+    if (settings?.llmProvider === 'ollama') {
+      fetchOllamaModels(true); // Auto-select first model if none selected
+    }
+  }, [settings?.llmProvider, fetchOllamaModels]);
 
   const handleTestConnection = async () => {
     setIsTesting(true);
@@ -195,18 +221,57 @@ export default function SettingsPage() {
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Model
               </label>
-              <select
-                value={settings.llmModel || ''}
-                onChange={(e) => handleUpdate({ llmModel: e.target.value || null })}
-                disabled={isSaving}
-                className="input-accent w-full max-w-md"
-              >
-                {currentProvider.models.map((model) => (
-                  <option key={model.value} value={model.value}>
-                    {model.label}
-                  </option>
-                ))}
-              </select>
+              {settings.llmProvider === 'ollama' ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2 items-center">
+                    <select
+                      value={settings.llmModel || ''}
+                      onChange={(e) => handleUpdate({ llmModel: e.target.value || null })}
+                      disabled={isSaving || isLoadingOllamaModels}
+                      className="input-accent w-full max-w-md"
+                    >
+                      {ollamaModels.length === 0 && (
+                        <option value="">No models found</option>
+                      )}
+                      {ollamaModels.map((model) => (
+                        <option key={model.name} value={model.name}>
+                          {model.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => fetchOllamaModels()}
+                      disabled={isLoadingOllamaModels}
+                      className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+                      title="Refresh models"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isLoadingOllamaModels ? 'animate-spin' : ''}`} />
+                    </button>
+                  </div>
+                  {isLoadingOllamaModels && (
+                    <p className="text-xs text-gray-500">Loading models from Ollama...</p>
+                  )}
+                  {ollamaModelsError && (
+                    <p className="text-xs text-amber-400">{ollamaModelsError}</p>
+                  )}
+                  {!isLoadingOllamaModels && !ollamaModelsError && ollamaModels.length === 0 && (
+                    <p className="text-xs text-gray-500">No models found. Pull a model with: ollama pull llama3.1</p>
+                  )}
+                </div>
+              ) : (
+                <select
+                  value={settings.llmModel || ''}
+                  onChange={(e) => handleUpdate({ llmModel: e.target.value || null })}
+                  disabled={isSaving}
+                  className="input-accent w-full max-w-md"
+                >
+                  {currentProvider.models.map((model) => (
+                    <option key={model.value} value={model.value}>
+                      {model.label}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
         </div>
@@ -258,11 +323,13 @@ export default function SettingsPage() {
                     value={localOllamaUrl}
                     onChange={(e) => setLocalOllamaUrl(e.target.value)}
                     onFocus={() => setIsEditingOllamaUrl(true)}
-                    onBlur={() => {
+                    onBlur={async () => {
                       setIsEditingOllamaUrl(false);
                       const currentValue = settings.ollamaBaseUrl ?? DEFAULT_OLLAMA_URL;
                       if (localOllamaUrl !== currentValue) {
-                        handleUpdate({ ollamaBaseUrl: localOllamaUrl });
+                        await handleUpdate({ ollamaBaseUrl: localOllamaUrl });
+                        // Refresh models after URL change
+                        fetchOllamaModels();
                       }
                     }}
                     disabled={isSaving}

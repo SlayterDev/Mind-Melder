@@ -126,6 +126,22 @@ export const todaySheetAPI = {
     }),
 };
 
+// Ollama
+export interface OllamaModel {
+  name: string;
+  modifiedAt: string;
+  size: number;
+}
+
+export interface OllamaModelsResponse {
+  models: OllamaModel[];
+  error?: string;
+}
+
+export const ollamaAPI = {
+  listModels: () => fetchAPI<OllamaModelsResponse>('/ollama/models'),
+};
+
 // Settings
 export interface Settings {
   id: string;
