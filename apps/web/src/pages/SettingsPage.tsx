@@ -235,7 +235,7 @@ export default function SettingsPage() {
                       )}
                       {ollamaModels.map((model) => (
                         <option key={model.name} value={model.name}>
-                          {model.name}
+                          {model.name} - {(model.size / (1024 * 1024 * 1024)).toFixed(2)} GB
                         </option>
                       ))}
                     </select>
