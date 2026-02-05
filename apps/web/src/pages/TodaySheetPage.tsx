@@ -156,6 +156,9 @@ export default function TodaySheetPage() {
 
     // Optimistic update
     if (sheet) {
+      // Capture completion state BEFORE mutation (shallow copy shares sections reference)
+      const beforeStates = newStatus === 'completed' ? checkCompletionStates(sheet) : null;
+
       const updatedSheet = { ...sheet };
       Object.keys(updatedSheet.sections).forEach((sectionKey) => {
         const section = sectionKey as keyof typeof updatedSheet.sections;
@@ -166,9 +169,7 @@ export default function TodaySheetPage() {
       setSheet(updatedSheet);
 
       // Trigger confetti when completing (not when uncompleting)
-      if (newStatus === 'completed') {
-        // Only check completion states when completing a task
-        const beforeStates = checkCompletionStates(sheet);
+      if (newStatus === 'completed' && beforeStates) {
         const afterStates = checkCompletionStates(updatedSheet);
 
         // Check if we just completed the entire today sheet
