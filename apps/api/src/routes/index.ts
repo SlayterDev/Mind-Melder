@@ -5,3 +5,4 @@ export * from './templates.js';
 export * from './settings.js';
 export * from './tags.js';
 export * from './search.js';
+export * from './ollama.js';

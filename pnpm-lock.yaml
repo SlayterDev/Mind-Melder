@@ -50,6 +50,9 @@ importers:
       llm:
         specifier: workspace:*
         version: link:../../packages/llm
+      ollama:
+        specifier: ^0.5.13
+        version: 0.5.18
       types:
         specifier: workspace:*
         version: link:../../packages/types
@@ -3017,6 +3020,9 @@ packages:
 
   obug@2.1.1:
     resolution: {integrity: sha512-uTqF9MuPraAQ+IsnPf366RG4cP9RtUi7MLO1N3KEc+wb0a6yKpeL0lmk2IB1jY5KHPAlTc6T/JRdC/YqxHNwkQ==}
+
+  ollama@0.5.18:
+    resolution: {integrity: sha512-lTFqTf9bo7Cd3hpF6CviBe/DEhewjoZYd9N/uCe7O20qYTvGqrNOFOBDj3lbZgFWHUgDv5EeyusYxsZSLS8nvg==}
 
   ollama@0.6.3:
     resolution: {integrity: sha512-KEWEhIqE5wtfzEIZbDCLH51VFZ6Z3ZSa6sIOg/E/tBV8S51flyqBOXi+bRxlOYKDf8i327zG9eSTb8IJxvm3Zg==}
@@ -6775,6 +6781,10 @@ snapshots:
     optional: true
 
   obug@2.1.1: {}
+
+  ollama@0.5.18:
+    dependencies:
+      whatwg-fetch: 3.6.20
 
   ollama@0.6.3:
     dependencies:
