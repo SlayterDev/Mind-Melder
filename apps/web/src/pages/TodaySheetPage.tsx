@@ -48,6 +48,11 @@ interface TodaySheet {
   todosIncluded: number;
 }
 
+interface CompletionStates {
+  isMustDoCompleted: boolean;
+  isAllCompleted: boolean;
+}
+
 export default function TodaySheetPage() {
   const [sheet, setSheet] = useState<TodaySheet | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -124,9 +129,7 @@ export default function TodaySheetPage() {
   });
 
   // Helper function to check completion states
-  const checkCompletionStates = (
-    sheetData: TodaySheet | null
-  ): { isMustDoCompleted: boolean; isAllCompleted: boolean } => {
+  const checkCompletionStates = (sheetData: TodaySheet | null): CompletionStates => {
     if (!sheetData) {
       return { isMustDoCompleted: false, isAllCompleted: false };
     }
@@ -135,9 +138,13 @@ export default function TodaySheetPage() {
       sheetData.sections.must_do_today.length > 0 &&
       sheetData.sections.must_do_today.every((t) => t.status === 'completed');
 
-    const isAllCompleted = Object.values(sheetData.sections).every((section) =>
-      section.length === 0 || section.every((t) => t.status === 'completed')
-    );
+    // Check other sections (excluding must_do_today which we already checked)
+    const otherSectionsCompleted = ['likely_today', 'opportunistic', 'overflow'].every((sectionKey) => {
+      const section = sheetData.sections[sectionKey as keyof typeof sheetData.sections];
+      return section.length === 0 || section.every((t) => t.status === 'completed');
+    });
+
+    const isAllCompleted = isMustDoCompleted && otherSectionsCompleted;
 
     return { isMustDoCompleted, isAllCompleted };
   };
