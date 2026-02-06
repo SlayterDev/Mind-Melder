@@ -6,10 +6,15 @@ A self-hosted productivity tool that captures quick notes throughout the day and
 
 ## Documentation
 
-- **[PROJECT_SPEC.md](./PROJECT_SPEC.md)** – Complete feature specification (One Prompt Template format)
-- **[AGENT_PROMPT.md](./AGENT_PROMPT.md)** – Engineering guidelines and constraints for Claude Code
-- **[TECH_STACK.md](./TECH_STACK.md)** – Technology choices and architecture decisions
+- **[PROJECT_SPEC.md](./docs/PROJECT_SPEC.md)** – Complete feature specification (One Prompt Template format)
+- **[AGENT_PROMPT.md](./docs/AGENT_PROMPT.md)** – Engineering guidelines and constraints for Claude Code
+- **[TECH_STACK.md](./docs/TECH_STACK.md)** – Technology choices and architecture decisions
 - **[TAGS.md](./docs/TAGS.md)** – Global tag management system documentation
+- **[TODAY_SHEET.md](./docs/TODAY_SHEET.md)** – AI-powered daily planning feature
+- **[SEARCH.md](./docs/SEARCH.md)** – Full-text search capabilities
+- **[FEEDBACK_API.md](./docs/FEEDBACK_API.md)** – User feedback on AI-generated todos
+- **[ELECTRON_DESKTOP.md](./docs/ELECTRON_DESKTOP.md)** – Desktop application setup
+- **[LLM_SETUP.md](./docs/LLM_SETUP.md)** – LLM provider configuration guide
 
 ---
 
@@ -83,12 +88,14 @@ Scripts in `./scripts` are available as manual Tilt resources and do not run on 
 
 - ⚡ Quick capture with keyboard shortcut (Cmd/Ctrl+Shift+N)
 - 🤖 LLM-powered organization (OpenAI, Anthropic, Ollama)
+- 📋 Today Sheet - AI-generated daily prioritized plan
 - 🏷️ Global tag management for AI-guided categorization
+- 🔍 Full-text search across captures, notes, and todos
 - 📝 User-defined templates for personalized structure
 - ✅ Automatic task extraction from natural language
-- 📅 Scheduled batch organization (future)
-- 📤 Markdown export for portability (future)
-- 🐳 Self-hosted via Docker Compose
+- 👍 Feedback system for AI-generated todos
+- 💻 Desktop app via Electron (macOS, Windows, Linux)
+- 🐳 Self-hosted via Docker Compose or Tilt
 
 ---
 
@@ -98,9 +105,7 @@ Set environment variables in `.env`:
 
 ```env
 # Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/capture
-# or for SQLite:
-# DATABASE_URL=file:./data/capture.db
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/capture
 
 # LLM Provider
 LLM_PROVIDER=openai          # openai | anthropic | ollama
@@ -108,35 +113,42 @@ OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 OLLAMA_BASE_URL=http://localhost:11434
 
-# Scheduler
-ORGANIZATION_SCHEDULE="0 17 * * *"  # 5 PM daily (cron format)
-
 # Server
 API_PORT=3000
-WEB_PORT=5173
+WEB_PORT=8080
+NODE_ENV=development
+
+# Timezone
+TZ=America/Chicago
 ```
+
+See [LLM_SETUP.md](./docs/LLM_SETUP.md) for detailed LLM provider setup.
 
 ---
 
 ## Usage Flow
 
 1. **Capture**: Hit keyboard shortcut anywhere → Type note → Enter
-2. **Organize**: Click "Organize Now" or wait for scheduled run
-3. **Review**: Check Organized Notes and Todo List
-4. **Complete**: Check off todos as you finish them
-5. **Export**: Download Markdown archive of your work
+2. **Organize**: Click "Organize Now" to process captures with AI
+3. **Today Sheet**: Generate AI-powered daily plan from captures and todos
+4. **Search**: Full-text search across all captures, notes, and todos
+5. **Review**: Check Organized Notes and Todo List with tags
+6. **Feedback**: Rate AI-generated todos with thumbs up/down
+7. **Complete**: Check off todos as you finish them
 
 ---
 
 ## Technology Stack
 
-- **Backend**: Node.js, Fastify, Drizzle ORM
-- **Frontend**: React, Vite, Tailwind CSS, Zustand
-- **Database**: PostgreSQL (production) / SQLite (dev)
+- **Backend**: Node.js, Express, Drizzle ORM
+- **Frontend**: React, Vite, Tailwind CSS, TanStack Query
+- **Database**: PostgreSQL 16 with full-text search
 - **LLM**: OpenAI, Anthropic, or Ollama (configurable)
+- **Desktop**: Electron for cross-platform app
+- **Dev Tools**: Tilt for local development, pnpm workspaces
 - **Deployment**: Docker Compose
 
-See [TECH_STACK.md](./TECH_STACK.md) for detailed rationale.
+See [TECH_STACK.md](./docs/TECH_STACK.md) for detailed rationale.
 
 ---
 

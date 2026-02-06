@@ -63,37 +63,25 @@ Nothing else exists until explicitly declared in the project documentation.
 - ❌ Implement rate limiting, quotas, or billing logic unless specified
 - ❌ Add logging frameworks beyond basic console output initially
 
-## Milestones (in order)
+## Milestones
 
-**M1: Core Data Layer**
-- Database schema for captures, organized notes, todos, templates
-- CRUD operations with clean abstractions
-- Migration system
+**Completed Milestones**:
+- ✅ M1: Core Data Layer (schema, repositories, migrations, validation)
+- ✅ M2: API Foundation (REST endpoints, validation, error handling)
+- ✅ M3: LLM Integration (provider adapters, organization service)
+- ✅ M4: Basic UI (React frontend, all core views, organization trigger)
+- ✅ M5: Today Sheet (AI-powered daily planning - all 4 phases complete)
+- ✅ Tags Feature (Global tag management)
+- ✅ Search Feature (Full-text search)
+- ✅ Feedback Feature (User feedback on AI todos)
+- ✅ Desktop App (Electron wrapper)
+- ✅ M6: Deployment (Docker Compose, Tilt, production docs)
 
-**M2: API Foundation**
-- REST endpoints for capture creation, retrieval, organization
-- Request validation and error handling
-- LLM provider interface (abstract)
+**Current Status**: Core feature set complete. Focus on refinement, polish, and user experience improvements.
 
-**M3: LLM Integration**
-- Implement provider adapters (OpenAI, Anthropic, Ollama)
-- Batch organization logic using user templates
-- Task extraction and categorization
-
-**M4: Basic UI**
-- Quick capture input with keyboard shortcut
-- Inbox view (raw captures)
-- Organized notes + todo list views
-- Template management
-
-**M5: Scheduling & Export**
-- Cron-based auto-organization
-- Markdown export functionality
-- Settings management
-
-**M6: Deployment**
-- Docker Compose setup for self-hosting
-- Environment configuration
-- Basic documentation
-
-Work milestone-by-milestone. Do not jump ahead.
+**Future Enhancements** (not committed):
+- Scheduled organization (cron job)
+- Markdown export
+- Authentication/multi-user
+- Calendar integration
+- Mobile apps
