@@ -11,8 +11,9 @@ import {
   TemplatesRepository,
   SettingsRepository,
   TagsRepository,
+  ConversationsRepository,
 } from 'database';
-import { createCapturesRouter, createTodosRouter, createNotesRouter, createTemplatesRouter, createSettingsRouter, createTagsRouter, createSearchRouter, createOllamaRouter } from './routes/index.js';
+import { createCapturesRouter, createTodosRouter, createNotesRouter, createTemplatesRouter, createSettingsRouter, createTagsRouter, createSearchRouter, createOllamaRouter, createConversationsRouter } from './routes/index.js';
 import { createOrganizeRouter } from './routes/organize.js';
 import { createTodaySheetRouter } from './routes/today-sheet.js';
 import { errorHandler, requestLogger } from './middleware/index.js';
@@ -38,6 +39,7 @@ const notesRepo = new OrganizedNotesRepository(db);
 const templatesRepo = new TemplatesRepository(db);
 const settingsRepo = new SettingsRepository(db);
 const tagsRepo = new TagsRepository(db);
+const conversationsRepo = new ConversationsRepository(db);
 
 // Middleware
 app.use(cors());
@@ -60,6 +62,7 @@ app.use('/api/v1/search', createSearchRouter(db));
 app.use('/api/v1/organize', createOrganizeRouter(db, settingsRepo));
 app.use('/api/v1/today-sheet', createTodaySheetRouter(db, settingsRepo));
 app.use('/api/v1/ollama', createOllamaRouter(settingsRepo));
+app.use('/api/v1/conversation', createConversationsRouter(conversationsRepo));
 
 // Error handler (must be last)
 app.use(errorHandler);
