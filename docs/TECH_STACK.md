@@ -13,27 +13,29 @@ This document defines the technology stack for the Quick Capture & AI Organizer.
   - Rationale: Mature ecosystem, excellent async I/O for API tasks, TypeScript support
 
 ### Framework
-- **Fastify** or **Express**
-  - Fastify preferred for performance and built-in validation
-  - Express acceptable for familiarity
-  - Decision: Confirm with implementer
+- **Express**
+  - Chosen for familiarity and ecosystem maturity
+  - Excellent middleware support
+  - Well-documented and widely adopted
 
 ### Database
-- **PostgreSQL 16** (production)
-- **SQLite** (development/single-user)
-  - Rationale: PostgreSQL for scalability, SQLite for zero-config local use
+- **PostgreSQL 16** (production and development)
+  - Rationale: Excellent full-text search with tsvector/GIN indexes
+  - JSONB support for flexible metadata
+  - Production-ready for self-hosting
 
 ### ORM/Query Builder
-- **Drizzle ORM** (recommended) or **Prisma**
-  - Drizzle: Lightweight, SQL-like, great TypeScript inference
-  - Prisma: More mature, better migrations, heavier
-  - Decision: Confirm with implementer
+- **Drizzle ORM**
+  - Lightweight, SQL-like syntax
+  - Excellent TypeScript inference
+  - Type-safe migrations
+  - Perfect for PostgreSQL full-text search
 
 ### Scheduler
-- **node-cron** or **BullMQ**
-  - node-cron for simplicity (in-process)
-  - BullMQ if Redis is added (overkill for v1)
-  - Decision: Start with node-cron
+- **Not implemented yet**
+  - Planned: node-cron for simplicity (in-process)
+  - Alternative: BullMQ if Redis is added
+  - Manual organization via UI currently available
 
 ---
 
@@ -44,57 +46,76 @@ This document defines the technology stack for the Quick Capture & AI Organizer.
   - Rationale: Fast dev experience, component reusability, large ecosystem
 
 ### State Management
-- **Zustand** or **TanStack Query**
-  - Zustand for global UI state (theme, active template)
-  - TanStack Query for server state (captures, todos)
-  - Avoid Redux—overkill for this app
+- **TanStack Query (React Query)** for server state
+  - Automatic caching and refetching
+  - Optimistic updates
+  - Excellent for API-driven apps
+- **Local React state** (useState, useReducer) for UI state
+  - No global state library needed for current scope
 
 ### Styling
 - **Tailwind CSS**
   - Rationale: Rapid prototyping, utility-first, easy dark mode
-  - Alternative: Plain CSS modules if preferred
+  - Consistent design system
 
-### Keyboard Shortcuts
-- **@github/hotkey** or **react-hotkeys-hook**
-  - Lightweight, declarative shortcut handling
+### Routing
+- **React Router v7**
+  - Type-safe routing
+  - Loader functions for data fetching
+  - Works well with TanStack Query
+
+### Drag & Drop
+- **@dnd-kit**
+  - Modern, accessible drag-and-drop
+  - Used for Today Sheet todo reordering
+  - Touch-friendly
+
+### Desktop
+- **Electron**
+  - Cross-platform desktop app (macOS, Windows, Linux)
+  - electron-builder for packaging
+  - Global keyboard shortcut for quick capture
 
 ---
 
 ## LLM Integration
 
 ### Provider Interface
-- Custom abstraction layer in `/backend/src/llm/providers/`
-- Adapters for:
-  - **OpenAI** (via `openai` npm package)
-  - **Anthropic** (via `@anthropic-ai/sdk`)
-  - **Ollama** (via REST API fetch)
+- Custom abstraction layer in `packages/llm/src/providers/`
+- ✅ Implemented adapters:
+  - **OpenAI** (via `openai` npm package) - Default: gpt-4o-mini
+  - **Anthropic** (via `@anthropic-ai/sdk`) - Default: claude-3-5-sonnet-20241022
+  - **Ollama** (via `ollama` npm package) - Local models
 
 ### Configuration
 - Provider selected via environment variable: `LLM_PROVIDER=openai|anthropic|ollama`
 - API keys stored in `.env`
 - Ollama endpoint configurable: `OLLAMA_BASE_URL=http://localhost:11434`
+- Ollama model selection available via settings UI
 
 ---
 
 ## Monorepo Structure
 
 ### Tool
-- **pnpm workspaces** (recommended) or **npm workspaces**
-  - Rationale: pnpm is faster, saves disk space, handles peer deps well
-  - No Turborepo/Nx needed initially—vanilla workspaces sufficient
+- **pnpm workspaces**
+  - Faster than npm, saves disk space
+  - Handles peer deps well
+  - No Turborepo/Nx needed—vanilla workspaces sufficient
 
 ### Layout
 ```
 /
 ├── apps/
-│   ├── api/          # Backend Fastify/Express server
-│   └── web/          # React Vite frontend
+│   ├── api/          # Backend Express server
+│   └── web/          # React Vite frontend + Electron wrapper
 ├── packages/
-│   ├── database/     # Shared schema, migrations, client
-│   ├── types/        # Shared TypeScript types
-│   └── llm/          # LLM provider abstractions (if shared)
-├── docker-compose.yml
-├── package.json      # Workspace root
+│   ├── database/     # Shared schema, migrations, repositories
+│   ├── types/        # Shared TypeScript types + Zod validation
+│   └── llm/          # LLM provider abstractions
+├── scripts/          # Testing and utility scripts
+├── docker-compose.yml # PostgreSQL + API + Web containers
+├── Tiltfile          # Local development orchestration
 └── docs/             # Project documentation
 ```
 

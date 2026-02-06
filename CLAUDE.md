@@ -24,13 +24,19 @@ A self-hosted productivity tool that captures quick notes throughout the day and
 
 **Database**: PostgreSQL 16 with Drizzle ORM
 
-**Tables**: `captures`, `organized_notes`, `todos`, `templates` with proper indexes
+**Tables**: `captures`, `organized_notes`, `todos`, `templates`, `settings`, `tags`, `today_sheets` with proper indexes and full-text search
 
 **Repositories**: Type-safe CRUD operations for all entities
 
-**LLM Providers**: Pluggable architecture supporting OpenAI, Anthropic, and Ollama (M3)
+**LLM Providers**: ✅ Pluggable architecture supporting OpenAI, Anthropic, and Ollama
 
-**Deployment**: Self-hosted via Docker Compose
+**Today Sheet**: ✅ AI-powered daily planning feature with prioritization and time estimation
+
+**Search**: ✅ Full-text search across captures, notes, and todos using PostgreSQL tsvector
+
+**Desktop**: ✅ Electron app for macOS, Windows, and Linux
+
+**Deployment**: Self-hosted via Docker Compose or Tilt (dev)
 
 ## Development Commands
 
@@ -45,12 +51,22 @@ docker compose up -d postgres    # Start PostgreSQL
 pnpm db:migrate                  # Run migrations
 pnpm db:generate                 # Generate new migration from schema changes
 pnpm db:studio                   # Open Drizzle Studio (DB GUI)
-pnpm db:test                     # Test database connection and CRUD
 
-# Development
+# Development (Tilt recommended - matches production)
+tilt up                          # Start postgres, api, web containers + manual script resources
+tilt down                        # Stop all services
+
+# Or run services directly with pnpm (requires local postgres)
 pnpm dev                         # Start both API and web servers
 # API runs on http://localhost:3000
 # Web runs on http://localhost:5173
+
+# Desktop app (Electron)
+pnpm desktop:dev                 # Start API + Electron app
+pnpm desktop:build               # Build desktop app for current platform
+pnpm desktop:build:mac           # Build for macOS
+pnpm desktop:build:win           # Build for Windows
+pnpm desktop:build:linux         # Build for Linux
 
 # Code quality
 pnpm lint                        # Run ESLint
@@ -60,7 +76,10 @@ pnpm format                      # Format with Prettier
 pnpm build                       # Build all apps
 
 # Testing
-./test-api.sh                    # Test all API endpoints
+./scripts/test-api.sh            # Test all API endpoints
+./scripts/test-organization.sh   # Test LLM organization flow
+./scripts/test-today-sheet-api.sh # Test Today Sheet generation
+./scripts/clear-db.sh            # Clear all data
 ```
 
 ## Technology Decisions
@@ -74,29 +93,46 @@ pnpm build                       # Build all apps
 
 **Frontend Stack**:
 - Framework: React 18 with Vite
-- State: Zustand (UI state) + TanStack Query (server state - future)
+- State: TanStack Query (server state) + local state hooks
 - Styling: Tailwind CSS
-- Shortcuts: @github/hotkey or react-hotkeys-hook (future)
+- Routing: React Router v7
+- Drag & Drop: @dnd-kit for Today Sheet
+- Desktop: Electron with electron-builder
 
 **Monorepo**: pnpm workspaces
 
 ## Database Schema
 
 **captures**: Raw user inputs with timestamp and metadata (JSONB)
-- Indexes: user_id, organized_at, timestamp
-- Fields: id, content, timestamp, metadata, user_id, organized_at
+- Indexes: user_id, organized, timestamp
+- Fields: id, content, timestamp, metadata, user_id, organized
+- Search: Full-text search via search_vector (tsvector)
 
 **organized_notes**: LLM-processed structured notes
-- Indexes: user_id, date, category
-- Fields: id, content, category, date, user_id
+- Indexes: user_id, created_at
+- Fields: id, title, content, user_id, created_at, updated_at
+- Search: Full-text search on title (weight A) and content (weight B)
 
 **todos**: Actionable tasks extracted from captures
-- Indexes: user_id, status, due_date
-- Fields: id, content, status (enum: pending/completed), due_date, completed_at, user_id
+- Indexes: user_id, status, due_date, today_sheet_section
+- Fields: id, content, description, status (enum: pending/completed/cancelled), due_date, completed_at, user_id, tags (JSONB), today_sheet_section, estimated_minutes, priority, feedback_vote, feedback_text, feedback_timestamp
+- Search: Full-text search on content (weight A), description (weight B), tags (weight B)
 
 **templates**: User-defined organization prompts for LLM
 - Indexes: user_id, is_active
 - Fields: id, name, prompt, is_active, user_id
+
+**tags**: Global tag definitions for AI-guided categorization
+- Indexes: user_id, unique constraint on (user_id, name)
+- Fields: id, name, description, user_id
+
+**today_sheets**: AI-generated daily plans
+- Indexes: user_id, date (unique constraint on user_id + date)
+- Fields: id, user_id, date, summary, metadata (JSONB with sections), created_at, updated_at
+
+**settings**: User preferences and configuration
+- Indexes: user_id, key (unique constraint on user_id + key)
+- Fields: id, user_id, key, value (JSONB)
 
 ## Repository Pattern
 
@@ -108,11 +144,16 @@ All entities have repositories with common operations:
 - `delete(id)` - Delete record
 
 Entity-specific methods:
-- `CapturesRepository.findUnorganized()` - Get captures without organized_at
-- `CapturesRepository.markAsOrganized(id)` - Set organized_at timestamp
-- `TodosRepository.findByStatus(status)` - Filter by pending/completed
+- `CapturesRepository.findUnorganized()` - Get captures where organized=null
+- `CapturesRepository.markAsOrganized(id)` - Set organized timestamp
+- `TodosRepository.findByStatus(status)` - Filter by pending/completed/cancelled
 - `TodosRepository.markAsCompleted(id)` - Complete a todo
+- `TodosRepository.submitFeedback(id, vote, text)` - Submit feedback on AI todo
 - `TemplatesRepository.findActive()` - Get active templates
+- `TagsRepository.findAll(userId)` - Get all tags for user
+- `TodaySheetRepository.findMostRecentByDate(userId, date)` - Get today sheet
+- `SettingsRepository.get(userId, key)` - Get setting value
+- `SettingsRepository.set(userId, key, value)` - Set setting value
 
 ## API Endpoints
 
@@ -126,15 +167,17 @@ All endpoints are prefixed with `/api/v1`:
 - DELETE `/:id` - Delete capture
 
 **Todos** (`/todos`):
-- POST `/` - Create todo (requires: content, optional: dueDate)
-- GET `/` - List todos (query: ?status=pending|completed)
+- POST `/` - Create todo (requires: content, optional: dueDate, description, tags)
+- GET `/` - List todos (query: ?status=pending|completed|cancelled)
 - GET `/:id` - Get single todo
 - PATCH `/:id` - Update todo
 - PATCH `/:id/complete` - Mark as completed
+- PATCH `/:id/feedback` - Submit feedback (vote: thumbs_up|thumbs_down|none, optional: feedbackText)
 - DELETE `/:id` - Delete todo
 
 **Organized Notes** (`/notes`):
-- GET `/` - List notes (query: ?category=string)
+- POST `/` - Create note (requires: title, content)
+- GET `/` - List notes
 - GET `/:id` - Get single note
 - PATCH `/:id` - Update note
 - DELETE `/:id` - Delete note
@@ -147,11 +190,36 @@ All endpoints are prefixed with `/api/v1`:
 - PATCH `/:id` - Update template
 - DELETE `/:id` - Delete template
 
+**Tags** (`/tags`):
+- POST `/` - Create tag (requires: name, optional: description)
+- GET `/` - List all tags
+- GET `/:id` - Get single tag
+- PATCH `/:id` - Update tag
+- DELETE `/:id` - Delete tag
+
 **Organization** (`/organize`):
 - POST `/` - Trigger LLM organization (optional: templateId)
 - Processes all unorganized captures
 - Creates organized notes and todos
 - Returns summary of results
+
+**Today Sheet** (`/today-sheet`):
+- POST `/generate` - Generate Today Sheet from captures and todos
+- GET `/` - Get current Today Sheet
+- PATCH `/todos/:id` - Update a todo in the sheet
+- PATCH `/reorder` - Bulk reorder todos
+
+**Search** (`/search`):
+- GET `/?q={query}&type={all|captures|todos|notes}` - Full-text search
+
+**Settings** (`/settings`):
+- GET `/:key` - Get setting value
+- POST `/` - Set setting value (requires: key, value)
+- GET `/` - List all settings
+
+**Ollama** (`/ollama`):
+- GET `/models` - List available Ollama models
+- GET `/health` - Check Ollama connection
 
 ## LLM Integration
 
@@ -187,14 +255,13 @@ This project follows milestone-based development with NO feature creep:
 - ✅ M2: API Foundation (REST endpoints, validation, error handling)
 - ✅ M3: LLM Integration (provider abstraction, OpenAI/Anthropic/Ollama adapters, organization service)
 - ✅ M4: Basic UI (React frontend, capture/inbox/notes/todos/templates views, organization trigger)
+- ✅ M5: Today Sheet (AI-powered daily planning with phases 1-4 complete)
+- ✅ Tags Feature (Global tag management for AI-guided categorization)
+- ✅ Search Feature (Full-text search across captures, notes, and todos)
+- ✅ Feedback Feature (User feedback on AI-generated todos)
+- ✅ Desktop App (Electron wrapper for cross-platform desktop deployment)
 
-**Current Milestone: M5 - Scheduling & Export**
-- Scheduled organization (cron job for automatic batch processing)
-- Markdown export functionality
-- Settings management for schedule configuration
-
-**Future Milestones**:
-- M6: Deployment (Docker Compose for full stack, production documentation)
+**Current Status**: Core feature set complete. Focus on refinement, bug fixes, and user experience improvements.
 
 **Do NOT implement**:
 - Authentication (until explicitly requested)
@@ -237,8 +304,7 @@ Environment variables in `.env`:
 
 ```env
 # Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/capture
-# or: DATABASE_URL=file:./data/capture.db
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/capture
 
 # LLM Provider
 LLM_PROVIDER=openai          # openai | anthropic | ollama
@@ -246,12 +312,13 @@ OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 OLLAMA_BASE_URL=http://localhost:11434
 
-# Scheduler
-ORGANIZATION_SCHEDULE="0 17 * * *"  # 5 PM daily (cron format)
-
 # Server
 API_PORT=3000
-WEB_PORT=5173
+WEB_PORT=8080
+NODE_ENV=development
+
+# Timezone
+TZ=America/Chicago
 ```
 
 ## LLM Provider Abstraction

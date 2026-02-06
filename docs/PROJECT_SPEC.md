@@ -119,12 +119,12 @@ Design for extensibility (new LLM providers, export formats, capture methods).
 
 ## Technical Constraints
 
-1. **Database**: Support both PostgreSQL (production) and SQLite (local development)
-2. **LLM Providers**: Abstract provider interface to support OpenAI, Anthropic, Ollama, and future additions
-3. **Deployment**: Docker Compose for self-hosting with environment-based configuration
-4. **Frontend**: Single-page application with keyboard-first navigation
-5. **Security**: Design schema for multi-tenancy even if launching single-user
-6. **Export**: Markdown format for maximum portability
+1. **Database**: PostgreSQL 16 with full-text search support (SQLite removed from scope)
+2. **LLM Providers**: Abstract provider interface supporting OpenAI, Anthropic, and Ollama
+3. **Deployment**: Docker Compose for self-hosting + Tilt for local development
+4. **Frontend**: Single-page React application with keyboard-first navigation
+5. **Security**: Schema designed for multi-tenancy (currently single-user with hardcoded user ID)
+6. **Export**: Markdown format for maximum portability (planned)
 
 ---
 
@@ -135,5 +135,14 @@ Design for extensibility (new LLM providers, export formats, capture methods).
 - Voice input or transcription
 - Integration with external calendar/task systems
 - Analytics or usage tracking
-- User authentication (single-user mode initially)
-- Advanced search or full-text indexing
+- User authentication (multi-user mode initially single-user)
+
+## Implemented Beyond Initial Scope
+
+The following features were added after initial specification:
+
+- ✅ **Full-text search** - PostgreSQL tsvector/GIN indexes for fast search across captures, notes, and todos
+- ✅ **Today Sheet** - AI-powered daily planning and prioritization
+- ✅ **Feedback system** - User feedback on AI-generated todos for quality improvement
+- ✅ **Desktop app** - Electron wrapper for macOS, Windows, and Linux
+- ✅ **Tags system** - Global tag management for AI-guided categorization
