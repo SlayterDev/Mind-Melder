@@ -45,7 +45,7 @@ CAPTURED NOTES (${captures.length}):
 ${captureList}
 
 YOUR TASK:
-1. Extract ONLY actionable tasks from captures (skip pure notes, info, or FYIs)
+1. Extract actionable tasks from captures.
 2. Transform each capture into a clear, actionable task with:
    - Title: Concise action-oriented summary (5-10 words) that makes the task immediately clear
    - Description: Additional context, reasoning, or implementation details from the original capture
