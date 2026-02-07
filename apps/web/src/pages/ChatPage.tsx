@@ -1,0 +1,513 @@
+import { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Plus, MessageSquare, Trash2, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { conversationsAPI, type Conversation } from '../api/client';
+import { getApiUrl } from '../api/config';
+import { ChatMessage } from '../components/chat/ChatMessage';
+import { ChatInput } from '../components/chat/ChatInput';
+
+interface DisplayMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  toolCalls?: Array<{ id: string; name: string; arguments: Record<string, unknown> }>;
+  toolResults?: Array<{ name: string; result: string }>;
+  isStreaming?: boolean;
+}
+
+export default function ChatPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const conversationIdRef = useRef<string | undefined>(undefined);
+  const isNearBottomRef = useRef(true);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<DisplayMessage[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Load conversations list
+  useEffect(() => {
+    loadConversations();
+  }, []);
+
+  // Load messages when conversation changes
+  useEffect(() => {
+    if (id) {
+      conversationIdRef.current = id;
+      loadMessages(id);
+    } else {
+      conversationIdRef.current = undefined;
+      setMessages([]);
+      setLoading(false);
+    }
+    
+    // Cleanup: abort any pending stream when conversation changes
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
+  }, [id]);
+
+  // Track if user is near bottom (for auto-scroll)
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 100;
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Auto-scroll to bottom only when user is near bottom and a new message is added
+  useEffect(() => {
+    if (isNearBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages.length]); // Only trigger on new messages, not every token
+
+  const loadConversations = async () => {
+    try {
+      const data = await conversationsAPI.list();
+      setConversations(data);
+    } catch (error) {
+      console.error('Failed to load conversations:', error);
+    }
+  };
+
+  const loadMessages = async (conversationId: string) => {
+    setLoading(true);
+    try {
+      const data = await conversationsAPI.get(conversationId);
+      // Convert API messages to display format, pairing tool results with assistant messages
+      const displayMessages: DisplayMessage[] = [];
+      const toolResultsMap = new Map<string, string>();
+      
+      // First pass: collect all tool results by toolCallId
+      for (const msg of data.messages) {
+        if (msg.role === 'tool' && msg.toolCallId && msg.content) {
+          toolResultsMap.set(msg.toolCallId, msg.content);
+        }
+      }
+      
+      // Second pass: build display messages with tool results attached
+      for (const msg of data.messages) {
+        if (msg.role === 'user') {
+          displayMessages.push({
+            id: msg.id,
+            role: 'user',
+            content: msg.content ?? '',
+          });
+        } else if (msg.role === 'assistant') {
+          const toolResults: Array<{ name: string; result: string }> = [];
+          
+          // Match tool results to this assistant message's tool calls
+          if (msg.toolCalls) {
+            for (const tc of msg.toolCalls) {
+              const result = toolResultsMap.get(tc.id);
+              if (result) {
+                toolResults.push({ name: tc.name, result });
+              }
+            }
+          }
+          
+          displayMessages.push({
+            id: msg.id,
+            role: 'assistant',
+            content: msg.content ?? '',
+            toolCalls: msg.toolCalls ?? undefined,
+            toolResults: toolResults.length > 0 ? toolResults : undefined,
+          });
+        }
+        // Skip system and tool messages for display (tool results are attached to assistant messages)
+      }
+      setMessages(displayMessages);
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createConversation = async () => {
+    try {
+      const conversation = await conversationsAPI.create({
+        title: 'New Chat',
+        systemPrompt: 'You are a helpful assistant with access to the user\'s notes, captures, and todos. Use the available tools to search and retrieve information when the user asks about their data.',
+      });
+      setConversations((prev) => [conversation, ...prev]);
+      navigate(`/chat/${conversation.id}`);
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
+    }
+  };
+
+  const deleteConversation = async (convId: string) => {
+    try {
+      await conversationsAPI.delete(convId);
+      setConversations((prev) => prev.filter((c) => c.id !== convId));
+      if (id === convId) {
+        navigate('/chat');
+      }
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+    }
+  };
+
+  const sendMessage = async (content: string) => {
+    if (!id || isStreaming) return;
+    
+    // Store the current conversation ID to check against later
+    const currentConversationId = id;
+
+    // Add user message optimistically
+    const userMessage: DisplayMessage = {
+      id: `temp-${Date.now()}`,
+      role: 'user',
+      content,
+    };
+    setMessages((prev) => [...prev, userMessage]);
+
+    // Add placeholder for assistant response
+    const tempAssistantId = `temp-assistant-${Date.now()}`;
+    const assistantMessage: DisplayMessage = {
+      id: tempAssistantId,
+      role: 'assistant',
+      content: '',
+      isStreaming: true,
+    };
+    setMessages((prev) => [...prev, assistantMessage]);
+    setIsStreaming(true);
+
+    // Track tool calls and results for this response
+    const toolCalls: Array<{ id: string; name: string; arguments: Record<string, unknown> }> = [];
+    const toolResults: Array<{ name: string; result: string }> = [];
+    const toolErrors: Array<{ name: string; error: string }> = [];
+
+    // Create abort controller for this request
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    try {
+      const response = await fetch(`${getApiUrl()}/conversations/${id}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+        signal: abortController.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No response body');
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let assistantContent = '';
+      let isDone = false;
+
+      // Use a more conventional loop structure to avoid lint warning
+      while (!isDone) {
+        const { done, value } = await reader.read();
+        if (done) {
+          isDone = true;
+          break;
+        }
+
+        // Check if conversation changed during streaming
+        if (conversationIdRef.current !== currentConversationId) {
+          reader.cancel();
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              if (data.type === 'token') {
+                assistantContent += data.content;
+                // Update state immutably
+                setMessages((prev) => {
+                  // Guard: ensure we're still in the same conversation
+                  if (conversationIdRef.current !== currentConversationId) {
+                    return prev;
+                  }
+                  const updated = [...prev];
+                  const lastIndex = updated.length - 1;
+                  const last = updated[lastIndex];
+                  if (last?.role === 'assistant' && last.id === tempAssistantId) {
+                    // Create new object instead of mutating
+                    updated[lastIndex] = {
+                      ...last,
+                      content: assistantContent,
+                    };
+                  }
+                  return updated;
+                });
+              } else if (data.type === 'tool_call') {
+                toolCalls.push(data.toolCall);
+                setMessages((prev) => {
+                  if (conversationIdRef.current !== currentConversationId) {
+                    return prev;
+                  }
+                  const updated = [...prev];
+                  const lastIndex = updated.length - 1;
+                  const last = updated[lastIndex];
+                  if (last?.role === 'assistant' && last.id === tempAssistantId) {
+                    updated[lastIndex] = {
+                      ...last,
+                      toolCalls: [...toolCalls],
+                    };
+                  }
+                  return updated;
+                });
+              } else if (data.type === 'tool_result') {
+                toolResults.push({ name: data.name, result: data.result });
+                setMessages((prev) => {
+                  if (conversationIdRef.current !== currentConversationId) {
+                    return prev;
+                  }
+                  const updated = [...prev];
+                  const lastIndex = updated.length - 1;
+                  const last = updated[lastIndex];
+                  if (last?.role === 'assistant' && last.id === tempAssistantId) {
+                    updated[lastIndex] = {
+                      ...last,
+                      toolResults: [...toolResults],
+                    };
+                  }
+                  return updated;
+                });
+              } else if (data.type === 'tool_error') {
+                // Handle tool errors
+                const errorResult = { name: data.name, result: `Error: ${data.error}` };
+                toolErrors.push({ name: data.name, error: data.error });
+                toolResults.push(errorResult);
+                setMessages((prev) => {
+                  if (conversationIdRef.current !== currentConversationId) {
+                    return prev;
+                  }
+                  const updated = [...prev];
+                  const lastIndex = updated.length - 1;
+                  const last = updated[lastIndex];
+                  if (last?.role === 'assistant' && last.id === tempAssistantId) {
+                    // Add error to tool results for display
+                    updated[lastIndex] = {
+                      ...last,
+                      toolResults: [...toolResults],
+                    };
+                  }
+                  return updated;
+                });
+              } else if (data.type === 'done') {
+                setMessages((prev) => {
+                  if (conversationIdRef.current !== currentConversationId) {
+                    return prev;
+                  }
+                  const updated = [...prev];
+                  const lastIndex = updated.length - 1;
+                  const last = updated[lastIndex];
+                  if (last?.role === 'assistant' && last.id === tempAssistantId) {
+                    updated[lastIndex] = {
+                      ...last,
+                      id: data.messageId,
+                      isStreaming: false,
+                    };
+                  }
+                  return updated;
+                });
+              } else if (data.type === 'error') {
+                console.error('Stream error:', data.message);
+                setMessages((prev) => {
+                  if (conversationIdRef.current !== currentConversationId) {
+                    return prev;
+                  }
+                  const updated = [...prev];
+                  const lastIndex = updated.length - 1;
+                  const last = updated[lastIndex];
+                  if (last?.role === 'assistant' && last.id === tempAssistantId) {
+                    updated[lastIndex] = {
+                      ...last,
+                      content: `Error: ${data.message}`,
+                      isStreaming: false,
+                    };
+                  }
+                  return updated;
+                });
+              }
+            } catch (parseError) {
+              console.error('Failed to parse SSE data:', parseError);
+            }
+          }
+        }
+      }
+    } catch (error: unknown) {
+      // Don't show error if aborted (user navigated away)
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
+      console.error('Failed to send message:', error);
+      setMessages((prev) => {
+        if (conversationIdRef.current !== currentConversationId) {
+          return prev;
+        }
+        const updated = [...prev];
+        const lastIndex = updated.length - 1;
+        const last = updated[lastIndex];
+        if (last?.role === 'assistant' && last.id === tempAssistantId) {
+          updated[lastIndex] = {
+            ...last,
+            content: 'Failed to get response. Please try again.',
+            isStreaming: false,
+          };
+        }
+        return updated;
+      });
+    } finally {
+      // Only update state if we're still in the same conversation
+      if (conversationIdRef.current === currentConversationId) {
+        setIsStreaming(false);
+        loadConversations(); // Refresh to update titles/timestamps
+      }
+      // Clear abort controller if it's still the current one
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null;
+      }
+    }
+  };
+
+  return (
+    <div className="flex h-full">
+      {/* Sidebar */}
+      <div
+        className={`border-r border-accent/20 bg-gray-900/30 flex flex-col transition-all duration-300 ${
+          sidebarCollapsed ? 'w-0 overflow-hidden' : 'w-64'
+        }`}
+      >
+        <div className="p-4 flex items-center gap-2">
+          <button
+            onClick={createConversation}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg
+                       bg-accent/20 border border-accent/30 text-accent hover:bg-accent/30 transition-colors"
+          >
+            <Plus size={18} />
+            New Chat
+          </button>
+          <button
+            onClick={() => setSidebarCollapsed(true)}
+            className="p-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition-colors"
+            title="Collapse sidebar"
+          >
+            <PanelLeftClose size={18} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          {conversations.map((conv) => (
+            <button
+              key={conv.id}
+              className={`group flex items-center gap-2 px-4 py-3 w-full text-left hover:bg-gray-800/50 transition-colors
+                         ${id === conv.id ? 'bg-gray-800/70 border-l-2 border-accent' : ''}`}
+              onClick={() => navigate(`/chat/${conv.id}`)}
+              aria-label={`Open conversation: ${conv.title || 'Untitled'}`}
+            >
+              <MessageSquare size={16} className="text-gray-500 flex-shrink-0" aria-hidden="true" />
+              <span className="flex-1 text-sm text-gray-300 truncate">
+                {conv.title || 'Untitled'}
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteConversation(conv.id);
+                }}
+                className="opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-red-400 transition-all"
+                aria-label={`Delete conversation: ${conv.title || 'Untitled'}`}
+              >
+                <Trash2 size={14} aria-hidden="true" />
+              </button>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main chat area */}
+      <div className="flex-1 flex flex-col">
+        {/* Header with expand button */}
+        {sidebarCollapsed && (
+          <div className="flex items-center gap-2 p-2 border-b border-accent/20">
+            <button
+              onClick={() => setSidebarCollapsed(false)}
+              className="p-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition-colors"
+              title="Expand sidebar"
+            >
+              <PanelLeft size={18} />
+            </button>
+            <button
+              onClick={createConversation}
+              className="p-2 rounded-lg text-accent hover:bg-accent/20 transition-colors"
+              title="New chat"
+            >
+              <Plus size={18} />
+            </button>
+          </div>
+        )}
+
+        {id ? (
+          <>
+            {/* Messages */}
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+              {loading ? (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  Loading...
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  Start a conversation
+                </div>
+              ) : (
+                messages.map((msg) => (
+                  <ChatMessage
+                    key={msg.id}
+                    role={msg.role}
+                    content={msg.content}
+                    toolCalls={msg.toolCalls}
+                    toolResults={msg.toolResults}
+                    isStreaming={msg.isStreaming}
+                  />
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            <ChatInput onSend={sendMessage} disabled={isStreaming} />
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-500">
+            <div className="text-center">
+              <MessageSquare size={48} className="mx-auto mb-4 opacity-50" />
+              <p>Select a conversation or start a new one</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

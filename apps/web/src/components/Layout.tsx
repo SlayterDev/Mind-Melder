@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ReactNode, useState } from 'react';
 import { useInboxCount } from '../api/queries';
-import { PenLine, CalendarDays, Inbox, FileText, ListChecks, Layers, Cog, Menu, X } from 'lucide-react';
+import { PenLine, CalendarDays, Inbox, FileText, ListChecks, Layers, MessageSquare, Cog, Menu, X } from 'lucide-react';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
@@ -15,7 +15,10 @@ export default function Layout({ children }: LayoutProps) {
 
   const location = useLocation();
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(path);
+  };
 
   const navItems = [
     { path: '/', label: 'Capture', icon: PenLine },
@@ -24,6 +27,7 @@ export default function Layout({ children }: LayoutProps) {
     { path: '/notes', label: 'Notes', icon: FileText },
     { path: '/todos', label: 'Todos', icon: ListChecks },
     { path: '/templates', label: 'Templates', icon: Layers },
+    { path: '/chat', label: 'Chat', icon: MessageSquare },
     { path: '/settings', label: 'Settings', icon: Cog },
   ];
 
@@ -154,7 +158,11 @@ export default function Layout({ children }: LayoutProps) {
             style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
           />
         )}
-        <div className="max-w-5xl mx-auto p-4 md:p-8">{children}</div>
+        {location.pathname.startsWith('/chat') ? (
+          <div className="h-full">{children}</div>
+        ) : (
+          <div className="max-w-5xl mx-auto p-4 md:p-8">{children}</div>
+        )}
       </main>
     </div>
   );
