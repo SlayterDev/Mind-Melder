@@ -177,7 +177,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       if (finishReason === 'tool_calls') {
         // All tool calls are complete, invoke callbacks
         for (const [, tc] of toolCallsInProgress) {
-          let parsedArgs: unknown;
+          let parsedArgs: Record<string, any> = {};
           try {
             parsedArgs = JSON.parse(tc.arguments || '{}');
           } catch (err) {
