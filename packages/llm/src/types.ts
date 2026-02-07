@@ -54,6 +54,17 @@ export interface ToolCall {
   name: string;
   arguments: Record<string, any>;
 }
+
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  input_schema: {
+    type: 'object';
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+}
+
 export interface StreamCallbacks {
   onToken: (token: string) => void;
   onToolCall?: (toolCall: ToolCall) => void;
@@ -88,7 +99,7 @@ export interface LLMProvider {
    */
   generateTodaySheet(input: TodaySheetInput): Promise<TodaySheetOutput>;
 
-  streamChat(messages: ChatMessage[], callbacks: StreamCallbacks): Promise<void>;
+  streamChat(messages: ChatMessage[], callbacks: StreamCallbacks, tools?: ToolDefinition[]): Promise<void>;
 }
 
 // Provider configuration

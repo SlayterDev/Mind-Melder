@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
-import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, TodaySheetInput, TodaySheetOutput } from '../types.js';
+import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, ToolCall, ToolDefinition, TodaySheetInput, TodaySheetOutput } from '../types.js';
 import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
 
 export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
@@ -90,7 +90,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
     return this.parseResponse<TodaySheetOutput>(content, todaySheetOutputSchema);
   }
 
-  async streamChat(messages: ChatMessage[], callbacks: StreamCallbacks): Promise<void> {
+  async streamChat(messages: ChatMessage[], callbacks: StreamCallbacks, tools?: ToolDefinition[]): Promise<void> {
     let fullResponse = '';
 
     // Map our ChatMessage to OpenAI's expected format
@@ -119,23 +119,69 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       };
     });
 
+    // Convert tools to OpenAI format
+    const openaiTools = tools?.map(t => ({
+      type: 'function' as const,
+      function: {
+        name: t.name,
+        description: t.description,
+        parameters: t.input_schema,
+      },
+    }));
+
     const response = await this.client.chat.completions.create({
       model: this.model,
       messages: openaiMessages,
       stream: true,
+      ...(openaiTools?.length ? { tools: openaiTools } : {}),
     });
+
+    // Track tool calls being accumulated (they stream in chunks)
+    const toolCallsInProgress: Map<number, { id: string; name: string; arguments: string }> = new Map();
 
     for await (const chunk of response) {
       const delta = chunk.choices[0]?.delta;
+      const finishReason = chunk.choices[0]?.finish_reason;
 
+      // Handle text content
       if (delta?.content) {
         callbacks.onToken(delta.content);
         fullResponse += delta.content;
       }
 
-      // TODO: Handle tool calls and arguments in the stream
+      // Handle tool calls (streamed incrementally)
+      if (delta?.tool_calls) {
+        for (const toolCallDelta of delta.tool_calls) {
+          const index = toolCallDelta.index;
 
-      if (chunk.choices[0]?.finish_reason === 'stop') {
+          if (!toolCallsInProgress.has(index)) {
+            toolCallsInProgress.set(index, {
+              id: toolCallDelta.id ?? '',
+              name: toolCallDelta.function?.name ?? '',
+              arguments: '',
+            });
+          }
+
+          const tc = toolCallsInProgress.get(index)!;
+          if (toolCallDelta.id) tc.id = toolCallDelta.id;
+          if (toolCallDelta.function?.name) tc.name = toolCallDelta.function.name;
+          if (toolCallDelta.function?.arguments) tc.arguments += toolCallDelta.function.arguments;
+        }
+      }
+
+      // Handle completion
+      if (finishReason === 'tool_calls') {
+        // All tool calls are complete, invoke callbacks
+        for (const [, tc] of toolCallsInProgress) {
+          const toolCall: ToolCall = {
+            id: tc.id,
+            name: tc.name,
+            arguments: JSON.parse(tc.arguments || '{}'),
+          };
+          callbacks.onToolCall?.(toolCall);
+        }
+        callbacks.onComplete(fullResponse);
+      } else if (finishReason === 'stop') {
         callbacks.onComplete(fullResponse);
       }
     }

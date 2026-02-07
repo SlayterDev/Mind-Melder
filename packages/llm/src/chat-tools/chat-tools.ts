@@ -1,4 +1,6 @@
-export const chatTools = [
+import type { ToolDefinition } from '../types.js';
+
+export const chatTools: ToolDefinition[] = [
   {
     name: 'search_user_content',
     description: `Search the user's captures, organized notes, and todos. Use this when the user asks about their past notes, tasks, or information they've captured. Returns relevant items ranked by relevance.`,

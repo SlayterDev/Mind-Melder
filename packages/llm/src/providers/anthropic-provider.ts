@@ -1,9 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
-import type { 
+import type {
   LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput,
-   TodaySheetOutput, ChatMessage, StreamCallbacks 
+  TodaySheetOutput, ChatMessage, StreamCallbacks, ToolCall, ToolDefinition
 } from '../types.js';
 import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
 
@@ -98,34 +98,92 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     return this.parseResponse<TodaySheetOutput>(content.text, todaySheetOutputSchema);
   }
 
-  async streamChat(messages: ChatMessage[], callbacks: StreamCallbacks): Promise<void> {
-    // Anthropic doesn't support system or tool roles in messages array
+  async streamChat(messages: ChatMessage[], callbacks: StreamCallbacks, tools?: ToolDefinition[]): Promise<void> {
+    // Extract system message
     const systemMessage = messages.find(m => m.role === 'system');
-    const chatMessages = messages.filter(m => m.role === 'user' || m.role === 'assistant');
 
-    const response = this.client.messages.stream({
+    // Map messages to Anthropic format
+    const anthropicMessages: Anthropic.MessageParam[] = [];
+    for (const m of messages) {
+      if (m.role === 'system') continue;
+
+      if (m.role === 'assistant' && m.toolCalls?.length) {
+        // Assistant message with tool calls
+        const content: Anthropic.ContentBlockParam[] = [];
+        if (m.content) {
+          content.push({ type: 'text', text: m.content });
+        }
+        for (const tc of m.toolCalls) {
+          content.push({
+            type: 'tool_use',
+            id: tc.id,
+            name: tc.name,
+            input: tc.arguments,
+          });
+        }
+        anthropicMessages.push({ role: 'assistant', content });
+      } else if (m.role === 'tool') {
+        // Tool result - must be in a user message
+        anthropicMessages.push({
+          role: 'user',
+          content: [{
+            type: 'tool_result',
+            tool_use_id: m.toolCallId ?? '',
+            content: m.content ?? '',
+          }],
+        });
+      } else {
+        anthropicMessages.push({
+          role: m.role as 'user' | 'assistant',
+          content: m.content ?? '',
+        });
+      }
+    }
+
+    // Convert tools to Anthropic format
+    const anthropicTools: Anthropic.Tool[] | undefined = tools?.map(t => ({
+      name: t.name,
+      description: t.description,
+      input_schema: {
+        type: 'object' as const,
+        properties: t.input_schema.properties,
+        required: t.input_schema.required,
+      },
+    }));
+
+    let fullTextResponse = '';
+
+    const stream = this.client.messages.stream({
       model: this.model,
       max_tokens: 4096,
       system: systemMessage?.content ?? this.buildSystemPrompt(),
-      messages: chatMessages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content ?? '' })),
+      messages: anthropicMessages,
       temperature: this.temperature,
-    })
-    .on('text', (token) => {
+      ...(anthropicTools?.length ? { tools: anthropicTools } : {}),
+    });
+
+    stream.on('text', (token) => {
       callbacks.onToken(token);
-    })
-    .on('error', (error) => {
-      if (callbacks.onError) {
-        callbacks.onError(error);
+      fullTextResponse += token;
+    });
+
+    // contentBlock fires when a content block is complete
+    stream.on('contentBlock', (block) => {
+      if (block.type === 'tool_use') {
+        const toolCall: ToolCall = {
+          id: block.id,
+          name: block.name,
+          arguments: block.input as Record<string, unknown>,
+        };
+        callbacks.onToolCall?.(toolCall);
       }
     });
 
-    const message = await response.finalMessage();
+    stream.on('error', (error) => {
+      callbacks.onError?.(error);
+    });
 
-    const fullMessage = message.content
-      .filter(block => block.type === 'text')
-      .map(block => block.type === 'text' ? block.text : '')
-      .join('');
-
-    callbacks.onComplete(fullMessage);
+    await stream.finalMessage();
+    callbacks.onComplete(fullTextResponse);
   }
 }
