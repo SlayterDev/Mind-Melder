@@ -297,7 +297,9 @@ export default function ChatPage() {
                 });
               } else if (data.type === 'tool_error') {
                 // Handle tool errors
+                const errorResult = { name: data.name, result: `Error: ${data.error}` };
                 toolErrors.push({ name: data.name, error: data.error });
+                toolResults.push(errorResult);
                 setMessages((prev) => {
                   if (conversationIdRef.current !== currentConversationId) {
                     return prev;
@@ -307,12 +309,9 @@ export default function ChatPage() {
                   const last = updated[lastIndex];
                   if (last?.role === 'assistant' && last.id === tempAssistantId) {
                     // Add error to tool results for display
-                    const errorResult = { name: data.name, result: `Error: ${data.error}` };
-                    const updatedResults = [...toolResults, errorResult];
-                    toolResults.push(errorResult);
                     updated[lastIndex] = {
                       ...last,
-                      toolResults: updatedResults,
+                      toolResults: [...toolResults],
                     };
                   }
                   return updated;
