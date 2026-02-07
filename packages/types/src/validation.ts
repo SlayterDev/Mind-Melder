@@ -99,3 +99,17 @@ export const updateTagSchema = z.object({
 
 export type CreateTagInput = z.infer<typeof createTagSchema>;
 export type UpdateTagInput = z.infer<typeof updateTagSchema>;
+
+// Conversation validation schemas
+export const createConversationSchema = z.object({
+  title: z.string().max(200).optional(),
+  model: z.string().max(100).optional(),
+  systemPrompt: z.string().max(10000).optional(),
+});
+
+export const chatMessageInputSchema = z.object({
+  content: z.string().min(1, 'Message content is required').max(50000, 'Message too long'),
+});
+
+export type CreateConversationInput = z.infer<typeof createConversationSchema>;
+export type ChatMessageInput = z.infer<typeof chatMessageInputSchema>;

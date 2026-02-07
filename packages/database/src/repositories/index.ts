@@ -5,3 +5,4 @@ export * from './todos-repository.js';
 export * from './templates-repository.js';
 export * from './settings-repository.js';
 export * from './tags-repository.js';
+export * from './conversations-repository.js';
