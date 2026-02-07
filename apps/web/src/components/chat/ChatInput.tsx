@@ -48,14 +48,16 @@ export function ChatInput({ onSend, disabled, placeholder = 'Type a message...' 
         className="flex-1 resize-none bg-gray-800/50 border border-accent/20 rounded-xl px-4 py-3
                    text-gray-100 placeholder-gray-500 focus:outline-none focus:border-accent/50
                    disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="Message input"
       />
       <button
         onClick={handleSubmit}
         disabled={disabled || !value.trim()}
         className="p-3 rounded-xl bg-accent/20 border border-accent/30 text-accent
                    hover:bg-accent/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="Send message"
       >
-        <Send size={20} />
+        <Send size={20} aria-hidden="true" />
       </button>
     </div>
   );

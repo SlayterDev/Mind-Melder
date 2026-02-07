@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, MessageSquare, Trash2, PanelLeftClose, PanelLeft } from 'lucide-react';
-import { conversationsAPI, type Conversation, type ChatMessage as ApiChatMessage } from '../api/client';
+import { conversationsAPI, type Conversation } from '../api/client';
 import { getApiUrl } from '../api/config';
 import { ChatMessage } from '../components/chat/ChatMessage';
 import { ChatInput } from '../components/chat/ChatInput';
@@ -19,6 +19,10 @@ export default function ChatPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const conversationIdRef = useRef<string | undefined>(undefined);
+  const isNearBottomRef = useRef(true);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
@@ -34,17 +38,43 @@ export default function ChatPage() {
   // Load messages when conversation changes
   useEffect(() => {
     if (id) {
+      conversationIdRef.current = id;
       loadMessages(id);
     } else {
+      conversationIdRef.current = undefined;
       setMessages([]);
       setLoading(false);
     }
+    
+    // Cleanup: abort any pending stream when conversation changes
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
   }, [id]);
 
-  // Auto-scroll to bottom
+  // Track if user is near bottom (for auto-scroll)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 100;
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Auto-scroll to bottom only when user is near bottom and a new message is added
+  useEffect(() => {
+    if (isNearBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages.length]); // Only trigger on new messages, not every token
 
   const loadConversations = async () => {
     try {
@@ -59,8 +89,18 @@ export default function ChatPage() {
     setLoading(true);
     try {
       const data = await conversationsAPI.get(conversationId);
-      // Convert API messages to display format
+      // Convert API messages to display format, pairing tool results with assistant messages
       const displayMessages: DisplayMessage[] = [];
+      const toolResultsMap = new Map<string, string>();
+      
+      // First pass: collect all tool results by toolCallId
+      for (const msg of data.messages) {
+        if (msg.role === 'tool' && msg.toolCallId && msg.content) {
+          toolResultsMap.set(msg.toolCallId, msg.content);
+        }
+      }
+      
+      // Second pass: build display messages with tool results attached
       for (const msg of data.messages) {
         if (msg.role === 'user') {
           displayMessages.push({
@@ -69,14 +109,27 @@ export default function ChatPage() {
             content: msg.content ?? '',
           });
         } else if (msg.role === 'assistant') {
+          const toolResults: Array<{ name: string; result: string }> = [];
+          
+          // Match tool results to this assistant message's tool calls
+          if (msg.toolCalls) {
+            for (const tc of msg.toolCalls) {
+              const result = toolResultsMap.get(tc.id);
+              if (result) {
+                toolResults.push({ name: tc.name, result });
+              }
+            }
+          }
+          
           displayMessages.push({
             id: msg.id,
             role: 'assistant',
             content: msg.content ?? '',
             toolCalls: msg.toolCalls ?? undefined,
+            toolResults: toolResults.length > 0 ? toolResults : undefined,
           });
         }
-        // Skip system and tool messages for display
+        // Skip system and tool messages for display (tool results are attached to assistant messages)
       }
       setMessages(displayMessages);
     } catch (error) {
@@ -113,6 +166,9 @@ export default function ChatPage() {
 
   const sendMessage = async (content: string) => {
     if (!id || isStreaming) return;
+    
+    // Store the current conversation ID to check against later
+    const currentConversationId = id;
 
     // Add user message optimistically
     const userMessage: DisplayMessage = {
@@ -123,8 +179,9 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, userMessage]);
 
     // Add placeholder for assistant response
+    const tempAssistantId = `temp-assistant-${Date.now()}`;
     const assistantMessage: DisplayMessage = {
-      id: `temp-assistant-${Date.now()}`,
+      id: tempAssistantId,
       role: 'assistant',
       content: '',
       isStreaming: true,
@@ -135,12 +192,18 @@ export default function ChatPage() {
     // Track tool calls and results for this response
     const toolCalls: Array<{ id: string; name: string; arguments: Record<string, unknown> }> = [];
     const toolResults: Array<{ name: string; result: string }> = [];
+    const toolErrors: Array<{ name: string; error: string }> = [];
+
+    // Create abort controller for this request
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
     try {
       const response = await fetch(`${getApiUrl()}/conversations/${id}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
+        signal: abortController.signal,
       });
 
       if (!response.ok) {
@@ -153,10 +216,21 @@ export default function ChatPage() {
       const decoder = new TextDecoder();
       let buffer = '';
       let assistantContent = '';
+      let isDone = false;
 
-      while (true) {
+      // Use a more conventional loop structure to avoid lint warning
+      while (!isDone) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          isDone = true;
+          break;
+        }
+
+        // Check if conversation changed during streaming
+        if (conversationIdRef.current !== currentConversationId) {
+          reader.cancel();
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -169,52 +243,111 @@ export default function ChatPage() {
 
               if (data.type === 'token') {
                 assistantContent += data.content;
+                // Update state immutably
                 setMessages((prev) => {
+                  // Guard: ensure we're still in the same conversation
+                  if (conversationIdRef.current !== currentConversationId) {
+                    return prev;
+                  }
                   const updated = [...prev];
-                  const last = updated[updated.length - 1];
-                  if (last?.role === 'assistant') {
-                    last.content = assistantContent;
+                  const lastIndex = updated.length - 1;
+                  const last = updated[lastIndex];
+                  if (last?.role === 'assistant' && last.id === tempAssistantId) {
+                    // Create new object instead of mutating
+                    updated[lastIndex] = {
+                      ...last,
+                      content: assistantContent,
+                    };
                   }
                   return updated;
                 });
               } else if (data.type === 'tool_call') {
                 toolCalls.push(data.toolCall);
                 setMessages((prev) => {
+                  if (conversationIdRef.current !== currentConversationId) {
+                    return prev;
+                  }
                   const updated = [...prev];
-                  const last = updated[updated.length - 1];
-                  if (last?.role === 'assistant') {
-                    last.toolCalls = [...toolCalls];
+                  const lastIndex = updated.length - 1;
+                  const last = updated[lastIndex];
+                  if (last?.role === 'assistant' && last.id === tempAssistantId) {
+                    updated[lastIndex] = {
+                      ...last,
+                      toolCalls: [...toolCalls],
+                    };
                   }
                   return updated;
                 });
               } else if (data.type === 'tool_result') {
                 toolResults.push({ name: data.name, result: data.result });
                 setMessages((prev) => {
+                  if (conversationIdRef.current !== currentConversationId) {
+                    return prev;
+                  }
                   const updated = [...prev];
-                  const last = updated[updated.length - 1];
-                  if (last?.role === 'assistant') {
-                    last.toolResults = [...toolResults];
+                  const lastIndex = updated.length - 1;
+                  const last = updated[lastIndex];
+                  if (last?.role === 'assistant' && last.id === tempAssistantId) {
+                    updated[lastIndex] = {
+                      ...last,
+                      toolResults: [...toolResults],
+                    };
+                  }
+                  return updated;
+                });
+              } else if (data.type === 'tool_error') {
+                // Handle tool errors
+                const errorResult = { name: data.name, result: `Error: ${data.error}` };
+                toolErrors.push({ name: data.name, error: data.error });
+                toolResults.push(errorResult);
+                setMessages((prev) => {
+                  if (conversationIdRef.current !== currentConversationId) {
+                    return prev;
+                  }
+                  const updated = [...prev];
+                  const lastIndex = updated.length - 1;
+                  const last = updated[lastIndex];
+                  if (last?.role === 'assistant' && last.id === tempAssistantId) {
+                    // Add error to tool results for display
+                    updated[lastIndex] = {
+                      ...last,
+                      toolResults: [...toolResults],
+                    };
                   }
                   return updated;
                 });
               } else if (data.type === 'done') {
                 setMessages((prev) => {
+                  if (conversationIdRef.current !== currentConversationId) {
+                    return prev;
+                  }
                   const updated = [...prev];
-                  const last = updated[updated.length - 1];
-                  if (last?.role === 'assistant') {
-                    last.id = data.messageId;
-                    last.isStreaming = false;
+                  const lastIndex = updated.length - 1;
+                  const last = updated[lastIndex];
+                  if (last?.role === 'assistant' && last.id === tempAssistantId) {
+                    updated[lastIndex] = {
+                      ...last,
+                      id: data.messageId,
+                      isStreaming: false,
+                    };
                   }
                   return updated;
                 });
               } else if (data.type === 'error') {
                 console.error('Stream error:', data.message);
                 setMessages((prev) => {
+                  if (conversationIdRef.current !== currentConversationId) {
+                    return prev;
+                  }
                   const updated = [...prev];
-                  const last = updated[updated.length - 1];
-                  if (last?.role === 'assistant') {
-                    last.content = `Error: ${data.message}`;
-                    last.isStreaming = false;
+                  const lastIndex = updated.length - 1;
+                  const last = updated[lastIndex];
+                  if (last?.role === 'assistant' && last.id === tempAssistantId) {
+                    updated[lastIndex] = {
+                      ...last,
+                      content: `Error: ${data.message}`,
+                      isStreaming: false,
+                    };
                   }
                   return updated;
                 });
@@ -225,20 +358,38 @@ export default function ChatPage() {
           }
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      // Don't show error if aborted (user navigated away)
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
       console.error('Failed to send message:', error);
       setMessages((prev) => {
+        if (conversationIdRef.current !== currentConversationId) {
+          return prev;
+        }
         const updated = [...prev];
-        const last = updated[updated.length - 1];
-        if (last?.role === 'assistant') {
-          last.content = 'Failed to get response. Please try again.';
-          last.isStreaming = false;
+        const lastIndex = updated.length - 1;
+        const last = updated[lastIndex];
+        if (last?.role === 'assistant' && last.id === tempAssistantId) {
+          updated[lastIndex] = {
+            ...last,
+            content: 'Failed to get response. Please try again.',
+            isStreaming: false,
+          };
         }
         return updated;
       });
     } finally {
-      setIsStreaming(false);
-      loadConversations(); // Refresh to update titles/timestamps
+      // Only update state if we're still in the same conversation
+      if (conversationIdRef.current === currentConversationId) {
+        setIsStreaming(false);
+        loadConversations(); // Refresh to update titles/timestamps
+      }
+      // Clear abort controller if it's still the current one
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null;
+      }
     }
   };
 
@@ -270,13 +421,14 @@ export default function ChatPage() {
 
         <div className="flex-1 overflow-y-auto">
           {conversations.map((conv) => (
-            <div
+            <button
               key={conv.id}
-              className={`group flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-gray-800/50 transition-colors
+              className={`group flex items-center gap-2 px-4 py-3 w-full text-left hover:bg-gray-800/50 transition-colors
                          ${id === conv.id ? 'bg-gray-800/70 border-l-2 border-accent' : ''}`}
               onClick={() => navigate(`/chat/${conv.id}`)}
+              aria-label={`Open conversation: ${conv.title || 'Untitled'}`}
             >
-              <MessageSquare size={16} className="text-gray-500 flex-shrink-0" />
+              <MessageSquare size={16} className="text-gray-500 flex-shrink-0" aria-hidden="true" />
               <span className="flex-1 text-sm text-gray-300 truncate">
                 {conv.title || 'Untitled'}
               </span>
@@ -286,10 +438,11 @@ export default function ChatPage() {
                   deleteConversation(conv.id);
                 }}
                 className="opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-red-400 transition-all"
+                aria-label={`Delete conversation: ${conv.title || 'Untitled'}`}
               >
-                <Trash2 size={14} />
+                <Trash2 size={14} aria-hidden="true" />
               </button>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -319,7 +472,7 @@ export default function ChatPage() {
         {id ? (
           <>
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
               {loading ? (
                 <div className="flex items-center justify-center h-full text-gray-500">
                   Loading...
