@@ -190,7 +190,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
         const errorMessage = error instanceof Error ? error.message : String(error);
         const isToolsNotSupported = 
           errorMessage.includes('does not support tools') ||
-          errorMessage.includes('tool') && errorMessage.includes('not supported');
+          (errorMessage.includes('tool') && errorMessage.includes('not supported'));
 
         if (isToolsNotSupported) {
           // Model doesn't support tools, fall back to streaming without tools
