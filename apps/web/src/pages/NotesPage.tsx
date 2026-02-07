@@ -109,11 +109,13 @@ export default function NotesPage() {
                     </div>
                   )}
 
-                  <h3 className="text-lg font-semibold text-gray-100 mb-2">
-                    {note.title || 'Untitled'}
-                  </h3>
+                  <Link to={`/notes/${note.id}`}>
+                    <h3 className="text-lg font-semibold text-gray-100 mb-2 hover:text-purple-400 transition-colors cursor-pointer">
+                      {note.title || 'Untitled'}
+                    </h3>
+                  </Link>
 
-                  <p className="text-gray-400 leading-relaxed whitespace-pre-wrap">
+                  <p className="text-gray-400 leading-relaxed whitespace-pre-wrap line-clamp-3">
                     {note.content}
                   </p>
 
