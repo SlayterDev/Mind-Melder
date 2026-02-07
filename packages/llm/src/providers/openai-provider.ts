@@ -96,10 +96,13 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
     // Map our ChatMessage to OpenAI's expected format
     const openaiMessages = messages.map(m => {
       if (m.role === 'tool') {
+        if (!m.toolCallId) {
+          throw new Error('toolCallId is required for tool messages');
+        }
         return {
           role: 'tool' as const,
           content: m.content ?? '',
-          tool_call_id: m.toolCallId ?? '',
+          tool_call_id: m.toolCallId,
         };
       }
       if (m.role === 'assistant' && m.toolCalls?.length) {
@@ -133,6 +136,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       model: this.model,
       messages: openaiMessages,
       stream: true,
+      temperature: this.temperature,
       ...(openaiTools?.length ? { tools: openaiTools } : {}),
     });
 
@@ -173,10 +177,25 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       if (finishReason === 'tool_calls') {
         // All tool calls are complete, invoke callbacks
         for (const [, tc] of toolCallsInProgress) {
+          let parsedArgs: unknown;
+          try {
+            parsedArgs = JSON.parse(tc.arguments || '{}');
+          } catch (err) {
+            // Surface JSON parse errors without crashing the whole stream
+            const error = err instanceof Error ? err : new Error(String(err));
+            callbacks.onError?.(
+              new Error(
+                `Failed to parse tool call arguments for tool "${tc.name}" (id: "${tc.id}"): ${error.message}. Raw arguments: ${tc.arguments}`,
+              ),
+            );
+            // Skip this tool call and continue processing any others
+            continue;
+          }
+
           const toolCall: ToolCall = {
             id: tc.id,
             name: tc.name,
-            arguments: JSON.parse(tc.arguments || '{}'),
+            arguments: parsedArgs,
           };
           callbacks.onToolCall?.(toolCall);
         }
