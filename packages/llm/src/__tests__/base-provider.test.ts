@@ -79,6 +79,21 @@ describe('BaseLLMProvider', () => {
       expect(prompt).toContain('tasks');
       expect(prompt).toContain('template');
     });
+
+    it('should mention transforming unclear notes into clear tasks', () => {
+      const prompt = provider.testBuildSystemPrompt();
+
+      expect(prompt.toLowerCase()).toContain('transform');
+      expect(prompt.toLowerCase()).toContain('clear');
+      expect(prompt.toLowerCase()).toContain('action-oriented');
+    });
+
+    it('should mention adding context to make tasks understandable', () => {
+      const prompt = provider.testBuildSystemPrompt();
+
+      expect(prompt.toLowerCase()).toContain('context');
+      expect(prompt.toLowerCase()).toContain('understandable');
+    });
   });
 
   describe('buildOrganizePrompt', () => {
@@ -93,7 +108,7 @@ describe('BaseLLMProvider', () => {
 
       expect(prompt).toContain('First capture');
       expect(prompt).toContain('Second capture');
-      expect(prompt).toContain('2 captured notes');
+      expect(prompt).toContain('CAPTURED NOTES (2)');
     });
 
     it('should include template prompt', () => {
@@ -126,7 +141,7 @@ describe('BaseLLMProvider', () => {
 
       expect(prompt).toContain('work');
       expect(prompt).toContain('personal');
-      expect(prompt).toContain('Use the following tags to categorize todos');
+      expect(prompt).toContain('Use the following tags to categorize tasks');
     });
 
     it('should include tag descriptions when includeDescriptions is true', () => {
@@ -181,6 +196,105 @@ describe('BaseLLMProvider', () => {
       const prompt = provider.testBuildOrganizePrompt(captures, template);
 
       expect(prompt).toContain('Return valid JSON only');
+    });
+
+    it('should include capture IDs for sourceId tracking', () => {
+      const captures = [
+        createMockCapture({ id: 'uuid-abc-123', content: 'First capture' }),
+        createMockCapture({ id: 'uuid-def-456', content: 'Second capture' }),
+      ];
+      const template = createMockTemplate();
+
+      const prompt = provider.testBuildOrganizePrompt(captures, template);
+
+      expect(prompt).toContain('uuid-abc-123');
+      expect(prompt).toContain('uuid-def-456');
+      expect(prompt).toContain('ID:');
+    });
+
+    it('should include guidance for action-oriented titles', () => {
+      const captures = [createMockCapture()];
+      const template = createMockTemplate();
+
+      const prompt = provider.testBuildOrganizePrompt(captures, template);
+
+      expect(prompt).toContain('action-oriented');
+      expect(prompt).toContain('TITLE GUIDELINES');
+      expect(prompt.toLowerCase()).toContain('verb');
+    });
+
+    it('should include time estimation guidelines', () => {
+      const captures = [createMockCapture()];
+      const template = createMockTemplate();
+
+      const prompt = provider.testBuildOrganizePrompt(captures, template);
+
+      expect(prompt).toContain('timeEstimate');
+      expect(prompt).toContain('quick');
+      expect(prompt).toContain('medium');
+      expect(prompt).toContain('long');
+      expect(prompt).toContain('15 min');
+    });
+
+    it('should include priority scoring guidelines', () => {
+      const captures = [createMockCapture()];
+      const template = createMockTemplate();
+
+      const prompt = provider.testBuildOrganizePrompt(captures, template);
+
+      expect(prompt).toContain('priorityScore');
+      expect(prompt).toContain('0-100');
+      expect(prompt).toContain('Urgency');
+      expect(prompt).toContain('Impact');
+    });
+
+    it('should request title and description separation', () => {
+      const captures = [createMockCapture()];
+      const template = createMockTemplate();
+
+      const prompt = provider.testBuildOrganizePrompt(captures, template);
+
+      expect(prompt).toContain('Title:');
+      expect(prompt).toContain('Description:');
+      expect(prompt).toContain('5-10 words');
+    });
+
+    it('should include guidance for extracting critical information', () => {
+      const captures = [createMockCapture()];
+      const template = createMockTemplate();
+
+      const prompt = provider.testBuildOrganizePrompt(captures, template);
+
+      expect(prompt).toContain('critical information');
+      expect(prompt.toLowerCase()).toContain('deadline');
+      expect(prompt.toLowerCase()).toContain('people');
+    });
+
+    it('should warn against generating new IDs', () => {
+      const captures = [createMockCapture()];
+      const template = createMockTemplate();
+
+      const prompt = provider.testBuildOrganizePrompt(captures, template);
+
+      expect(prompt).toContain('CRITICAL RULE');
+      expect(prompt).toContain('NEVER generate new IDs');
+      expect(prompt).toContain('exact ID');
+    });
+
+    it('should provide output format example with all required fields', () => {
+      const captures = [createMockCapture()];
+      const template = createMockTemplate();
+
+      const prompt = provider.testBuildOrganizePrompt(captures, template);
+
+      expect(prompt).toContain('OUTPUT FORMAT');
+      expect(prompt).toContain('"title"');
+      expect(prompt).toContain('"description"');
+      expect(prompt).toContain('"timeEstimate"');
+      expect(prompt).toContain('"priorityScore"');
+      expect(prompt).toContain('"tags"');
+      expect(prompt).toContain('"sourceType"');
+      expect(prompt).toContain('"sourceId"');
     });
   });
 
