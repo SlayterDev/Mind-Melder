@@ -185,25 +185,37 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
         }
 
         callbacks.onComplete(response.message.content ?? '');
-      } catch {
-        // Model might not support tools, fall back to streaming without tools
-        const response = await this.client.chat({
-          model: this.model,
-          messages: ollamaMessages,
-          stream: true,
-          options: {
-            temperature: this.temperature,
-          },
-        });
+      } catch (error: unknown) {
+        // Check if this is a "tools not supported" error
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const isToolsNotSupported = 
+          errorMessage.includes('does not support tools') ||
+          errorMessage.includes('tool') && errorMessage.includes('not supported');
 
-        let fullMessage = '';
-        for await (const chunk of response) {
-          if (chunk.message.content) {
-            callbacks.onToken(chunk.message.content);
-            fullMessage += chunk.message.content;
+        if (isToolsNotSupported) {
+          // Model doesn't support tools, fall back to streaming without tools
+          const response = await this.client.chat({
+            model: this.model,
+            messages: ollamaMessages,
+            stream: true,
+            options: {
+              temperature: this.temperature,
+            },
+          });
+
+          let fullMessage = '';
+          for await (const chunk of response) {
+            if (chunk.message.content) {
+              callbacks.onToken(chunk.message.content);
+              fullMessage += chunk.message.content;
+            }
           }
+          callbacks.onComplete(fullMessage);
+        } else {
+          // Unexpected error - report it and rethrow
+          callbacks.onError?.(error instanceof Error ? error : new Error(errorMessage));
+          throw error;
         }
-        callbacks.onComplete(fullMessage);
       }
       return;
     }

@@ -62,7 +62,7 @@ app.use('/api/v1/search', createSearchRouter(db));
 app.use('/api/v1/organize', createOrganizeRouter(db, settingsRepo));
 app.use('/api/v1/today-sheet', createTodaySheetRouter(db, settingsRepo));
 app.use('/api/v1/ollama', createOllamaRouter(settingsRepo));
-app.use('/api/v1/conversation', createConversationsRouter(db, conversationsRepo, settingsRepo));
+app.use('/api/v1/conversations', createConversationsRouter(db, conversationsRepo, settingsRepo));
 
 // Error handler (must be last)
 app.use(errorHandler);

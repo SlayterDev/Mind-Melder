@@ -124,11 +124,14 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
         anthropicMessages.push({ role: 'assistant', content });
       } else if (m.role === 'tool') {
         // Tool result - must be in a user message
+        if (!m.toolCallId) {
+          throw new Error('AnthropicProvider.streamChat: tool message is missing required toolCallId');
+        }
         anthropicMessages.push({
           role: 'user',
           content: [{
             type: 'tool_result',
-            tool_use_id: m.toolCallId ?? '',
+            tool_use_id: m.toolCallId,
             content: m.content ?? '',
           }],
         });

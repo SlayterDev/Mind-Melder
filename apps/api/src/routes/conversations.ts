@@ -13,7 +13,7 @@ export function createConversationsRouter(
 ): ExpressRouter {
   const router = Router();
 
-  // POST /api/v1/conversation - Create new conversation
+  // POST /api/v1/conversations - Create new conversation
   router.post(
     '/',
     validateBody(createConversationSchema),
@@ -32,7 +32,7 @@ export function createConversationsRouter(
     })
   );
 
-  // GET /api/v1/conversation - List all conversations
+  // GET /api/v1/conversations - List all conversations
   router.get(
     '/',
     asyncHandler(async (req, res) => {
@@ -43,14 +43,15 @@ export function createConversationsRouter(
     })
   );
 
-  // GET /api/v1/conversation/:id - Get conversation with messages
+  // GET /api/v1/conversations/:id - Get conversation with messages
   router.get(
     '/:id',
     asyncHandler(async (req, res) => {
       const { id } = req.params;
+      const userId = 'test-user-1'; // TODO: Get from auth context
 
       const conversation = await conversationsRepo.findById(id);
-      if (!conversation) {
+      if (!conversation || conversation.userId !== userId) {
         throw new ApiError(404, 'Conversation not found');
       }
 
@@ -60,11 +61,18 @@ export function createConversationsRouter(
     })
   );
 
-  // DELETE /api/v1/conversation/:id - Delete conversation
+  // DELETE /api/v1/conversations/:id - Delete conversation
   router.delete(
     '/:id',
     asyncHandler(async (req, res) => {
       const { id } = req.params;
+      const userId = 'test-user-1'; // TODO: Get from auth context
+
+      // Verify ownership before deleting
+      const conversation = await conversationsRepo.findById(id);
+      if (!conversation || conversation.userId !== userId) {
+        throw new ApiError(404, 'Conversation not found');
+      }
 
       await conversationsRepo.delete(id);
       res.status(204).send();
@@ -75,39 +83,44 @@ export function createConversationsRouter(
   async function runLLMTurn(
     llmProvider: LLMProvider,
     messages: ChatMessage[],
-    res: Response,
-    conversationId: string,
-    userId: string,
-    toolExecutor: ChatToolExecutor
+    res: Response
   ): Promise<{ toolCalls: ToolCall[]; content: string }> {
     let content = '';
     const toolCalls: ToolCall[] = [];
 
-    await llmProvider.streamChat(
-      messages,
-      {
-        onToken: (token) => {
-          content += token;
-          res.write(`data: ${JSON.stringify({ type: 'token', content: token })}\n\n`);
+    try {
+      await llmProvider.streamChat(
+        messages,
+        {
+          onToken: (token) => {
+            content += token;
+            res.write(`data: ${JSON.stringify({ type: 'token', content: token })}\n\n`);
+          },
+          onToolCall: (toolCall) => {
+            toolCalls.push(toolCall);
+            res.write(`data: ${JSON.stringify({ type: 'tool_call', toolCall })}\n\n`);
+          },
+          onComplete: () => {
+            // Handled after this function returns
+          },
+          onError: (error) => {
+            res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+          },
         },
-        onToolCall: (toolCall) => {
-          toolCalls.push(toolCall);
-          res.write(`data: ${JSON.stringify({ type: 'tool_call', toolCall })}\n\n`);
-        },
-        onComplete: () => {
-          // Handled after this function returns
-        },
-        onError: (error) => {
-          res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
-        },
-      },
-      chatTools
-    );
+        chatTools
+      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'An unexpected error occurred while streaming.';
+      res.write(`data: ${JSON.stringify({ type: 'error', message })}\n\n`);
+      res.end();
+      throw error;
+    }
 
     return { toolCalls, content };
   }
 
-  // POST /api/v1/conversation/:id/chat - Send message (SSE streaming)
+  // POST /api/v1/conversations/:id/chat - Send message (SSE streaming)
   router.post(
     '/:id/chat',
     validateBody(chatMessageInputSchema),
@@ -133,6 +146,15 @@ export function createConversationsRouter(
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       res.flushHeaders();
+
+      // Track if client disconnected
+      let clientDisconnected = false;
+      const handleDisconnect = () => {
+        clientDisconnected = true;
+      };
+      
+      req.on('close', handleDisconnect);
+      res.on('close', handleDisconnect);
 
       // Get LLM provider from settings
       const settings = await settingsRepo.getOrCreate(userId);
@@ -160,15 +182,17 @@ export function createConversationsRouter(
       let iterations = 0;
 
       while (iterations < MAX_TOOL_ITERATIONS) {
+        // Check if client disconnected
+        if (clientDisconnected) {
+          return;
+        }
+
         iterations++;
         const messages = await buildMessages();
         const { toolCalls, content: turnContent } = await runLLMTurn(
           llmProvider,
           messages,
-          res,
-          id,
-          userId,
-          toolExecutor
+          res
         );
 
         if (toolCalls.length === 0) {
@@ -193,6 +217,11 @@ export function createConversationsRouter(
 
         // Execute each tool and save results
         for (const toolCall of toolCalls) {
+          // Check if client disconnected
+          if (clientDisconnected) {
+            return;
+          }
+
           try {
             const result = await toolExecutor.executeTool(userId, toolCall.name, toolCall.arguments);
             res.write(`data: ${JSON.stringify({ type: 'tool_result', name: toolCall.name, result })}\n\n`);
