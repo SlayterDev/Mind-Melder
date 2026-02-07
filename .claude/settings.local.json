@@ -51,7 +51,9 @@
       "Bash(timeout 5 sh:*)",
       "Bash(git add:*)",
       "Bash(npx vitest run:*)",
-      "Bash(git remote get-url:*)"
+      "Bash(git remote get-url:*)",
+      "Bash(psql:*)",
+      "Bash(source:*)"
     ]
   }
 }

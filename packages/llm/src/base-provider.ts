@@ -11,7 +11,9 @@ export abstract class BaseLLMProvider {
 Your job is to:
 1. Read through a batch of captured notes, which may be unstructured, messy, incomplete, or in short form
 2. Extract any actionable tasks or todos from the content
-3. Follow the user's template instructions for organization style
+3. Transform unclear or abbreviated notes into clear, action-oriented tasks
+4. Add context and details to make tasks independently understandable
+5. Follow the user's template instructions for organization style
 `;
   }
 
@@ -20,7 +22,7 @@ Your job is to:
    */
   protected buildOrganizePrompt(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions: boolean = false): string {
     const captureList = captures
-      .map((c, i) => `${i + 1}. [${new Date(c.timestamp).toLocaleString()}] ${c.content}`)
+      .map((c, i) => `${i + 1}. ID: ${c.id} | [${new Date(c.timestamp).toLocaleString()}] ${c.content}`)
       .join('\n');
 
     let tagsInstruction = '';
@@ -28,20 +30,82 @@ Your job is to:
       const tagsList = tags
         .map(tag => includeDescriptions && tag.description ? `${tag.name} (${tag.description})` : tag.name)
         .join(', ');
-      tagsInstruction = `\nCategorization tags: Use the following tags to categorize todos: ${tagsList}.`;
+      tagsInstruction = `\nCATEGORIZATION TAGS:
+- Use the following tags to categorize tasks: ${tagsList}.
+- Assign appropriate tags to each task in the "tags" array field using only this list. Do not create new tags.
+- If no relevant tag exists, leave the "tags" array empty for that task.
+`;
     } else {
-      tagsInstruction = '\nCategorization: Use your best judgment to categorize todos with tags.';
+      tagsInstruction = '\nCATEGORIZATION: Use your best judgment to categorize todos with relevant tags.';
     }
 
-    return `Here are ${captures.length} captured notes to process:
+    return `You are extracting actionable todos from a batch of unorganized captures.
 
+CAPTURED NOTES (${captures.length}):
 ${captureList}
 
-Organization instructions:
-${template.prompt}
+YOUR TASK:
+1. Extract actionable tasks from captures.
+2. Transform each capture into a clear, actionable task with:
+   - Title: Concise action-oriented summary (5-10 words) that makes the task immediately clear
+   - Description: Additional context, reasoning, or implementation details from the original capture
+   - Expand abbreviations, add clarity, make titles scannable
+   - Example: "auth middleware jwt" → Title: "Refactor authentication middleware for JWT support" / Description: "Update existing middleware to handle JWT tokens properly"
+3. Assign time estimates based on task complexity:
+   - quick: < 15 minutes (simple edits, quick reviews, small fixes)
+   - medium: 30-60 minutes (moderate coding, research, planning)
+   - long: > 90 minutes (complex features, major refactors, deep investigations)
+4. Assign priority scores (0-100) based on:
+   - Urgency: Is there a deadline or time-sensitive aspect?
+   - Impact: How important is this task to overall goals?
+   - Dependencies: Do other tasks depend on this?
+   - Use 80-100 for critical/urgent, 50-79 for important, 20-49 for nice-to-have, 0-19 for low-priority
+5. Look for critical information in captures to include in titles/descriptions:
+   - People mentioned (names, roles)
+   - Deadlines or time references
+   - Project names or areas
+   - Specific technical details
+6. Extract due dates when explicitly mentioned or strongly implied
+   - Look for phrases like "by Friday", "tomorrow", "end of week", "due on..."
+   - Convert relative dates to actual dates based on capture timestamp
+   - Leave dueDate null if not clearly indicated
+
+TITLE GUIDELINES:
+- Be specific and action-oriented (start with verbs: "Review", "Update", "Fix", "Implement", "Research", "Plan")
+- Include key details in the title itself, not just in description
+- Expand abbreviations and incomplete thoughts
+- Make titles independently understandable without reading the description
+- Description should add context and details, not be the primary information
+
 ${tagsInstruction}
 
-Please extract todos from these notes. Return valid JSON only.`;
+USER TEMPLATE INSTRUCTIONS:
+${template.prompt}
+
+CRITICAL RULE FOR sourceId:
+- You MUST use the exact ID from the captures list above (copy the UUID after "ID:")
+- Use sourceType="capture" for all tasks extracted from captures
+- NEVER generate new IDs or use numbers like "1", "2", etc.
+
+OUTPUT FORMAT (valid JSON only):
+{
+  "todos": [
+    {
+      "title": "Review security PR #482 for authentication changes",
+      "description": "Critical security fix for JWT token validation needs approval before deployment",
+      "timeEstimate": "medium",
+      "priorityScore": 85,
+      "tags": ["security", "code-review"],
+      "sourceType": "capture",
+      "sourceId": "<INSERT_EXACT_UUID_FROM_LIST_ABOVE>",
+      "dueDate": "2026-02-07"
+    }
+  ]
+}
+
+Time estimates: quick (<15min), medium (30-60min), long (>90min)
+Priority scores: 0-100 (higher = more important/urgent)
+Return valid JSON only.`;
   }
 
   /**

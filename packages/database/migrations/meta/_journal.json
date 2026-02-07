@@ -64,6 +64,13 @@
       "when": 1770303900000,
       "tag": "0008_replace_category_with_tags",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1770390300000,
+      "tag": "0009_add_conversations",
+      "breakpoints": true
     }
   ]
 }
