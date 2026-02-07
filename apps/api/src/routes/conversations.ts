@@ -1,10 +1,15 @@
 import { Router, type Router as ExpressRouter } from 'express';
-import { ConversationsRepository } from 'database';
+import { ConversationsRepository, Database, SettingsRepository } from 'database';
 import { createConversationSchema, chatMessageInputSchema } from 'types';
+import { ProviderFactory, type ChatMessage } from 'llm';
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, ApiError } from '../middleware/index.js';
 
-export function createConversationsRouter(conversationsRepo: ConversationsRepository): ExpressRouter {
+export function createConversationsRouter(
+  db: Database,
+  conversationsRepo: ConversationsRepository,
+  settingsRepo: SettingsRepository
+): ExpressRouter {
   const router = Router();
 
   // POST /api/v1/conversation - Create new conversation
@@ -65,13 +70,14 @@ export function createConversationsRouter(conversationsRepo: ConversationsReposi
     })
   );
 
-  // POST /api/v1/conversation/:id/chat - Send message
+  // POST /api/v1/conversation/:id/chat - Send message (SSE streaming)
   router.post(
     '/:id/chat',
     validateBody(chatMessageInputSchema),
     asyncHandler(async (req, res) => {
       const { id } = req.params;
       const { content } = req.body;
+      const userId = 'test-user-1'; // TODO: Get from auth context
 
       const conversation = await conversationsRepo.findById(id);
       if (!conversation) {
@@ -79,18 +85,60 @@ export function createConversationsRouter(conversationsRepo: ConversationsReposi
       }
 
       // Save user message
-      const userMessage = await conversationsRepo.addMessage({
+      await conversationsRepo.addMessage({
         conversationId: id,
         role: 'user',
         content,
       });
 
-      // Fetch conversation history
-      const messages = await conversationsRepo.getMessages(id);
+      // Fetch conversation history and map to ChatMessage format
+      const dbMessages = await conversationsRepo.getMessages(id);
+      const messages: ChatMessage[] = [
+        // Add system prompt if conversation has one
+        ...(conversation.systemPrompt
+          ? [{ role: 'system' as const, content: conversation.systemPrompt }]
+          : []),
+        // Map db messages to ChatMessage format
+        ...dbMessages.map((m) => ({
+          role: m.role as ChatMessage['role'],
+          content: m.content,
+          toolCallId: m.toolCallId,
+          toolCalls: m.toolCalls,
+        })),
+      ];
 
-      // TODO: Call LLM, handle tool calls, save assistant response
+      // Set up SSE headers
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders();
 
-      res.status(201).json({ message: userMessage, history: messages });
+      // Get LLM provider from settings
+      const settings = await settingsRepo.getOrCreate(userId);
+      const llmProvider = ProviderFactory.createFromSettings(settings);
+
+      let assistantContent = '';
+
+      await llmProvider.streamChat(messages, {
+        onToken: (token) => {
+          assistantContent += token;
+          res.write(`data: ${JSON.stringify({ type: 'token', content: token })}\n\n`);
+        },
+        onComplete: async (fullMessage) => {
+          // Save assistant message
+          const assistantMessage = await conversationsRepo.addMessage({
+            conversationId: id,
+            role: 'assistant',
+            content: fullMessage,
+          });
+          res.write(`data: ${JSON.stringify({ type: 'done', messageId: assistantMessage.id })}\n\n`);
+          res.end();
+        },
+        onError: (error) => {
+          res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+          res.end();
+        },
+      });
     })
   );
 

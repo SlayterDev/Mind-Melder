@@ -42,6 +42,26 @@ export interface OrganizedOutput {
   todos: TodaySheetTaskItem[];
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system' | 'tool';
+  content: string | null;
+  toolCallId?: string | null; // Required for tool role messages
+  toolCalls?: ToolCall[] | null; // For assistant messages with tool calls
+}
+
+export interface ToolCall {
+  id: string;
+  name: string;
+  arguments: Record<string, any>;
+}
+export interface StreamCallbacks {
+  onToken: (token: string) => void;
+  onToolCall?: (toolCall: ToolCall) => void;
+  onToolResult?: (toolName: string, result: any) => void;
+  onComplete: (fullMessage: string) => void;
+  onError?: (error: Error) => void;
+}
+
 // LLM Provider interface
 export interface LLMProvider {
   /**
@@ -67,6 +87,8 @@ export interface LLMProvider {
    * @returns Prioritized sections with tasks, summary, and time estimate
    */
   generateTodaySheet(input: TodaySheetInput): Promise<TodaySheetOutput>;
+
+  streamChat(messages: ChatMessage[], callbacks: StreamCallbacks): Promise<void>;
 }
 
 // Provider configuration

@@ -1,7 +1,7 @@
 import OpenAI from 'openai';
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
-import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types.js';
+import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, TodaySheetInput, TodaySheetOutput } from '../types.js';
 import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
 
 export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
@@ -88,5 +88,56 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
     }
 
     return this.parseResponse<TodaySheetOutput>(content, todaySheetOutputSchema);
+  }
+
+  async streamChat(messages: ChatMessage[], callbacks: StreamCallbacks): Promise<void> {
+    let fullResponse = '';
+
+    // Map our ChatMessage to OpenAI's expected format
+    const openaiMessages = messages.map(m => {
+      if (m.role === 'tool') {
+        return {
+          role: 'tool' as const,
+          content: m.content ?? '',
+          tool_call_id: m.toolCallId ?? '',
+        };
+      }
+      if (m.role === 'assistant' && m.toolCalls?.length) {
+        return {
+          role: 'assistant' as const,
+          content: m.content ?? null,
+          tool_calls: m.toolCalls.map(tc => ({
+            id: tc.id,
+            type: 'function' as const,
+            function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
+          })),
+        };
+      }
+      return {
+        role: m.role as 'user' | 'assistant' | 'system',
+        content: m.content ?? '',
+      };
+    });
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: openaiMessages,
+      stream: true,
+    });
+
+    for await (const chunk of response) {
+      const delta = chunk.choices[0]?.delta;
+
+      if (delta?.content) {
+        callbacks.onToken(delta.content);
+        fullResponse += delta.content;
+      }
+
+      // TODO: Handle tool calls and arguments in the stream
+
+      if (chunk.choices[0]?.finish_reason === 'stop') {
+        callbacks.onComplete(fullResponse);
+      }
+    }
   }
 }

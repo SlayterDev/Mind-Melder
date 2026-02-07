@@ -1,7 +1,7 @@
 import { Ollama } from 'ollama';
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
-import type { LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput, TodaySheetOutput } from '../types.js';
+import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, TodaySheetInput, TodaySheetOutput } from '../types.js';
 import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -107,5 +107,29 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     });
 
     return this.parseResponse<TodaySheetOutput>(response.message.content, todaySheetOutputSchema);
+  }
+
+  async streamChat(messages: ChatMessage[], callbacks: StreamCallbacks): Promise<void> {
+    // Filter out tool messages and map to Ollama's expected format
+    const ollamaMessages = messages
+      .filter(m => m.role !== 'tool')
+      .map(m => ({ role: m.role as 'user' | 'assistant' | 'system', content: m.content ?? '' }));
+
+    const response = await this.client.chat({
+      model: this.model,
+      messages: ollamaMessages,
+      stream: true,
+      options: {
+        temperature: this.temperature,
+      },
+    });
+
+    let fullMessage = '';
+    for await (const chunk of response) {
+      callbacks.onToken(chunk.message.content);
+      fullMessage += chunk.message.content;
+    }
+
+    callbacks.onComplete(fullMessage);
   }
 }
