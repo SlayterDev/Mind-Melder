@@ -143,6 +143,39 @@ export const ollamaAPI = {
   listModels: () => fetchAPI<OllamaModelsResponse>('/ollama/models'),
 };
 
+// Conversations
+export interface Conversation {
+  id: string;
+  title: string | null;
+  userId: string;
+  model: string | null;
+  systemPrompt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  role: 'user' | 'assistant' | 'system' | 'tool';
+  content: string | null;
+  toolCalls: Array<{ id: string; name: string; arguments: Record<string, unknown> }> | null;
+  toolCallId: string | null;
+  createdAt: string;
+}
+
+export interface ConversationWithMessages extends Conversation {
+  messages: ChatMessage[];
+}
+
+export const conversationsAPI = {
+  list: () => fetchAPI<Conversation[]>('/conversations'),
+  create: (data: { title?: string; systemPrompt?: string }) =>
+    fetchAPI<Conversation>('/conversations', { method: 'POST', body: JSON.stringify(data) }),
+  get: (id: string) => fetchAPI<ConversationWithMessages>(`/conversations/${id}`),
+  delete: (id: string) => fetchAPI(`/conversations/${id}`, { method: 'DELETE' }),
+};
+
 // Settings
 export interface Settings {
   id: string;

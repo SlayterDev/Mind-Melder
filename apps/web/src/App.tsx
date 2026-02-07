@@ -12,6 +12,7 @@ import TemplatesPage from './pages/TemplatesPage';
 import SettingsPage from './pages/SettingsPage';
 import SetupPage from './pages/SetupPage';
 import QuickCapturePage from './pages/QuickCapturePage';
+import ChatPage from './pages/ChatPage';
 import { isApiConfigured } from './api/config';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
@@ -27,6 +28,8 @@ function AppRoutes() {
       <Route path="/notes" element={<NotesPage />} />
       <Route path="/todos" element={<TodosPage />} />
       <Route path="/templates" element={<TemplatesPage />} />
+      <Route path="/chat/:id" element={<ChatPage />} />
+      <Route path="/chat" element={<ChatPage />} />
       <Route path="/settings" element={<SettingsPage />} />
     </Routes>
   );
