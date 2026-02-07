@@ -25,17 +25,11 @@ export default function NoteDetailPage() {
     setError(null);
     
     try {
-      const data = await notesAPI.list();
-      const foundNote = data.find((n: any) => n.id === id);
-      
-      if (!foundNote) {
-        setError('Note not found');
-      } else {
-        setNote(foundNote);
-      }
+      const note = await notesAPI.get(id);
+      setNote(note);
     } catch (err) {
       console.error('Failed to load note:', err);
-      setError('Failed to load note');
+      setError(err instanceof Error ? err.message : 'Failed to load note');
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +80,7 @@ export default function NoteDetailPage() {
           onClick={() => setIsEditing(false)}
           className="flex items-center gap-2 text-gray-400 hover:text-gray-200 mb-6 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <X className="w-4 h-4" />
           Cancel Editing
         </button>
 

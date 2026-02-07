@@ -58,6 +58,7 @@ export const todosAPI = {
 export const notesAPI = {
   list: (tag?: string) =>
     fetchAPI<any[]>(`/notes${tag ? `?tag=${tag}` : ''}`),
+  get: (id: string) => fetchAPI<any>(`/notes/${id}`),
   create: (data: { title: string; content: string; tags?: string[] }) =>
     fetchAPI('/notes', { method: 'POST', body: JSON.stringify(data) }),
   append: (data: {title: string, contentToAppend: string}) =>
