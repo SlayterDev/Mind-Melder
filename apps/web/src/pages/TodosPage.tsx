@@ -6,7 +6,7 @@ import TodoCard from '../components/TodoCard';
 export default function TodosPage() {
   const [todos, setTodos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed'>('pending');
 
   const loadTodos = async (status?: 'pending' | 'completed') => {
     setIsLoading(true);
@@ -134,7 +134,7 @@ export default function TodosPage() {
         </div>
 
         <div className="flex gap-2 sheet-card p-1">
-          {(['all', 'pending', 'completed'] as const).map((filter) => (
+          {(['pending', 'completed', 'all'] as const).map((filter) => (
             <button
               key={filter}
               onClick={() => setStatusFilter(filter)}
