@@ -13,7 +13,7 @@ import TaskCard from '../components/TaskCard';
 import QuickCaptureInput from '../components/QuickCaptureInput';
 import TemplateSelector from '../components/TemplateSelector';
 import { useInboxCount } from '../api/queries';
-import { ClipboardList, Sparkles, Flame, Target, Lightbulb, Package, Loader2, EyeOff, Eye } from 'lucide-react';
+import { ClipboardList, Sparkles, Flame, Target, Lightbulb, Package, Loader2, EyeOff, Eye, Check } from 'lucide-react';
 import { triggerSmallConfetti, triggerLargeConfetti } from '../utils/confetti';
 
 type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
@@ -474,58 +474,49 @@ export default function TodaySheetPage() {
         {/* Journal Page Header */}
         <div className={`mb-6 pb-4 section-divider ${isGenerating ? 'section-divider-generating' : ''}`}>
           <div className="flex flex-col md:flex-row items-start md:items-start justify-between gap-4">
-            <div className="flex-1">
+            <div className="flex-1 flex flex-col">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-100 mb-1">Today's Plan</h1>
               <p className="text-gray-400 text-sm font-serif italic">{dateStr}</p>
+              <div className="mt-2 flex items-center gap-2 inset-x-0 bottom-0">
+                <button 
+                  id="hideCompleted" 
+                  className={`checkbox-accent ${
+                    hideCompleted ? 'checkbox-setting-accent-checked' : 'checkbox-accent-unchecked'
+                  }`}
+                  onClick={() => setHideCompleted(!hideCompleted)} 
+                >
+                  {hideCompleted && <Check className="w-3 h-3 text-white" />}
+                </button>
+                <label htmlFor="hideCompleted" className="flex items-center gap-2 text-sm font-medium text-gray-300 transition-all cursor-pointer" title="Hide completed tasks">
+                    Hide Completed
+                </label>
+              </div>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setHideCompleted(!hideCompleted)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                    hideCompleted
-                      ? 'bg-accent/20 text-accent hover:bg-accent/30'
-                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                  }`}
-                  title={hideCompleted ? 'Show completed tasks' : 'Hide completed tasks'}
-                >
-                  {hideCompleted ? (
-                    <>
-                      <EyeOff className="w-4 h-4" />
-                      <span className="hidden sm:inline">Hide Completed</span>
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="w-4 h-4" />
-                      <span className="hidden sm:inline">Show All</span>
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={() => handleGenerate.mutateAsync()}
-                  disabled={isGenerating}
-                  className={`btn-accent flex items-center justify-center gap-2 transition-all ${
-                    isGenerating ? 'btn-generating' : ''
-                  } ${showSuccess ? 'btn-success-flash' : ''}`}
-                >
-                  {isGenerating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : sheet ? (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      Regenerate
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      Generate Plan
-                    </>
-                  )}
-                </button>
-              </div>
+              <button
+                onClick={() => handleGenerate.mutateAsync()}
+                disabled={isGenerating}
+                className={`btn-accent flex items-center justify-center gap-2 transition-all ${
+                  isGenerating ? 'btn-generating' : ''
+                } ${showSuccess ? 'btn-success-flash' : ''}`}
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : sheet ? (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Regenerate
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Generate Plan
+                  </>
+                )}
+              </button>
               <TemplateSelector
                 value={selectedTemplateId}
                 onChange={setSelectedTemplateId}
