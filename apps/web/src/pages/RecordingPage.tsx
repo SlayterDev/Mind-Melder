@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Mic, Monitor, Pause, Play, Square, Loader2 } from 'lucide-react';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import RecordingPermissionPrompt from '../components/RecordingPermissionPrompt';
@@ -11,9 +11,100 @@ function formatTime(seconds: number): string {
   return `${m}:${s}`;
 }
 
+interface DiagnosticInfo {
+  devices: string;
+  getUserMediaResult: string;
+  trackState: string;
+  audioContextState: string;
+  hasAudioData: string;
+}
+
+function useDiagnostics() {
+  const [info, setInfo] = useState<DiagnosticInfo | null>(null);
+
+  useEffect(() => {
+    async function run() {
+      const result: DiagnosticInfo = {
+        devices: 'checking...',
+        getUserMediaResult: 'pending',
+        trackState: 'pending',
+        audioContextState: 'pending',
+        hasAudioData: 'pending',
+      };
+
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter((d) => d.kind === 'audioinput');
+        result.devices = audioInputs.map((d) => d.label || d.deviceId).join(', ') || 'none found';
+        setInfo({ ...result });
+      } catch (e) {
+        result.devices = `error: ${e}`;
+        setInfo({ ...result });
+        return;
+      }
+
+      let stream: MediaStream | null = null;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        result.getUserMediaResult = 'success';
+        const track = stream.getAudioTracks()[0];
+        result.trackState = track
+          ? `readyState=${track.readyState}, enabled=${track.enabled}, muted=${track.muted}, label="${track.label}"`
+          : 'no audio track';
+        setInfo({ ...result });
+      } catch (e) {
+        result.getUserMediaResult = `error: ${e instanceof Error ? e.message : e}`;
+        setInfo({ ...result });
+        return;
+      }
+
+      try {
+        const ctx = new AudioContext();
+        result.audioContextState = ctx.state;
+        if (ctx.state === 'suspended') {
+          await ctx.resume();
+          result.audioContextState = `resumed -> ${ctx.state}`;
+        }
+
+        // Check for actual audio data using AnalyserNode
+        const source = ctx.createMediaStreamSource(stream!);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+        // Sample audio levels over 1 second
+        let maxLevel = 0;
+        const checkInterval = setInterval(() => {
+          analyser.getByteFrequencyData(dataArray);
+          const level = Math.max(...dataArray);
+          if (level > maxLevel) maxLevel = level;
+        }, 100);
+
+        await new Promise((r) => setTimeout(r, 1000));
+        clearInterval(checkInterval);
+
+        result.hasAudioData = maxLevel > 0 ? `yes (peak=${maxLevel}/255)` : 'NO - mic appears silent';
+
+        ctx.close();
+        stream!.getTracks().forEach((t) => t.stop());
+        setInfo({ ...result });
+      } catch (e) {
+        result.audioContextState = `error: ${e instanceof Error ? e.message : e}`;
+        stream?.getTracks().forEach((t) => t.stop());
+        setInfo({ ...result });
+      }
+    }
+    run();
+  }, []);
+
+  return info;
+}
+
 export default function RecordingPage() {
   const [micEnabled, setMicEnabled] = useState(true);
   const [systemAudioEnabled, setSystemAudioEnabled] = useState(false);
+  const diagnostics = useDiagnostics();
 
   const {
     state,
@@ -51,7 +142,6 @@ export default function RecordingPage() {
   const isSaving = state === 'saving';
   const isActive = isRecording || isPaused;
 
-  // Check if permissions are needed
   const needsPermissions =
     permissionStatus &&
     (permissionStatus.microphone !== 'granted' ||
@@ -80,15 +170,13 @@ export default function RecordingPage() {
 
       {/* Content */}
       <div
-        className="flex-1 flex flex-col px-4 pb-4"
+        className="flex-1 flex flex-col px-4 pb-4 overflow-y-auto"
         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
       >
-        {/* Error message */}
         {error && (
           <div className="text-red-400 text-xs bg-red-900/20 rounded px-3 py-2 mb-2">{error}</div>
         )}
 
-        {/* Saving state */}
         {isSaving && (
           <div className="flex-1 flex flex-col items-center justify-center gap-2">
             <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
@@ -96,7 +184,6 @@ export default function RecordingPage() {
           </div>
         )}
 
-        {/* Idle state */}
         {isIdle && (
           <>
             {needsPermissions && permissionStatus ? (
@@ -109,7 +196,6 @@ export default function RecordingPage() {
               />
             ) : (
               <div className="space-y-2">
-                {/* System Audio toggle */}
                 <label className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2 cursor-pointer">
                   <div className="flex items-center gap-2 text-sm">
                     <Monitor className="w-4 h-4 text-gray-400" />
@@ -129,7 +215,6 @@ export default function RecordingPage() {
                   </div>
                 </label>
 
-                {/* Microphone toggle */}
                 <label className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2 cursor-pointer">
                   <div className="flex items-center gap-2 text-sm">
                     <Mic className="w-4 h-4 text-gray-400" />
@@ -151,14 +236,10 @@ export default function RecordingPage() {
               </div>
             )}
 
-            {/* Record button */}
             <div className="flex-1 flex items-center justify-center mt-3">
               <button
                 onClick={handleRecord}
-                disabled={
-                  (!micEnabled && !systemAudioEnabled) ||
-                  !!needsPermissions
-                }
+                disabled={(!micEnabled && !systemAudioEnabled) || !!needsPermissions}
                 className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors flex items-center justify-center shadow-lg"
               >
                 <div className="w-5 h-5 bg-white rounded-full" />
@@ -167,10 +248,8 @@ export default function RecordingPage() {
           </>
         )}
 
-        {/* Recording / Paused state */}
         {isActive && (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            {/* Timer with recording indicator */}
             <div className="flex items-center gap-3">
               <div
                 className={`w-3 h-3 rounded-full bg-red-500 ${
@@ -182,15 +261,12 @@ export default function RecordingPage() {
               </span>
             </div>
 
-            {/* Active source indicators */}
             <div className="flex items-center gap-3 text-gray-400">
               {systemAudioEnabled && <Monitor className="w-4 h-4" />}
               {micEnabled && <Mic className="w-4 h-4" />}
             </div>
 
-            {/* Controls */}
             <div className="flex items-center gap-4">
-              {/* Pause/Resume button */}
               <button
                 onClick={isPaused ? resumeRecording : pauseRecording}
                 className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors flex items-center justify-center"
@@ -202,13 +278,41 @@ export default function RecordingPage() {
                 )}
               </button>
 
-              {/* Stop button */}
               <button
                 onClick={stopRecording}
                 className="w-12 h-12 rounded-full bg-red-600 hover:bg-red-500 transition-colors flex items-center justify-center"
               >
                 <Square className="w-5 h-5 text-white fill-white" />
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Diagnostics */}
+        {diagnostics && (
+          <div className="mt-3 border-t border-gray-700 pt-2 text-[10px] text-gray-500 space-y-0.5 font-mono">
+            <div>
+              <span className="text-gray-600">devices:</span> {diagnostics.devices}
+            </div>
+            <div>
+              <span className="text-gray-600">getUserMedia:</span>{' '}
+              {diagnostics.getUserMediaResult}
+            </div>
+            <div>
+              <span className="text-gray-600">track:</span> {diagnostics.trackState}
+            </div>
+            <div>
+              <span className="text-gray-600">audioCtx:</span> {diagnostics.audioContextState}
+            </div>
+            <div>
+              <span className="text-gray-600">audioData:</span>{' '}
+              <span
+                className={
+                  diagnostics.hasAudioData.startsWith('NO') ? 'text-red-400' : 'text-green-400'
+                }
+              >
+                {diagnostics.hasAudioData}
+              </span>
             </div>
           </div>
         )}

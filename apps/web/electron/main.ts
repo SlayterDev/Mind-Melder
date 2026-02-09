@@ -4,6 +4,7 @@ import {
   desktopCapturer,
   globalShortcut,
   ipcMain,
+  session,
   shell,
   systemPreferences,
 } from 'electron';
@@ -115,7 +116,7 @@ function createRecordingWindow() {
 
   recordingWindow = new BrowserWindow({
     width: 320,
-    height: 220,
+    height: 340,
     frame: false,
     resizable: false,
     alwaysOnTop: true,
@@ -234,6 +235,20 @@ ipcMain.handle('close-recording-window', () => {
 
 // App lifecycle
 app.whenReady().then(() => {
+  // Handle getDisplayMedia requests — provides screen source + system audio loopback
+  // This enables native system audio capture via macOS ScreenCaptureKit
+  session.defaultSession.setDisplayMediaRequestHandler(async (_request, callback) => {
+    const sources = await desktopCapturer.getSources({
+      types: ['screen'],
+      thumbnailSize: { width: 0, height: 0 },
+    });
+    if (sources.length > 0) {
+      callback({ video: sources[0], audio: 'loopback' });
+    } else {
+      callback({});
+    }
+  });
+
   createMainWindow();
   registerGlobalShortcuts();
 

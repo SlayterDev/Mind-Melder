@@ -111,31 +111,18 @@ export function useAudioRecorder() {
           streams.push(micStream);
         }
 
-        // Get system audio stream via desktopCapturer
+        // Get system audio via getDisplayMedia + loopback (handled by main process)
         if (options.systemAudioEnabled) {
-          const sources = await api.getDesktopSources();
-          if (sources.length > 0) {
-            systemStream = await navigator.mediaDevices.getUserMedia({
-              audio: {
-                mandatory: {
-                  chromeMediaSource: 'desktop',
-                  chromeMediaSourceId: sources[0].id,
-                },
-              } as unknown as MediaTrackConstraints,
-              video: {
-                mandatory: {
-                  chromeMediaSource: 'desktop',
-                  chromeMediaSourceId: sources[0].id,
-                  maxWidth: 1,
-                  maxHeight: 1,
-                  maxFrameRate: 1,
-                },
-              } as unknown as MediaTrackConstraints,
-            });
-            // Stop the dummy video track immediately
-            systemStream.getVideoTracks().forEach((track) => track.stop());
-            streams.push(systemStream);
+          systemStream = await navigator.mediaDevices.getDisplayMedia({
+            audio: true,
+            video: true, // Required by Chromium; video track is stopped immediately
+          });
+          // Drop the video track — we only need audio
+          systemStream.getVideoTracks().forEach((track) => track.stop());
+          if (systemStream.getAudioTracks().length === 0) {
+            throw new Error('System audio not available. Check Screen Recording permission.');
           }
+          streams.push(systemStream);
         }
 
         if (streams.length === 0) {
