@@ -13,7 +13,7 @@ import TaskCard from '../components/TaskCard';
 import QuickCaptureInput from '../components/QuickCaptureInput';
 import TemplateSelector from '../components/TemplateSelector';
 import { useInboxCount } from '../api/queries';
-import { ClipboardList, Sparkles, Flame, Target, Lightbulb, Package, Loader2 } from 'lucide-react';
+import { ClipboardList, Sparkles, Flame, Target, Lightbulb, Package, Loader2, EyeOff, Eye } from 'lucide-react';
 import { triggerSmallConfetti, triggerLargeConfetti } from '../utils/confetti';
 
 type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
@@ -60,6 +60,11 @@ export default function TodaySheetPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
+  const [hideCompleted, setHideCompleted] = useState(() => {
+    // Initialize from localStorage
+    const stored = localStorage.getItem('hideCompletedTasks');
+    return stored === 'true';
+  });
   const { data: inboxCount = 0 } = useInboxCount();
 
   // Track previous completion states to detect when completion happens
@@ -67,6 +72,11 @@ export default function TodaySheetPage() {
   const prevAllCompletedRef = useRef(false);
 
   const queryClient = useQueryClient();
+
+  // Persist hideCompleted to localStorage
+  useEffect(() => {
+    localStorage.setItem('hideCompletedTasks', String(hideCompleted));
+  }, [hideCompleted]);
 
   useEffect(() => {
     loadSheet();
@@ -429,6 +439,12 @@ export default function TodaySheetPage() {
     return null;
   };
 
+  // Helper to filter todos based on hideCompleted setting
+  const filterTodos = (todos: Todo[]): Todo[] => {
+    if (!hideCompleted) return todos;
+    return todos.filter((t) => t.status !== 'completed');
+  };
+
   if (isLoading) {
     return (
       <div className="text-gray-400 text-center py-12">
@@ -463,30 +479,53 @@ export default function TodaySheetPage() {
               <p className="text-gray-400 text-sm font-serif italic">{dateStr}</p>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <button
-                onClick={() => handleGenerate.mutateAsync()}
-                disabled={isGenerating}
-                className={`btn-accent flex items-center justify-center gap-2 transition-all ${
-                  isGenerating ? 'btn-generating' : ''
-                } ${showSuccess ? 'btn-success-flash' : ''}`}
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : sheet ? (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    Regenerate
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    Generate Plan
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setHideCompleted(!hideCompleted)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    hideCompleted
+                      ? 'bg-accent/20 text-accent hover:bg-accent/30'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                  title={hideCompleted ? 'Show completed tasks' : 'Hide completed tasks'}
+                >
+                  {hideCompleted ? (
+                    <>
+                      <EyeOff className="w-4 h-4" />
+                      <span className="hidden sm:inline">Hide Completed</span>
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-4 h-4" />
+                      <span className="hidden sm:inline">Show All</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => handleGenerate.mutateAsync()}
+                  disabled={isGenerating}
+                  className={`btn-accent flex items-center justify-center gap-2 transition-all ${
+                    isGenerating ? 'btn-generating' : ''
+                  } ${showSuccess ? 'btn-success-flash' : ''}`}
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : sheet ? (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Regenerate
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Generate Plan
+                    </>
+                  )}
+                </button>
+              </div>
               <TemplateSelector
                 value={selectedTemplateId}
                 onChange={setSelectedTemplateId}
@@ -557,7 +596,7 @@ export default function TodaySheetPage() {
                     id="must_do_today"
                     title="Must-Do Today"
                     icon={Flame}
-                    todos={sheet.sections.must_do_today}
+                    todos={filterTodos(sheet.sections.must_do_today)}
                     onToggleComplete={handleToggleComplete}
                     onUpdateDueDate={handleUpdateDueDate}
                     onUpdateDescription={handleUpdateDescription}
@@ -571,7 +610,7 @@ export default function TodaySheetPage() {
                     id="likely_today"
                     title="Likely Today"
                     icon={Target}
-                    todos={sheet.sections.likely_today}
+                    todos={filterTodos(sheet.sections.likely_today)}
                     onToggleComplete={handleToggleComplete}
                     onUpdateDueDate={handleUpdateDueDate}
                     onUpdateDescription={handleUpdateDescription}
@@ -585,7 +624,7 @@ export default function TodaySheetPage() {
                     id="opportunistic"
                     title="Opportunistic"
                     icon={Lightbulb}
-                    todos={sheet.sections.opportunistic}
+                    todos={filterTodos(sheet.sections.opportunistic)}
                     onToggleComplete={handleToggleComplete}
                     onUpdateDueDate={handleUpdateDueDate}
                     onUpdateDescription={handleUpdateDescription}
@@ -599,7 +638,7 @@ export default function TodaySheetPage() {
                     id="overflow"
                     title="Overflow"
                     icon={Package}
-                    todos={sheet.sections.overflow}
+                    todos={filterTodos(sheet.sections.overflow)}
                     onToggleComplete={handleToggleComplete}
                     onUpdateDueDate={handleUpdateDueDate}
                     onUpdateDescription={handleUpdateDescription}
