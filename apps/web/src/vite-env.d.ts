@@ -37,6 +37,7 @@ interface ElectronAPI {
   openSystemPreferences: (pane: string) => Promise<void>;
   openRecordingWindow: () => Promise<void>;
   closeRecordingWindow: () => Promise<void>;
+  resizeRecordingWindow: (height: number) => Promise<void>;
 }
 
 interface Window {

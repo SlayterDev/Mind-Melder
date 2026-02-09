@@ -95,7 +95,11 @@ export function useAudioRecorder() {
           for (let attempt = 0; attempt < 3; attempt++) {
             try {
               micStream = await navigator.mediaDevices.getUserMedia({
-                audio: true,
+                audio: {
+                  echoCancellation: true,
+                  noiseSuppression: true,
+                  autoGainControl: true,
+                },
                 video: false,
               });
               break;

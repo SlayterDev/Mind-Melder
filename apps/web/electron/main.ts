@@ -4,6 +4,7 @@ import {
   desktopCapturer,
   globalShortcut,
   ipcMain,
+  screen,
   session,
   shell,
   systemPreferences,
@@ -114,9 +115,16 @@ function createRecordingWindow() {
     return;
   }
 
+  const windowWidth = 320;
+  const windowHeight = 220;
+  const inset = 20;
+  const { workArea } = screen.getPrimaryDisplay();
+
   recordingWindow = new BrowserWindow({
-    width: 320,
-    height: 340,
+    width: windowWidth,
+    height: windowHeight,
+    x: workArea.x + workArea.width - windowWidth - inset,
+    y: workArea.y + inset,
     frame: false,
     resizable: false,
     alwaysOnTop: true,
@@ -231,6 +239,12 @@ ipcMain.handle('open-recording-window', () => {
 
 ipcMain.handle('close-recording-window', () => {
   recordingWindow?.close();
+});
+
+ipcMain.handle('resize-recording-window', (_event, height: number) => {
+  if (!recordingWindow) return;
+  const [width] = recordingWindow.getSize();
+  recordingWindow.setSize(width, Math.round(height));
 });
 
 // App lifecycle
