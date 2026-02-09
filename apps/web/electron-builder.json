@@ -25,7 +25,11 @@
     "entitlements": "build/entitlements.mac.plist",
     "entitlementsInherit": "build/entitlements.mac.plist",
     "hardenedRuntime": true,
-    "gatekeeperAssess": false
+    "gatekeeperAssess": false,
+    "extendInfo": {
+      "NSMicrophoneUsageDescription": "Mind Melder needs microphone access to record audio notes.",
+      "NSScreenCaptureUsageDescription": "Mind Melder needs screen recording access to capture system audio."
+    }
   },
   "dmg": {
     "contents": [

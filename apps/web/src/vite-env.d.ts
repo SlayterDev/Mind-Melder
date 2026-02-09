@@ -8,10 +8,35 @@ interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
 
+interface AudioPermissionStatus {
+  microphone: 'not-determined' | 'granted' | 'denied' | 'restricted' | 'unknown';
+  screen: 'not-determined' | 'granted' | 'denied' | 'restricted' | 'unknown';
+}
+
+interface DesktopSource {
+  id: string;
+  name: string;
+}
+
+interface SaveRecordingResult {
+  path: string;
+  size: number;
+}
+
 interface ElectronAPI {
   closeQuickCapture: () => Promise<void>;
   getPlatform: () => Promise<string>;
   isElectron: boolean;
+
+  // Recording
+  checkAudioPermissions: () => Promise<AudioPermissionStatus>;
+  requestMicrophonePermission: () => Promise<boolean>;
+  getDesktopSources: () => Promise<DesktopSource[]>;
+  saveRecording: (data: { buffer: string; filename: string }) => Promise<SaveRecordingResult>;
+  getRecordingsPath: () => Promise<string>;
+  openSystemPreferences: (pane: string) => Promise<void>;
+  openRecordingWindow: () => Promise<void>;
+  closeRecordingWindow: () => Promise<void>;
 }
 
 interface Window {

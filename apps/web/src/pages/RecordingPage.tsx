@@ -1,0 +1,218 @@
+import { useState } from 'react';
+import { X, Mic, Monitor, Pause, Play, Square, Loader2 } from 'lucide-react';
+import { useAudioRecorder } from '../hooks/useAudioRecorder';
+import RecordingPermissionPrompt from '../components/RecordingPermissionPrompt';
+
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
+export default function RecordingPage() {
+  const [micEnabled, setMicEnabled] = useState(true);
+  const [systemAudioEnabled, setSystemAudioEnabled] = useState(false);
+
+  const {
+    state,
+    elapsedSeconds,
+    error,
+    permissionStatus,
+    startRecording,
+    stopRecording,
+    pauseRecording,
+    resumeRecording,
+    checkPermissions,
+    requestMicPermission,
+    openScreenRecordingSettings,
+  } = useAudioRecorder();
+
+  const handleClose = () => {
+    window.electronAPI?.closeRecordingWindow();
+  };
+
+  const handleRecord = () => {
+    startRecording({ micEnabled, systemAudioEnabled });
+  };
+
+  const handleMicPermission = async () => {
+    if (permissionStatus?.microphone === 'not-determined') {
+      await requestMicPermission();
+    } else {
+      window.electronAPI?.openSystemPreferences('microphone');
+    }
+  };
+
+  const isIdle = state === 'idle';
+  const isRecording = state === 'recording';
+  const isPaused = state === 'paused';
+  const isSaving = state === 'saving';
+  const isActive = isRecording || isPaused;
+
+  // Check if permissions are needed
+  const needsPermissions =
+    permissionStatus &&
+    (permissionStatus.microphone !== 'granted' ||
+      (systemAudioEnabled && permissionStatus.screen !== 'granted'));
+
+  return (
+    <div
+      className="h-screen bg-gray-900 text-gray-100 flex flex-col select-none overflow-hidden"
+      style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-3 pb-2">
+        <span className="text-sm font-medium text-gray-300">
+          {isActive ? 'Recording' : 'Record Audio'}
+        </span>
+        {!isActive && (
+          <button
+            onClick={handleClose}
+            className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-gray-200 transition-colors"
+            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Content */}
+      <div
+        className="flex-1 flex flex-col px-4 pb-4"
+        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+      >
+        {/* Error message */}
+        {error && (
+          <div className="text-red-400 text-xs bg-red-900/20 rounded px-3 py-2 mb-2">{error}</div>
+        )}
+
+        {/* Saving state */}
+        {isSaving && (
+          <div className="flex-1 flex flex-col items-center justify-center gap-2">
+            <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+            <span className="text-sm text-gray-400">Saving...</span>
+          </div>
+        )}
+
+        {/* Idle state */}
+        {isIdle && (
+          <>
+            {needsPermissions && permissionStatus ? (
+              <RecordingPermissionPrompt
+                permissionStatus={permissionStatus}
+                systemAudioEnabled={systemAudioEnabled}
+                onRequestMicPermission={handleMicPermission}
+                onOpenScreenSettings={openScreenRecordingSettings}
+                onCheckAgain={checkPermissions}
+              />
+            ) : (
+              <div className="space-y-2">
+                {/* System Audio toggle */}
+                <label className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2 cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Monitor className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-300">System Audio</span>
+                  </div>
+                  <div
+                    onClick={() => setSystemAudioEnabled(!systemAudioEnabled)}
+                    className={`w-9 h-5 rounded-full relative transition-colors cursor-pointer ${
+                      systemAudioEnabled ? 'bg-accent' : 'bg-gray-600'
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform ${
+                        systemAudioEnabled ? 'translate-x-4' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </div>
+                </label>
+
+                {/* Microphone toggle */}
+                <label className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2 cursor-pointer">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mic className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-300">Microphone</span>
+                  </div>
+                  <div
+                    onClick={() => setMicEnabled(!micEnabled)}
+                    className={`w-9 h-5 rounded-full relative transition-colors cursor-pointer ${
+                      micEnabled ? 'bg-accent' : 'bg-gray-600'
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform ${
+                        micEnabled ? 'translate-x-4' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </div>
+                </label>
+              </div>
+            )}
+
+            {/* Record button */}
+            <div className="flex-1 flex items-center justify-center mt-3">
+              <button
+                onClick={handleRecord}
+                disabled={
+                  (!micEnabled && !systemAudioEnabled) ||
+                  !!needsPermissions
+                }
+                className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-500 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors flex items-center justify-center shadow-lg"
+              >
+                <div className="w-5 h-5 bg-white rounded-full" />
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Recording / Paused state */}
+        {isActive && (
+          <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            {/* Timer with recording indicator */}
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-3 h-3 rounded-full bg-red-500 ${
+                  isRecording ? 'recording-dot-pulse' : ''
+                }`}
+              />
+              <span className="text-3xl font-mono text-gray-100 tabular-nums">
+                {formatTime(elapsedSeconds)}
+              </span>
+            </div>
+
+            {/* Active source indicators */}
+            <div className="flex items-center gap-3 text-gray-400">
+              {systemAudioEnabled && <Monitor className="w-4 h-4" />}
+              {micEnabled && <Mic className="w-4 h-4" />}
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center gap-4">
+              {/* Pause/Resume button */}
+              <button
+                onClick={isPaused ? resumeRecording : pauseRecording}
+                className="w-10 h-10 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors flex items-center justify-center"
+              >
+                {isPaused ? (
+                  <Play className="w-5 h-5 text-gray-200" />
+                ) : (
+                  <Pause className="w-5 h-5 text-gray-200" />
+                )}
+              </button>
+
+              {/* Stop button */}
+              <button
+                onClick={stopRecording}
+                className="w-12 h-12 rounded-full bg-red-600 hover:bg-red-500 transition-colors flex items-center justify-center"
+              >
+                <Square className="w-5 h-5 text-white fill-white" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

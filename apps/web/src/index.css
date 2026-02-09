@@ -225,6 +225,16 @@
     background-color: #7261af;
   }
 
+  /* Recording dot pulse */
+  .recording-dot-pulse {
+    animation: pulse-red 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse-red {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
   /* Fade-in animation for sections */
   .animate-fade-in {
     animation: fade-in 0.5s ease-out forwards;
