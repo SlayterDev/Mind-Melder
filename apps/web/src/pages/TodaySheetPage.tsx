@@ -13,7 +13,7 @@ import TaskCard from '../components/TaskCard';
 import QuickCaptureInput from '../components/QuickCaptureInput';
 import TemplateSelector from '../components/TemplateSelector';
 import { useInboxCount } from '../api/queries';
-import { ClipboardList, Sparkles, Flame, Target, Lightbulb, Package, Loader2 } from 'lucide-react';
+import { ClipboardList, Sparkles, Flame, Target, Lightbulb, Package, Loader2, EyeOff, Eye, Check } from 'lucide-react';
 import { triggerSmallConfetti, triggerLargeConfetti } from '../utils/confetti';
 
 type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
@@ -60,6 +60,11 @@ export default function TodaySheetPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
+  const [hideCompleted, setHideCompleted] = useState(() => {
+    // Initialize from localStorage
+    const stored = localStorage.getItem('hideCompletedTasks');
+    return stored === 'true';
+  });
   const { data: inboxCount = 0 } = useInboxCount();
 
   // Track previous completion states to detect when completion happens
@@ -67,6 +72,11 @@ export default function TodaySheetPage() {
   const prevAllCompletedRef = useRef(false);
 
   const queryClient = useQueryClient();
+
+  // Persist hideCompleted to localStorage
+  useEffect(() => {
+    localStorage.setItem('hideCompletedTasks', String(hideCompleted));
+  }, [hideCompleted]);
 
   useEffect(() => {
     loadSheet();
@@ -429,6 +439,12 @@ export default function TodaySheetPage() {
     return null;
   };
 
+  // Helper to filter todos based on hideCompleted setting
+  const filterTodos = (todos: Todo[]): Todo[] => {
+    if (!hideCompleted) return todos;
+    return todos.filter((t) => t.status !== 'completed');
+  };
+
   if (isLoading) {
     return (
       <div className="text-gray-400 text-center py-12">
@@ -458,9 +474,23 @@ export default function TodaySheetPage() {
         {/* Journal Page Header */}
         <div className={`mb-6 pb-4 section-divider ${isGenerating ? 'section-divider-generating' : ''}`}>
           <div className="flex flex-col md:flex-row items-start md:items-start justify-between gap-4">
-            <div className="flex-1">
+            <div className="flex-1 flex flex-col">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-100 mb-1">Today's Plan</h1>
               <p className="text-gray-400 text-sm font-serif italic">{dateStr}</p>
+              <div className="mt-2 flex items-center gap-2 inset-x-0 bottom-0">
+                <button 
+                  id="hideCompleted" 
+                  className={`checkbox-accent ${
+                    hideCompleted ? 'checkbox-setting-accent-checked' : 'checkbox-accent-unchecked'
+                  }`}
+                  onClick={() => setHideCompleted(!hideCompleted)} 
+                >
+                  {hideCompleted && <Check className="w-3 h-3 text-white" />}
+                </button>
+                <label htmlFor="hideCompleted" className="flex items-center gap-2 text-sm font-medium text-gray-300 transition-all cursor-pointer" title="Hide completed tasks">
+                    Hide Completed
+                </label>
+              </div>
             </div>
             <div className="flex flex-col items-end gap-2">
               <button
@@ -557,7 +587,7 @@ export default function TodaySheetPage() {
                     id="must_do_today"
                     title="Must-Do Today"
                     icon={Flame}
-                    todos={sheet.sections.must_do_today}
+                    todos={filterTodos(sheet.sections.must_do_today)}
                     onToggleComplete={handleToggleComplete}
                     onUpdateDueDate={handleUpdateDueDate}
                     onUpdateDescription={handleUpdateDescription}
@@ -571,7 +601,7 @@ export default function TodaySheetPage() {
                     id="likely_today"
                     title="Likely Today"
                     icon={Target}
-                    todos={sheet.sections.likely_today}
+                    todos={filterTodos(sheet.sections.likely_today)}
                     onToggleComplete={handleToggleComplete}
                     onUpdateDueDate={handleUpdateDueDate}
                     onUpdateDescription={handleUpdateDescription}
@@ -585,7 +615,7 @@ export default function TodaySheetPage() {
                     id="opportunistic"
                     title="Opportunistic"
                     icon={Lightbulb}
-                    todos={sheet.sections.opportunistic}
+                    todos={filterTodos(sheet.sections.opportunistic)}
                     onToggleComplete={handleToggleComplete}
                     onUpdateDueDate={handleUpdateDueDate}
                     onUpdateDescription={handleUpdateDescription}
@@ -599,7 +629,7 @@ export default function TodaySheetPage() {
                     id="overflow"
                     title="Overflow"
                     icon={Package}
-                    todos={sheet.sections.overflow}
+                    todos={filterTodos(sheet.sections.overflow)}
                     onToggleComplete={handleToggleComplete}
                     onUpdateDueDate={handleUpdateDueDate}
                     onUpdateDescription={handleUpdateDescription}

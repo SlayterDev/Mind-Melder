@@ -138,6 +138,12 @@
     @apply bg-green-600 border-green-500 shadow-inner;
   }
 
+  .checkbox-setting-accent-checked {
+    @apply shadow-inner;
+    background-color: rgb(114 97 175 / 0.2);
+    border: 1px solid rgb(114 97 175 / 0.3);
+  }
+
   /* Badge Styles */
   .badge-accent {
     @apply px-2.5 py-0.5 rounded-full text-sm text-gray-300;
