@@ -6,6 +6,46 @@ import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, ApiError } from '../middleware/index.js';
 import { ChatToolExecutor } from '../services/chat-tool-executor.js';
 
+/**
+ * Normalizes and sanitizes a generated title from LLM output.
+ * Handles wrapping quotes, newlines, excessive length, etc.
+ */
+function normalizeGeneratedTitle(raw: string | null | undefined): string {
+  if (!raw) return '';
+
+  let title = raw.trim();
+
+  // Strip a single pair of wrapping quotes if present
+  if (
+    title.length >= 2 &&
+    ((title.startsWith('"') && title.endsWith('"')) ||
+      (title.startsWith("'") && title.endsWith("'")))
+  ) {
+    title = title.slice(1, -1).trim();
+  }
+
+  // Replace newlines with spaces and collapse repeated whitespace
+  title = title.replace(/[\r\n]+/g, ' ');
+  title = title.replace(/\s+/g, ' ').trim();
+
+  if (!title) return '';
+
+  // Limit to a reasonable number of words (e.g., 15)
+  const maxWords = 15;
+  const words = title.split(' ');
+  if (words.length > maxWords) {
+    title = words.slice(0, maxWords).join(' ');
+  }
+
+  // Enforce max length consistent with createConversationSchema (200 chars)
+  const maxLength = 200;
+  if (title.length > maxLength) {
+    title = title.slice(0, maxLength).trim();
+  }
+
+  return title;
+}
+
 export function createConversationsRouter(
   db: Database,
   conversationsRepo: ConversationsRepository,
@@ -76,7 +116,7 @@ export function createConversationsRouter(
       }
 
       // Ensure we have at least one field to update
-      if (!title) {
+      if (title === undefined) {
         throw new ApiError(400, 'No fields to update');
       }
 
@@ -158,42 +198,6 @@ export function createConversationsRouter(
       res.json({ title: safeTitle });
     })
   );
-
-  function normalizeGeneratedTitle(raw: string | null | undefined): string {
-    if (!raw) return '';
-
-    let title = raw.trim();
-
-    // Strip a single pair of wrapping quotes if present
-    if (
-      title.length >= 2 &&
-      ((title.startsWith('"') && title.endsWith('"')) ||
-        (title.startsWith("'") && title.endsWith("'")))
-    ) {
-      title = title.slice(1, -1).trim();
-    }
-
-    // Replace newlines with spaces and collapse repeated whitespace
-    title = title.replace(/[\r\n]+/g, ' ');
-    title = title.replace(/\s+/g, ' ').trim();
-
-    if (!title) return '';
-
-    // Limit to a reasonable number of words (e.g., 15)
-    const maxWords = 15;
-    const words = title.split(' ');
-    if (words.length > maxWords) {
-      title = words.slice(0, maxWords).join(' ');
-    }
-
-    // Enforce max length consistent with createConversationSchema (200 chars)
-    const maxLength = 200;
-    if (title.length > maxLength) {
-      title = title.slice(0, maxLength).trim();
-    }
-
-    return title;
-  }
 
   // Helper to run a single LLM turn with tool handling
   async function runLLMTurn(

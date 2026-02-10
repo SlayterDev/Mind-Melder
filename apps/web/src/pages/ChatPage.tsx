@@ -23,6 +23,7 @@ export default function ChatPage() {
   const conversationIdRef = useRef<string | undefined>(undefined);
   const isNearBottomRef = useRef(true);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const conversationsRef = useRef<Conversation[]>([]);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<DisplayMessage[]>([]);
@@ -31,6 +32,11 @@ export default function ChatPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
+
+  // Keep ref in sync with conversations state
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
 
   // Load conversations list
   useEffect(() => {
@@ -414,23 +420,19 @@ export default function ChatPage() {
       if (conversationIdRef.current === currentConversationId) {
         setIsStreaming(false);
 
-        // Auto-generate title if still "New Chat" using latest conversations state
-        setConversations(prev => {
-          const conv = prev.find(c => c.id === currentConversationId);
-          if (conv && conv.title === 'New Chat') {
-            conversationsAPI.generateTitle(currentConversationId)
-              .then(({ title }) => {
-                setConversations(prevInner =>
-                  prevInner.map(c =>
-                    c.id === currentConversationId ? { ...c, title } : c
-                  )
-                );
-              })
-              .catch(err => console.error('Failed to generate title:', err));
-          }
-          // No state change here; this call is used to safely read latest state
-          return prev;
-        });
+        // Auto-generate title if still "New Chat" using latest conversations from ref
+        const conv = conversationsRef.current.find(c => c.id === currentConversationId);
+        if (conv && conv.title === 'New Chat') {
+          conversationsAPI.generateTitle(currentConversationId)
+            .then(({ title }) => {
+              setConversations(prev =>
+                prev.map(c =>
+                  c.id === currentConversationId ? { ...c, title } : c
+                )
+              );
+            })
+            .catch(err => console.error('Failed to generate title:', err));
+        }
 
         loadConversations(); // Refresh to update titles/timestamps
       }
