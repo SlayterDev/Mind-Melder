@@ -12,6 +12,7 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const { data: inboxCount = 0 } = useInboxCount();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const location = useLocation();
 
@@ -36,7 +37,11 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="flex h-screen bg-gray-950 text-gray-100 overflow-hidden">
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:block w-64 bg-gray-900 border-r border-gray-800 shadow-2xl flex-shrink-0">
+      <aside
+        className={`hidden md:block bg-gray-900 border-r border-gray-800 shadow-2xl flex-shrink-0 transition-all duration-300 ${
+          isSidebarCollapsed ? 'w-16' : 'w-64'
+        }`}
+      >
         {/* Draggable title bar region for Electron */}
         {isElectron && (
           <div
@@ -44,9 +49,23 @@ export default function Layout({ children }: LayoutProps) {
             style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
           />
         )}
-        <div className={`p-6 ${isElectron ? 'pt-2' : ''}`}>
-          <h1 className="text-2xl font-bold text-gray-100">Mind Melder</h1>
-          <p className="text-sm text-gray-400 mt-1">Quick Capture & AI Organizer</p>
+        <div className={`p-4 ${isElectron ? 'pt-2' : ''}`}>
+          <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : 'justify-between'}`}>
+            {!isSidebarCollapsed && (
+              <div>
+                <h1 className="text-2xl font-bold text-gray-100">Mind Melder</h1>
+                <p className="text-sm text-gray-400 mt-1">Quick Capture & AI Organizer</p>
+              </div>
+            )}
+            <button
+              onClick={() => setIsSidebarCollapsed((prev) => !prev)}
+              className="p-2 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800"
+              title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              style={isElectron ? { WebkitAppRegion: 'no-drag' } as React.CSSProperties : undefined}
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <nav className="mt-6">
@@ -57,17 +76,25 @@ export default function Layout({ children }: LayoutProps) {
                 key={item.path}
                 to={item.path}
                 className={`
-                  flex items-center gap-3 px-6 py-3 transition-all
+                  flex items-center gap-3 py-3 transition-all ${
+                    isSidebarCollapsed ? 'px-4 justify-center' : 'px-6'
+                  }
                   ${
                     isActive(item.path)
                       ? 'bg-gray-800 border-l-4 border-accent text-gray-100'
                       : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
                   }
                 `}
+                title={isSidebarCollapsed ? item.label : undefined}
               >
-                <Icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
-                {item.path === '/inbox' && inboxCount > 0 && (
+                <span className="relative">
+                  <Icon className="w-5 h-5" />
+                  {item.path === '/inbox' && inboxCount > 0 && isSidebarCollapsed && (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-accent" />
+                  )}
+                </span>
+                {!isSidebarCollapsed && <span className="font-medium">{item.label}</span>}
+                {!isSidebarCollapsed && item.path === '/inbox' && inboxCount > 0 && (
                   <span className="badge-accent">
                     {inboxCount}
                   </span>
