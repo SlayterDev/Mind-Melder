@@ -100,7 +100,10 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
 
   async generateTitle(messages: ChatMessage[]): Promise<string> {
     const conversationText = messages
-      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .filter(m =>
+        (m.role === 'user' || m.role === 'assistant') &&
+        m.content
+      )
       .map(m => `${m.role}: ${m.content}`)
       .join('\n');
 

@@ -414,17 +414,23 @@ export default function ChatPage() {
       if (conversationIdRef.current === currentConversationId) {
         setIsStreaming(false);
 
-        // Auto-generate title if still "New Chat"
-        const conv = conversations.find(c => c.id === currentConversationId);
-        if (conv && conv.title === 'New Chat') {
-          conversationsAPI.generateTitle(currentConversationId)
-            .then(({ title }) => {
-              setConversations(prev =>
-                prev.map(c => c.id === currentConversationId ? { ...c, title } : c)
-              );
-            })
-            .catch(err => console.error('Failed to generate title:', err));
-        }
+        // Auto-generate title if still "New Chat" using latest conversations state
+        setConversations(prev => {
+          const conv = prev.find(c => c.id === currentConversationId);
+          if (conv && conv.title === 'New Chat') {
+            conversationsAPI.generateTitle(currentConversationId)
+              .then(({ title }) => {
+                setConversations(prevInner =>
+                  prevInner.map(c =>
+                    c.id === currentConversationId ? { ...c, title } : c
+                  )
+                );
+              })
+              .catch(err => console.error('Failed to generate title:', err));
+          }
+          // No state change here; this call is used to safely read latest state
+          return prev;
+        });
 
         loadConversations(); // Refresh to update titles/timestamps
       }
@@ -463,11 +469,19 @@ export default function ChatPage() {
 
         <div className="flex-1 overflow-y-auto">
           {conversations.map((conv) => (
-            <button
+            <div
               key={conv.id}
-              className={`group flex items-center gap-2 px-4 py-3 w-full text-left hover:bg-gray-800/50 transition-colors
+              className={`group flex items-center gap-2 px-4 py-3 w-full text-left hover:bg-gray-800/50 transition-colors cursor-pointer
                          ${id === conv.id ? 'bg-gray-800/70 border-l-2 border-accent' : ''}`}
               onClick={() => navigate(`/chat/${conv.id}`)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate(`/chat/${conv.id}`);
+                }
+              }}
               aria-label={`Open conversation: ${conv.title || 'Untitled'}`}
             >
               <MessageSquare size={16} className="text-gray-500 flex-shrink-0" aria-hidden="true" />
@@ -483,6 +497,7 @@ export default function ChatPage() {
                   onBlur={saveTitle}
                   onClick={(e) => e.stopPropagation()}
                   autoFocus
+                  aria-label={`Edit title for conversation: ${conv.title || 'Untitled'}`}
                   className="flex-1 text-sm text-gray-300 bg-gray-800 border border-accent/40 rounded px-1 py-0.5 outline-none focus:border-accent"
                 />
               ) : (
@@ -510,7 +525,7 @@ export default function ChatPage() {
               >
                 <Trash2 size={14} aria-hidden="true" />
               </button>
-            </button>
+            </div>
           ))}
         </div>
       </div>
