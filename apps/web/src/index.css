@@ -266,7 +266,10 @@
   }
 
   .chat-message-assistant {
-    @apply max-w-none text-gray-200;
+    @apply max-w-none text-gray-200 px-4 py-3 rounded-lg;
+     background-color: rgb(17 24 39 / 0.6);
+     border: 1px solid rgb(114 97 175 / 0.15);
+     margin-right: 50pt;
   }
 
   .chat-message-assistant p {
