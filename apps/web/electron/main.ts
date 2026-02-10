@@ -9,8 +9,9 @@ import {
   shell,
   systemPreferences,
 } from 'electron';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs/promises';
+import * as fsSync from 'fs';
+import * as path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -197,23 +198,43 @@ ipcMain.handle('request-microphone-permission', async () => {
   return true;
 });
 
-ipcMain.handle('get-desktop-sources', async () => {
-  const sources = await desktopCapturer.getSources({
-    types: ['screen'],
-    thumbnailSize: { width: 0, height: 0 },
-  });
-  return sources.map((s) => ({ id: s.id, name: s.name }));
-});
 
-ipcMain.handle('save-recording', async (_event, data: { buffer: string; filename: string }) => {
+ipcMain.handle('save-recording', async (_event, data: { buffer: Uint8Array; filename: string }) => {
   const recordingsDir = path.join(app.getPath('userData'), 'recordings');
-  if (!fs.existsSync(recordingsDir)) {
-    fs.mkdirSync(recordingsDir, { recursive: true });
+  
+  // Ensure recordings directory exists (async)
+  try {
+    await fs.access(recordingsDir);
+  } catch {
+    await fs.mkdir(recordingsDir, { recursive: true });
   }
-  const filePath = path.join(recordingsDir, data.filename);
-  const buffer = Buffer.from(data.buffer, 'base64');
-  fs.writeFileSync(filePath, buffer);
-  return { path: filePath, size: buffer.length };
+
+  // Sanitize filename to prevent path traversal
+  const requestedName = data.filename ?? '';
+  const baseName = path.basename(requestedName);
+
+  // Reject filenames with consecutive dots or path segments
+  if (baseName === '.' || baseName === '..' || baseName.includes('..')) {
+    throw new Error('Invalid recording filename');
+  }
+
+  // Allow only simple, safe filenames (alphanumeric, single dots, underscores, hyphens)
+  if (!/^[a-zA-Z0-9._-]+$/.test(baseName)) {
+    throw new Error('Invalid recording filename');
+  }
+
+  // Enforce .webm extension
+  let safeFileName = baseName;
+  if (path.extname(safeFileName).toLowerCase() !== '.webm') {
+    safeFileName = `${safeFileName}.webm`;
+  }
+
+  const filePath = path.join(recordingsDir, safeFileName);
+  
+  // Write buffer directly without creating a copy (Buffer can accept Uint8Array)
+  await fs.writeFile(filePath, data.buffer);
+  
+  return { path: filePath, size: data.buffer.length };
 });
 
 ipcMain.handle('get-recordings-path', () => {
@@ -243,8 +264,12 @@ ipcMain.handle('close-recording-window', () => {
 
 ipcMain.handle('resize-recording-window', (_event, height: number) => {
   if (!recordingWindow) return;
+  
+  // Clamp height to reasonable bounds (min 100px, max 800px)
+  const clampedHeight = Math.max(100, Math.min(800, Math.round(height)));
+  
   const [width] = recordingWindow.getSize();
-  recordingWindow.setSize(width, Math.round(height));
+  recordingWindow.setSize(width, clampedHeight);
 });
 
 // App lifecycle
