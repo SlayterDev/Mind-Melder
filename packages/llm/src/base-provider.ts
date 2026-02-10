@@ -18,6 +18,13 @@ Your job is to:
   }
 
   /**
+   * Build the system prompt for chat title generation
+   */
+  protected buildChatTitleSystemPrompt(): string {
+    return 'Generate a concise title (6 words max) for this conversation. Return ONLY the title text, no quotes or punctuation wrapping.';
+  }
+
+  /**
    * Build the user prompt with captures and template
    */
   protected buildOrganizePrompt(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions: boolean = false): string {

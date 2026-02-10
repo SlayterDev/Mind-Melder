@@ -98,6 +98,33 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     return this.parseResponse<TodaySheetOutput>(content.text, todaySheetOutputSchema);
   }
 
+  async generateTitle(messages: ChatMessage[]): Promise<string> {
+    const conversationText = messages
+      .filter(m =>
+        (m.role === 'user' || m.role === 'assistant') &&
+        m.content
+      )
+      .map(m => `${m.role}: ${m.content}`)
+      .join('\n');
+
+    const response = await this.client.messages.create({
+      model: this.model,
+      max_tokens: 30,
+      temperature: 0.3,
+      system: this.buildChatTitleSystemPrompt(),
+      messages: [
+        { role: 'user', content: conversationText },
+      ],
+    });
+
+    const content = response.content[0];
+    if (content.type !== 'text') {
+      throw new Error('Unexpected response type from Anthropic');
+    }
+
+    return content.text.trim();
+  }
+
   async streamChat(messages: ChatMessage[], callbacks: StreamCallbacks, tools?: ToolDefinition[]): Promise<void> {
     // Extract system message
     const systemMessage = messages.find(m => m.role === 'system');

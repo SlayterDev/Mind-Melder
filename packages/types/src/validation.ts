@@ -107,9 +107,14 @@ export const createConversationSchema = z.object({
   systemPrompt: z.string().max(10000).optional(),
 });
 
+export const updateConversationSchema = z.object({
+  title: z.string().min(1, 'Title cannot be empty').max(200, 'Title too long').optional(),
+});
+
 export const chatMessageInputSchema = z.object({
   content: z.string().min(1, 'Message content is required').max(50000, 'Message too long'),
 });
 
 export type CreateConversationInput = z.infer<typeof createConversationSchema>;
+export type UpdateConversationInput = z.infer<typeof updateConversationSchema>;
 export type ChatMessageInput = z.infer<typeof chatMessageInputSchema>;
