@@ -213,7 +213,12 @@ ipcMain.handle('save-recording', async (_event, data: { buffer: Uint8Array; file
   const requestedName = data.filename ?? '';
   const baseName = path.basename(requestedName);
 
-  // Allow only simple, safe filenames
+  // Reject filenames with consecutive dots or path segments
+  if (baseName === '.' || baseName === '..' || baseName.includes('..')) {
+    throw new Error('Invalid recording filename');
+  }
+
+  // Allow only simple, safe filenames (alphanumeric, single dots, underscores, hyphens)
   if (!/^[a-zA-Z0-9._-]+$/.test(baseName)) {
     throw new Error('Invalid recording filename');
   }
@@ -226,11 +231,10 @@ ipcMain.handle('save-recording', async (_event, data: { buffer: Uint8Array; file
 
   const filePath = path.join(recordingsDir, safeFileName);
   
-  // Convert Uint8Array to Buffer and write asynchronously
-  const buffer = Buffer.from(data.buffer);
-  await fs.writeFile(filePath, buffer);
+  // Write buffer directly without creating a copy (Buffer can accept Uint8Array)
+  await fs.writeFile(filePath, data.buffer);
   
-  return { path: filePath, size: buffer.length };
+  return { path: filePath, size: data.buffer.length };
 });
 
 ipcMain.handle('get-recordings-path', () => {
