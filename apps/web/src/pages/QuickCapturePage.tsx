@@ -33,13 +33,19 @@ export default function QuickCapturePage() {
           style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
         />
 
-        <div className="w-full px-3 py-2">
-          <QuickCaptureInput
-            variant="input"
-            placeholder="Quick capture..."
-            autoFocus
-            onSuccess={handleSuccess}
-          />
+        <div className="flex-1 flex flex-col items-left w-full">
+          <div className="w-full px-3 py-2">
+            <QuickCaptureInput
+              variant="input"
+              placeholder="Quick capture..."
+              autoFocus
+              onSuccess={handleSuccess}
+            />
+          </div>
+
+          <div>
+            <p className="text-gray-600 text-xs font-mono px-5">Esc to close</p>
+          </div>
         </div>
       </div>
     </QueryClientProvider>
