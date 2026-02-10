@@ -16,7 +16,9 @@ export function ChatInput({ onSend, disabled, placeholder = 'Type a message...' 
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+      const newHeight = Math.min(textarea.scrollHeight, 200);
+      textarea.style.height = `${newHeight}px`;
+      textarea.style.overflowY = textarea.scrollHeight > 200 ? 'auto' : 'hidden';
     }
   }, [value]);
 
