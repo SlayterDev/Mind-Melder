@@ -105,6 +105,13 @@ export default function RecordingPage() {
           <div className="text-red-400 text-xs bg-red-900/20 rounded px-3 py-2 mb-2">{error}</div>
         )}
 
+        {state === 'requesting-permissions' && (
+          <div className="flex flex-col items-center justify-center gap-2 py-4">
+            <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+            <span className="text-sm text-gray-400">Starting...</span>
+          </div>
+        )}
+
         {isSaving && (
           <div className="flex flex-col items-center justify-center gap-2 py-4">
             <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />

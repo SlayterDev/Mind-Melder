@@ -131,7 +131,7 @@ function createRecordingWindow() {
     alwaysOnTop: true,
     skipTaskbar: true,
     transparent: false,
-    backgroundColor: '#1f2937',
+    backgroundColor: '#111827',
     show: false,
     webPreferences: {
       contextIsolation: true,
@@ -265,8 +265,8 @@ ipcMain.handle('close-recording-window', () => {
 ipcMain.handle('resize-recording-window', (_event, height: number) => {
   if (!recordingWindow) return;
   
-  // Clamp height to reasonable bounds (min 100px, max 800px)
-  const clampedHeight = Math.max(100, Math.min(800, Math.round(height)));
+  // Clamp height to reasonable bounds (min 220px, max 800px)
+  const clampedHeight = Math.max(220, Math.min(800, Math.round(height)));
   
   const [width] = recordingWindow.getSize();
   recordingWindow.setSize(width, clampedHeight);
