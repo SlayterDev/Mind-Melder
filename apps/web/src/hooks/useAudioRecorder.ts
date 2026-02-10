@@ -199,20 +199,12 @@ export function useAudioRecorder() {
       const arrayBuffer = await blob.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
 
-      let binary = '';
-      const chunkSize = 8192;
-      for (let i = 0; i < bytes.length; i += chunkSize) {
-        const chunk = bytes.subarray(i, i + chunkSize);
-        binary += String.fromCharCode(...chunk);
-      }
-      const base64 = btoa(binary);
-
       const now = new Date();
       const timestamp = now.toISOString().replace(/[:.]/g, '-').replace('Z', '');
       // Use .webm extension — MediaRecorder in Chromium always outputs WebM
       const filename = `recording-${timestamp}.webm`;
 
-      await api.saveRecording({ buffer: base64, filename });
+      await api.saveRecording({ buffer: bytes, filename });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save recording';
       setError(message);

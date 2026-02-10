@@ -13,11 +13,6 @@ interface AudioPermissionStatus {
   screen: 'not-determined' | 'granted' | 'denied' | 'restricted' | 'unknown';
 }
 
-interface DesktopSource {
-  id: string;
-  name: string;
-}
-
 interface SaveRecordingResult {
   path: string;
   size: number;
@@ -31,8 +26,7 @@ interface ElectronAPI {
   // Recording
   checkAudioPermissions: () => Promise<AudioPermissionStatus>;
   requestMicrophonePermission: () => Promise<boolean>;
-  getDesktopSources: () => Promise<DesktopSource[]>;
-  saveRecording: (data: { buffer: string; filename: string }) => Promise<SaveRecordingResult>;
+  saveRecording: (data: { buffer: Uint8Array; filename: string }) => Promise<SaveRecordingResult>;
   getRecordingsPath: () => Promise<string>;
   openSystemPreferences: (pane: string) => Promise<void>;
   openRecordingWindow: () => Promise<void>;

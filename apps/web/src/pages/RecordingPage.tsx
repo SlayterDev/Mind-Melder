@@ -71,7 +71,7 @@ export default function RecordingPage() {
 
   const needsPermissions =
     permissionStatus &&
-    (permissionStatus.microphone !== 'granted' ||
+    ((micEnabled && permissionStatus.microphone !== 'granted') ||
       (systemAudioEnabled && permissionStatus.screen !== 'granted'));
 
   return (
@@ -124,12 +124,16 @@ export default function RecordingPage() {
               />
             ) : (
               <div className="space-y-2">
-                <label className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2 cursor-pointer">
+                <div className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2">
                   <div className="flex items-center gap-2 text-sm">
                     <Monitor className="w-4 h-4 text-gray-400" />
                     <span className="text-gray-300">System Audio</span>
                   </div>
-                  <div
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={systemAudioEnabled}
+                    aria-label="Toggle system audio"
                     onClick={() => setSystemAudioEnabled(!systemAudioEnabled)}
                     className={`w-9 h-5 rounded-full relative transition-colors cursor-pointer ${
                       systemAudioEnabled ? 'bg-accent' : 'bg-gray-600'
@@ -140,15 +144,19 @@ export default function RecordingPage() {
                         systemAudioEnabled ? 'translate-x-4' : 'translate-x-0.5'
                       }`}
                     />
-                  </div>
-                </label>
+                  </button>
+                </div>
 
-                <label className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2 cursor-pointer">
+                <div className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2">
                   <div className="flex items-center gap-2 text-sm">
                     <Mic className="w-4 h-4 text-gray-400" />
                     <span className="text-gray-300">Microphone</span>
                   </div>
-                  <div
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={micEnabled}
+                    aria-label="Toggle microphone"
                     onClick={() => setMicEnabled(!micEnabled)}
                     className={`w-9 h-5 rounded-full relative transition-colors cursor-pointer ${
                       micEnabled ? 'bg-accent' : 'bg-gray-600'
@@ -159,8 +167,8 @@ export default function RecordingPage() {
                         micEnabled ? 'translate-x-4' : 'translate-x-0.5'
                       }`}
                     />
-                  </div>
-                </label>
+                  </button>
+                </div>
               </div>
             )}
 
