@@ -304,4 +304,24 @@
   .chat-message-assistant blockquote {
     @apply border-l-2 border-accent/50 pl-4 italic text-gray-400 my-3;
   }
+
+  /* Scrollbar Styles - dark theme */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: 20px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgb(107 114 128 / 0.6);
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(107 114 128 / 0.8);
+  }
 }
