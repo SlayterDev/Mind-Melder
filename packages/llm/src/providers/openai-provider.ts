@@ -101,7 +101,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       max_tokens: 30,
       temperature: 0.3,
       messages: [
-        { role: 'system', content: 'Generate a concise title (6 words max) for this conversation. Return ONLY the title text, no quotes or punctuation wrapping.' },
+        { role: 'system', content: this.buildChatTitleSystemPrompt() },
         { role: 'user', content: conversationText },
       ],
     });

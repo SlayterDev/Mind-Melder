@@ -111,7 +111,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       model: this.model,
       max_tokens: 30,
       temperature: 0.3,
-      system: 'Generate a concise title (6 words max) for this conversation. Return ONLY the title text, no quotes or punctuation wrapping.',
+      system: this.buildChatTitleSystemPrompt(),
       messages: [
         { role: 'user', content: conversationText },
       ],
