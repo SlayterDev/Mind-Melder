@@ -30,7 +30,14 @@ export function useAudioRecorder() {
     const api = window.electronAPI;
     if (!api) return false;
     const granted = await api.requestMicrophonePermission();
-    await checkPermissions();
+    if (granted) {
+      // Trust the askForMediaAccess result directly instead of re-querying
+      // getMediaAccessStatus, which can return stale values and cause a
+      // permission-prompt loop.
+      setPermissionStatus((prev) => prev && { ...prev, microphone: 'granted' });
+    } else {
+      await checkPermissions();
+    }
     return granted;
   }, [checkPermissions]);
 

@@ -69,10 +69,13 @@ export default function RecordingPage() {
   const isSaving = state === 'saving';
   const isActive = isRecording || isPaused;
 
+  // Only gate on microphone permission — screen/system-audio permission is
+  // unreliable on macOS 15+ (getMediaAccessStatus('screen') can report
+  // 'denied' even when granted).  If system audio capture actually fails,
+  // the error from getDisplayMedia is already caught and shown in the UI.
   const needsPermissions =
     permissionStatus &&
-    ((micEnabled && permissionStatus.microphone !== 'granted') ||
-      (systemAudioEnabled && permissionStatus.screen !== 'granted'));
+    micEnabled && permissionStatus.microphone !== 'granted';
 
   return (
     <div

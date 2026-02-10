@@ -288,6 +288,15 @@ app.whenReady().then(() => {
     }
   });
 
+  // Approve all Chromium-level permission checks and requests.
+  // The app only loads its own bundled content, so macOS TCC is the real
+  // authorization boundary. Without these handlers Chromium maintains
+  // session-scoped permission state that doesn't persist across launches.
+  session.defaultSession.setPermissionCheckHandler(() => true);
+  session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
+    callback(true);
+  });
+
   createMainWindow();
   registerGlobalShortcuts();
 
