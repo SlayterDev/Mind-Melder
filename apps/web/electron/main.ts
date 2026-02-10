@@ -89,10 +89,6 @@ function createQuickCaptureWindow() {
 
   quickCaptureWindow.on('closed', () => {
     quickCaptureWindow = null;
-    // Hide the app to return focus to the previously active application
-    if (process.platform === 'darwin') {
-      app.hide();
-    }
   });
 }
 
@@ -111,7 +107,11 @@ function registerGlobalShortcuts() {
 
 // IPC handlers
 ipcMain.handle('close-quick-capture', () => {
+  mainWindow?.setFocusable(false);
   quickCaptureWindow?.close();
+  setTimeout(() => {
+    mainWindow?.setFocusable(true);
+  }, 200);
 });
 
 ipcMain.handle('get-platform', () => {
