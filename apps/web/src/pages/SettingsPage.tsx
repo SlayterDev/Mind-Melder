@@ -5,17 +5,42 @@ import { getServerUrl, setApiUrl, testConnection } from '../api/config';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
-// Server Connection Component (Electron only)
+/**
+ * Props for the ServerConnection component
+ */
 interface ServerConnectionProps {
+  /** Current server URL value */
   serverUrl: string;
+  /** Callback to update server URL */
   setServerUrl: (url: string) => void;
+  /** Whether a connection test is in progress */
   isTesting: boolean;
+  /** Current connection test status */
   connectionStatus: 'idle' | 'success' | 'error';
+  /** Callback to update connection status */
   setConnectionStatus: (status: 'idle' | 'success' | 'error') => void;
+  /** Async function to test server connection */
   handleTestConnection: () => Promise<void>;
+  /** Function to save connection and reload the app */
   handleSaveConnection: () => void;
 }
 
+/**
+ * ServerConnection component - Renders server connection settings for Electron app
+ * 
+ * This component is only used in the Electron version of the app to allow users
+ * to configure and test the API server URL. It provides:
+ * - Editable server URL input
+ * - Connection test functionality
+ * - Save and reconnect capability
+ * 
+ * The component is displayed in two contexts:
+ * 1. When settings load successfully (normal settings view)
+ * 2. When settings fail to load (error state) - allows users to fix connection issues
+ * 
+ * @param props - Component props
+ * @returns ServerConnection UI component
+ */
 function ServerConnection({
   serverUrl,
   setServerUrl,
