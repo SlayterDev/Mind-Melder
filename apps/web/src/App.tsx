@@ -12,6 +12,7 @@ import TemplatesPage from './pages/TemplatesPage';
 import SettingsPage from './pages/SettingsPage';
 import SetupPage from './pages/SetupPage';
 import QuickCapturePage from './pages/QuickCapturePage';
+import RecordingPage from './pages/RecordingPage';
 import ChatPage from './pages/ChatPage';
 import { isApiConfigured } from './api/config';
 
@@ -61,6 +62,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/quick-capture" element={<QuickCapturePage />} />
+          <Route path="/recording" element={<RecordingPage />} />
           <Route path="*" element={<SetupPage onComplete={() => setNeedsSetup(false)} />} />
         </Routes>
       </Router>
@@ -72,6 +74,8 @@ function App() {
       <Routes>
         {/* Quick capture window - no Layout wrapper */}
         <Route path="/quick-capture" element={<QuickCapturePage />} />
+        {/* Recording window - no Layout wrapper */}
+        <Route path="/recording" element={<RecordingPage />} />
 
         {/* Main app with Layout */}
         <Route

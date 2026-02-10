@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ReactNode, useState } from 'react';
 import { useInboxCount } from '../api/queries';
-import { PenLine, CalendarDays, Inbox, FileText, ListChecks, Layers, MessageSquare, Cog, Menu, X } from 'lucide-react';
+import { PenLine, CalendarDays, Inbox, FileText, ListChecks, Layers, MessageSquare, Cog, Menu, X, Mic } from 'lucide-react';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
@@ -75,6 +75,15 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
             );
           })}
+          {isElectron && (
+            <button
+              onClick={() => window.electronAPI?.openRecordingWindow()}
+              className="flex items-center gap-3 px-6 py-3 transition-all text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 w-full"
+            >
+              <Mic className="w-5 h-5" />
+              <span className="font-medium">Record</span>
+            </button>
+          )}
         </nav>
       </aside>
 
@@ -146,6 +155,18 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
             );
           })}
+          {isElectron && (
+            <button
+              onClick={() => {
+                closeDrawer();
+                window.electronAPI?.openRecordingWindow();
+              }}
+              className="flex items-center gap-3 px-6 py-3 transition-all text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 w-full"
+            >
+              <Mic className="w-5 h-5" />
+              <span className="font-medium">Record</span>
+            </button>
+          )}
         </nav>
       </div>
 
