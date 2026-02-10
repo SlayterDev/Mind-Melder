@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { settingsAPI, ollamaAPI, type Settings, type OllamaModel } from '../api/client';
-import { Cog, ChevronDown, ChevronUp, Server, Check, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { Cog, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { getServerUrl, setApiUrl, testConnection } from '../api/config';
+import ServerConnection from '../components/ServerConnection';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
@@ -161,11 +162,36 @@ export default function SettingsPage() {
 
   if (!settings) {
     return (
-      <div className="text-center py-12">
-        <p className="text-red-400 mb-4">{error || 'Failed to load settings'}</p>
-        <button onClick={loadSettings} className="btn-accent">
-          Retry
-        </button>
+      <div>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-3xl font-bold mb-2">Settings</h2>
+            <p className="text-gray-400">Configure your LLM provider and preferences</p>
+          </div>
+        </div>
+
+        <div className="mb-6 p-4 bg-red-900/30 border border-red-700 rounded-lg text-red-300">
+          {error || 'Failed to load settings'}
+        </div>
+
+        {/* Server Connection (Electron only) - Always show even when settings fail */}
+        {isElectron && (
+          <ServerConnection
+            serverUrl={serverUrl}
+            setServerUrl={setServerUrl}
+            isTesting={isTesting}
+            connectionStatus={connectionStatus}
+            setConnectionStatus={setConnectionStatus}
+            handleTestConnection={handleTestConnection}
+            handleSaveConnection={handleSaveConnection}
+          />
+        )}
+
+        <div className="text-center">
+          <button onClick={loadSettings} className="btn-accent">
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -397,72 +423,15 @@ export default function SettingsPage() {
 
         {/* Server Connection (Electron only) */}
         {isElectron && (
-          <div className="sheet-card p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Server className="w-5 h-5 text-gray-400" />
-              <h3 className="text-lg font-semibold">Server Connection</h3>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Server URL
-                </label>
-                <input
-                  type="url"
-                  value={serverUrl}
-                  onChange={(e) => {
-                    setServerUrl(e.target.value);
-                    setConnectionStatus('idle');
-                  }}
-                  placeholder="http://localhost:3000"
-                  className="input-accent w-full max-w-md"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  The URL where your Mind Melder API server is running
-                </p>
-              </div>
-
-              {connectionStatus === 'success' && (
-                <div className="flex items-center gap-2 text-green-400 text-sm">
-                  <Check className="w-4 h-4" />
-                  <span>Connection successful!</span>
-                </div>
-              )}
-
-              {connectionStatus === 'error' && (
-                <div className="flex items-center gap-2 text-red-400 text-sm">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>Could not connect to server</span>
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                <button
-                  onClick={handleTestConnection}
-                  disabled={isTesting || !serverUrl.trim()}
-                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
-                >
-                  {isTesting ? (
-                    <span className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Testing...
-                    </span>
-                  ) : (
-                    'Test Connection'
-                  )}
-                </button>
-
-                <button
-                  onClick={handleSaveConnection}
-                  disabled={connectionStatus !== 'success' || serverUrl === getServerUrl()}
-                  className="btn-accent"
-                >
-                  Save & Reconnect
-                </button>
-              </div>
-            </div>
-          </div>
+          <ServerConnection
+            serverUrl={serverUrl}
+            setServerUrl={setServerUrl}
+            isTesting={isTesting}
+            connectionStatus={connectionStatus}
+            setConnectionStatus={setConnectionStatus}
+            handleTestConnection={handleTestConnection}
+            handleSaveConnection={handleSaveConnection}
+          />
         )}
 
         {/* Info Card */}
