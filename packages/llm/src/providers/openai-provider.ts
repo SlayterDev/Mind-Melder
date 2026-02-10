@@ -90,6 +90,30 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
     return this.parseResponse<TodaySheetOutput>(content, todaySheetOutputSchema);
   }
 
+  async generateTitle(messages: ChatMessage[]): Promise<string> {
+    const conversationText = messages
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .map(m => `${m.role}: ${m.content}`)
+      .join('\n');
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      max_tokens: 30,
+      temperature: 0.3,
+      messages: [
+        { role: 'system', content: 'Generate a concise title (6 words max) for this conversation. Return ONLY the title text, no quotes or punctuation wrapping.' },
+        { role: 'user', content: conversationText },
+      ],
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('Empty response from OpenAI');
+    }
+
+    return content.trim();
+  }
+
   async streamChat(messages: ChatMessage[], callbacks: StreamCallbacks, tools?: ToolDefinition[]): Promise<void> {
     let fullResponse = '';
 

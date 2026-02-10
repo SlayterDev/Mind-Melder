@@ -173,7 +173,11 @@ export const conversationsAPI = {
   create: (data: { title?: string; systemPrompt?: string }) =>
     fetchAPI<Conversation>('/conversations', { method: 'POST', body: JSON.stringify(data) }),
   get: (id: string) => fetchAPI<ConversationWithMessages>(`/conversations/${id}`),
+  update: (id: string, data: { title?: string }) =>
+    fetchAPI<Conversation>(`/conversations/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => fetchAPI(`/conversations/${id}`, { method: 'DELETE' }),
+  generateTitle: (id: string) =>
+    fetchAPI<{ title: string }>(`/conversations/${id}/generate-title`, { method: 'POST' }),
 };
 
 // Settings

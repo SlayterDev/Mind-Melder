@@ -100,6 +100,13 @@ export interface LLMProvider {
   generateTodaySheet(input: TodaySheetInput): Promise<TodaySheetOutput>;
 
   streamChat(messages: ChatMessage[], callbacks: StreamCallbacks, tools?: ToolDefinition[]): Promise<void>;
+
+  /**
+   * Generate a concise title for a conversation based on its messages
+   * @param messages - The conversation messages (typically first user + assistant exchange)
+   * @returns A short descriptive title (roughly 6 words max)
+   */
+  generateTitle(messages: ChatMessage[]): Promise<string>;
 }
 
 // Provider configuration

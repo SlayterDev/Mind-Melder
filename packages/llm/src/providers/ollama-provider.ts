@@ -109,6 +109,28 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     return this.parseResponse<TodaySheetOutput>(response.message.content, todaySheetOutputSchema);
   }
 
+  async generateTitle(messages: ChatMessage[]): Promise<string> {
+    const conversationText = messages
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .map(m => `${m.role}: ${m.content}`)
+      .join('\n');
+
+    const response = await this.client.chat({
+      model: this.model,
+      messages: [
+        { role: 'system', content: 'Generate a concise title (6 words max) for this conversation. Return ONLY the title text, no quotes or punctuation wrapping.' },
+        { role: 'user', content: conversationText },
+      ],
+      stream: false,
+      options: {
+        temperature: 0.3,
+        num_predict: 30,
+      },
+    });
+
+    return response.message.content.trim();
+  }
+
   async streamChat(messages: ChatMessage[], callbacks: StreamCallbacks, tools?: ToolDefinition[]): Promise<void> {
     // Map messages to Ollama format
     // Tool results are converted to user messages since not all models support tool role

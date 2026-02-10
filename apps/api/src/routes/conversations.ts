@@ -61,6 +61,24 @@ export function createConversationsRouter(
     })
   );
 
+  // PATCH /api/v1/conversations/:id - Update conversation
+  router.patch(
+    '/:id',
+    asyncHandler(async (req, res) => {
+      const { id } = req.params;
+      const { title } = req.body;
+      const userId = 'test-user-1'; // TODO: Get from auth context
+
+      const conversation = await conversationsRepo.findById(id);
+      if (!conversation || conversation.userId !== userId) {
+        throw new ApiError(404, 'Conversation not found');
+      }
+
+      const updated = await conversationsRepo.update(id, { title });
+      res.json(updated);
+    })
+  );
+
   // DELETE /api/v1/conversations/:id - Delete conversation
   router.delete(
     '/:id',
@@ -76,6 +94,41 @@ export function createConversationsRouter(
 
       await conversationsRepo.delete(id);
       res.status(204).send();
+    })
+  );
+
+  // POST /api/v1/conversations/:id/generate-title - Generate title from messages
+  router.post(
+    '/:id/generate-title',
+    asyncHandler(async (req, res) => {
+      const { id } = req.params;
+      const userId = 'test-user-1'; // TODO: Get from auth context
+
+      const conversation = await conversationsRepo.findById(id);
+      if (!conversation || conversation.userId !== userId) {
+        throw new ApiError(404, 'Conversation not found');
+      }
+
+      const dbMessages = await conversationsRepo.getMessages(id);
+
+      // Extract first user + assistant messages
+      const firstUser = dbMessages.find(m => m.role === 'user');
+      const firstAssistant = dbMessages.find(m => m.role === 'assistant');
+      if (!firstUser || !firstAssistant) {
+        throw new ApiError(400, 'Need at least one user and one assistant message');
+      }
+
+      const settings = await settingsRepo.getOrCreate(userId);
+      const llmProvider = ProviderFactory.createFromSettings(settings);
+
+      const title = await llmProvider.generateTitle([
+        { role: 'user', content: firstUser.content },
+        { role: 'assistant', content: firstAssistant.content },
+      ]);
+
+      await conversationsRepo.update(id, { title });
+
+      res.json({ title });
     })
   );
 

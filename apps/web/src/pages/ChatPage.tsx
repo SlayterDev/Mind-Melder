@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, MessageSquare, Trash2, PanelLeftClose, PanelLeft } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, PanelLeftClose, PanelLeft, Pencil } from 'lucide-react';
 import { conversationsAPI, type Conversation } from '../api/client';
 import { getApiUrl } from '../api/config';
 import { ChatMessage } from '../components/chat/ChatMessage';
@@ -29,6 +29,8 @@ export default function ChatPage() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
 
   // Load conversations list
   useEffect(() => {
@@ -162,6 +164,33 @@ export default function ChatPage() {
     } catch (error) {
       console.error('Failed to delete conversation:', error);
     }
+  };
+
+  const startEditing = (conv: Conversation) => {
+    setEditingConversationId(conv.id);
+    setEditingTitle(conv.title || '');
+  };
+
+  const saveTitle = async () => {
+    if (!editingConversationId) return;
+    const trimmed = editingTitle.trim();
+    if (!trimmed) {
+      setEditingConversationId(null);
+      return;
+    }
+    try {
+      await conversationsAPI.update(editingConversationId, { title: trimmed });
+      setConversations((prev) =>
+        prev.map((c) => c.id === editingConversationId ? { ...c, title: trimmed } : c)
+      );
+    } catch (error) {
+      console.error('Failed to rename conversation:', error);
+    }
+    setEditingConversationId(null);
+  };
+
+  const cancelEditing = () => {
+    setEditingConversationId(null);
   };
 
   const sendMessage = async (content: string) => {
@@ -384,6 +413,19 @@ export default function ChatPage() {
       // Only update state if we're still in the same conversation
       if (conversationIdRef.current === currentConversationId) {
         setIsStreaming(false);
+
+        // Auto-generate title if still "New Chat"
+        const conv = conversations.find(c => c.id === currentConversationId);
+        if (conv && conv.title === 'New Chat') {
+          conversationsAPI.generateTitle(currentConversationId)
+            .then(({ title }) => {
+              setConversations(prev =>
+                prev.map(c => c.id === currentConversationId ? { ...c, title } : c)
+              );
+            })
+            .catch(err => console.error('Failed to generate title:', err));
+        }
+
         loadConversations(); // Refresh to update titles/timestamps
       }
       // Clear abort controller if it's still the current one
@@ -429,9 +471,35 @@ export default function ChatPage() {
               aria-label={`Open conversation: ${conv.title || 'Untitled'}`}
             >
               <MessageSquare size={16} className="text-gray-500 flex-shrink-0" aria-hidden="true" />
-              <span className="flex-1 text-sm text-gray-300 truncate">
-                {conv.title || 'Untitled'}
-              </span>
+              {editingConversationId === conv.id ? (
+                <input
+                  type="text"
+                  value={editingTitle}
+                  onChange={(e) => setEditingTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') saveTitle();
+                    if (e.key === 'Escape') cancelEditing();
+                  }}
+                  onBlur={saveTitle}
+                  onClick={(e) => e.stopPropagation()}
+                  autoFocus
+                  className="flex-1 text-sm text-gray-300 bg-gray-800 border border-accent/40 rounded px-1 py-0.5 outline-none focus:border-accent"
+                />
+              ) : (
+                <span className="flex-1 text-sm text-gray-300 truncate">
+                  {conv.title || 'Untitled'}
+                </span>
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  startEditing(conv);
+                }}
+                className="opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-accent transition-all"
+                aria-label={`Rename conversation: ${conv.title || 'Untitled'}`}
+              >
+                <Pencil size={14} aria-hidden="true" />
+              </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
