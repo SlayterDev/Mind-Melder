@@ -1,7 +1,9 @@
 # Issue #81 Implementation Plan: Show Todos as Task Cards in Chat
 
 ## Overview
-Enhance the chat interface to display todos as interactive Task Cards when they are created by the AI assistant via tool calls. This provides immediate visual feedback and allows users to interact with newly created todos directly from the chat interface.
+Enhance the chat interface to display todos as interactive Task Cards when they are returned by existing tool calls (e.g., `get_todays_todos`, `search_user_content`). This provides immediate visual feedback and allows users to interact with todos directly from the chat interface without leaving the conversation.
+
+**Scope**: Display up to 2 todos per message as TaskCards. No new tool creation - work with existing tools only.
 
 ## Current State Analysis
 
@@ -74,134 +76,138 @@ interface TaskCardProps {
 
 ## Problem Statement
 
-When the AI assistant creates todos (either through organization or other means), users need to:
-1. See the created todos immediately in the chat interface
+When the AI assistant retrieves todos via existing tools (`get_todays_todos`, `search_user_content`), users currently see them only as plain text. Users need to:
+1. See todos as interactive TaskCards in the chat interface
 2. Interact with the todos (complete, edit, set due dates) without leaving the chat
 3. Have a visual distinction between tool result text and actionable todo items
+4. Avoid UI clutter (limit to 2 todos shown per message)
 
 ## Requirements (from Issue #81)
 
-### Requirement 1: Store todo IDs from tool call
-- [x] Identify when tool calls create/modify todos
+### Requirement 1: Store todo IDs from tool call results
+- [x] Identify when tool calls return todos (e.g., `get_todays_todos`, `search_user_content`)
 - [x] Extract and store todo IDs from tool results
 - [x] Associate todo IDs with specific messages
+- [x] Limit to 2 todos per message
 
-### Requirement 2: Load and display task in chat UI
+### Requirement 2: Load and display tasks in chat UI
 - [x] Fetch full todo details by ID
-- [x] Render TaskCard components for todos in chat messages
+- [x] Render TaskCard components for up to 2 todos in chat messages
 - [x] Handle todo updates from within chat interface
 
 ## Implementation Strategy
 
-### Phase 1: Backend - Add `create_todo` Tool (NEW)
+### Phase 1: Backend - Enhance Tool Result Format
 
-**Rationale**: Currently, there's no tool that allows the AI to create todos. The existing tools (`search_user_content`, `get_todays_todos`, `get_recent_captures`) are read-only. We need a tool that can create todos and return the created todo ID.
+**Rationale**: Current tools (`get_todays_todos`, `search_user_content`) return todos as plain text strings. We need to include todo IDs in the tool results so the frontend can fetch and display them as TaskCards.
 
 **Changes Required**:
 
-1. **Add `create_todo` tool definition** (`packages/llm/src/chat-tools/chat-tools.ts`):
-```typescript
-{
-  name: 'create_todo',
-  description: `Create a new todo/task for the user. Use this when the user asks you to remind them of something, create a task, or track an action item.`,
-  input_schema: {
-    type: 'object',
-    properties: {
-      content: {
-        type: 'string',
-        description: 'The main content/title of the todo'
-      },
-      description: {
-        type: 'string',
-        description: 'Optional detailed description of the todo'
-      },
-      due_date: {
-        type: 'string',
-        description: 'Optional due date in ISO format (YYYY-MM-DD)'
-      },
-      time_estimate: {
-        type: 'string',
-        enum: ['quick', 'medium', 'long', 'none'],
-        description: 'Estimated time to complete: quick (<15min), medium (30-60min), long (>90min), none'
-      }
-    },
-    required: ['content']
-  }
-}
-```
+1. **Update tool result format** (`apps/api/src/services/chat-tool-executor.ts`):
 
-2. **Add `create_todo` handler** (`apps/api/src/services/chat-tool-executor.ts`):
+Instead of returning only text, return JSON with both text (for display in tool results) and todo IDs:
+
 ```typescript
-private async handleCreateTodo(
+private async handleGetTodaysTodos(
   userId: string,
-  input: CreateTodoInput
+  input: GetTodaysTodosInput
 ): Promise<string> {
-  const todo = await this.todoRepository.create({
-    userId,
-    content: input.content,
-    description: input.description,
-    dueDate: input.due_date ? new Date(input.due_date) : undefined,
-    timeEstimate: input.time_estimate || 'none',
-    status: 'pending'
-  });
+  const todos = await this.todoRepository.findDueToday(userId, input.include_completed || false);
+  if (todos.length === 0) {
+    return 'No todos due today.';
+  }
+
+  // Build text output (existing)
+  let output = 'Today\'s Todos:\n';
+  const todoIds: string[] = [];
   
-  // Return JSON with todo ID for frontend parsing
+  todos.forEach((todo, index) => {
+    const dueDate = todo.dueDate ? (todo.dueDate instanceof Date ? todo.dueDate : new Date(todo.dueDate as string)) : null;
+    output += `${index + 1}. (${dueDate ? "Due: " + dueDate.toISOString() : 'No due date'}) ${todo.content} - ${todo.status === 'completed' ? 'Completed' : 'Pending'} - ${todo.description}\n`;
+    todoIds.push(todo.id);
+  });
+
+  // Return JSON with both text and IDs
   return JSON.stringify({
-    type: 'todo_created',
-    todo_id: todo.id,
-    content: todo.content,
-    description: todo.description,
-    due_date: todo.dueDate?.toISOString(),
-    message: `Created todo: ${todo.content}`
+    type: 'todos_result',
+    text: output,
+    todo_ids: todoIds.slice(0, 2) // Limit to 2 todos
   });
 }
 ```
 
-**Why JSON response?**: Returning structured JSON allows the frontend to easily detect todo creation events and extract the ID.
+Similarly update `handleSearchContent` to include todo IDs when todos are returned:
 
-### Phase 2: Backend - Modify Tool Result Streaming
+```typescript
+private async handleSearchContent(
+  userId: string,
+  input: SearchToolInput
+): Promise<string> {
+  const results = await this.searchService.search(userId, input.query, input.type || 'all');
+  
+  // ... existing result building code ...
+  
+  const todoIds: string[] = [];
+  if (results.todos) {
+    output += `\nTodos:\n`;
+    results.todos.slice(0, input.limit || 8).forEach((todo, index) => {
+      output += `${index + 1}. (${todo.dueDate ? "Due: " + todo.dueDate?.toISOString() : 'No due date'}) ${todo.content} - ${todo.status === 'completed' ? 'Completed' : 'Pending'}${todo.description ? ' - ' + todo.description : ''}\n`;
+      todoIds.push(todo.id);
+    });
+  }
+
+  // Return JSON if there are todo IDs
+  if (todoIds.length > 0) {
+    return JSON.stringify({
+      type: 'search_result',
+      text: output,
+      todo_ids: todoIds.slice(0, 2) // Limit to 2 todos
+    });
+  }
+  
+  return output; // Plain text if no todos
+}
+```
+
+**Why JSON response?**: Returning structured JSON allows the frontend to easily detect todo IDs and extract them for TaskCard display.
+
+### Phase 2: Backend - Parse JSON Tool Results in SSE Streaming
 
 **Current Flow**:
 ```
-SSE Event: data: {"type":"tool_result","name":"search_user_content","result":"...text..."}
+SSE Event: data: {"type":"tool_result","name":"get_todays_todos","result":"...text..."}
 ```
 
-**New Flow** (detect and enrich todo results):
+**New Flow** (detect and parse JSON results):
 ```typescript
 // In /apps/api/src/routes/conversations.ts (chat endpoint)
-if (data.type === 'tool_result') {
-  let enrichedResult = data.result;
-  let todoIds: string[] = [];
+// When tool result comes back, check if it's JSON with todo IDs
+if (toolResult.name === 'get_todays_todos' || toolResult.name === 'search_user_content') {
+  let resultText = toolResult.result;
+  let todoIds: string[] | undefined;
   
-  // Check if result contains todo creation JSON
+  // Try to parse as JSON
   try {
-    const parsed = JSON.parse(data.result);
-    if (parsed.type === 'todo_created' && parsed.todo_id) {
-      todoIds.push(parsed.todo_id);
+    const parsed = JSON.parse(toolResult.result);
+    if (parsed.type && parsed.text && parsed.todo_ids) {
+      resultText = parsed.text; // Extract text for display
+      todoIds = parsed.todo_ids; // Extract todo IDs
     }
   } catch {
     // Not JSON, treat as regular text result
   }
   
-  // Send enhanced event with todo IDs
+  // Send enhanced event with todo IDs if present
   stream.write(`data: ${JSON.stringify({
     type: 'tool_result',
-    name: data.name,
-    result: enrichedResult,
-    todo_ids: todoIds.length > 0 ? todoIds : undefined
+    name: toolResult.name,
+    result: resultText,
+    todo_ids: todoIds // Optional field
   })}\n\n`);
 }
 ```
 
-**Alternative Approach** (simpler): Add a new SSE event type:
-```typescript
-// When create_todo tool completes
-stream.write(`data: ${JSON.stringify({
-  type: 'todo_created',
-  todo_id: todoId,
-  tool_call_id: toolCallId
-})}\n\n`);
-```
+**Backward Compatibility**: Tools that return plain text (not JSON) will work as before. The `todo_ids` field is optional.
 
 ### Phase 3: Frontend - Capture Todo IDs in ChatPage
 
@@ -213,42 +219,44 @@ interface DisplayMessage {
   content: string;
   toolCalls?: Array<{ id: string; name: string; arguments: Record<string, unknown> }>;
   toolResults?: Array<{ name: string; result: string; todoIds?: string[] }>; // ADD todoIds
-  todoIds?: string[]; // Overall todo IDs for the message
+  todoIds?: string[]; // Overall todo IDs for the message (max 2)
   isStreaming?: boolean;
 }
 ```
 
 **Update SSE Parsing** (in `ChatPage.tsx` sendMessage function):
 ```typescript
-// Add to existing event handling
+// Update existing tool_result handler
 else if (data.type === 'tool_result') {
   const resultData = {
     name: data.name,
     result: data.result,
-    todoIds: data.todo_ids // Capture todo IDs if present
+    todoIds: data.todo_ids ? data.todo_ids.slice(0, 2) : undefined // LIMIT TO 2
   };
   toolResults.push(resultData);
   
-  // Aggregate all todo IDs at message level
+  // Aggregate all todo IDs at message level (max 2 total)
   const allTodoIds = toolResults
     .flatMap(r => r.todoIds || [])
-    .filter(Boolean);
+    .filter(Boolean)
+    .slice(0, 2); // ENFORCE 2-TODO LIMIT
   
   setMessages((prev) => {
-    // ... existing update logic ...
-    updated[lastIndex] = {
-      ...last,
-      toolResults: [...toolResults],
-      todoIds: allTodoIds.length > 0 ? allTodoIds : undefined
-    };
+    if (conversationIdRef.current !== currentConversationId) {
+      return prev;
+    }
+    const updated = [...prev];
+    const lastIndex = updated.length - 1;
+    const last = updated[lastIndex];
+    if (last?.role === 'assistant' && last.id === tempAssistantId) {
+      updated[lastIndex] = {
+        ...last,
+        toolResults: [...toolResults],
+        todoIds: allTodoIds.length > 0 ? allTodoIds : undefined
+      };
+    }
     return updated;
   });
-}
-// OR handle new todo_created event type
-else if (data.type === 'todo_created') {
-  // Track todo ID separately
-  const todoId = data.todo_id;
-  // ... add to message state
 }
 ```
 
@@ -256,7 +264,7 @@ else if (data.type === 'todo_created') {
 
 **New Component**: `/apps/web/src/components/chat/ChatTaskCards.tsx`
 
-**Purpose**: Fetch and display TaskCards for a list of todo IDs in the chat interface.
+**Purpose**: Fetch and display up to 2 TaskCards for a list of todo IDs in the chat interface.
 
 ```typescript
 import { useState, useEffect } from 'react';
@@ -264,7 +272,7 @@ import { todosAPI } from '../../api/client';
 import TaskCard from '../TaskCard';
 
 interface ChatTaskCardsProps {
-  todoIds: string[];
+  todoIds: string[]; // Already limited to 2 from backend
   onTodoUpdate?: () => void; // Optional callback for when todos change
 }
 
@@ -281,7 +289,7 @@ export function ChatTaskCards({ todoIds, onTodoUpdate }: ChatTaskCardsProps) {
     setLoading(true);
     setError(null);
     try {
-      // Fetch all todos in parallel
+      // todoIds are already limited to 2, fetch all in parallel
       const todoPromises = todoIds.map(id => todosAPI.get(id));
       const fetchedTodos = await Promise.all(todoPromises);
       setTodos(fetchedTodos);
@@ -301,7 +309,6 @@ export function ChatTaskCards({ todoIds, onTodoUpdate }: ChatTaskCardsProps) {
       } else {
         await todosAPI.update(id, { status: 'pending' });
       }
-      // Refresh todos
       await loadTodos();
       onTodoUpdate?.();
     } catch (err) {
@@ -336,7 +343,7 @@ export function ChatTaskCards({ todoIds, onTodoUpdate }: ChatTaskCardsProps) {
   return (
     <div className="space-y-3 mt-3">
       <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">
-        Created Todos
+        Todos ({todos.length})
       </div>
       {todos.map(todo => (
         <TaskCard
@@ -355,15 +362,7 @@ export function ChatTaskCards({ todoIds, onTodoUpdate }: ChatTaskCardsProps) {
 }
 ```
 
-**Note on TaskCard Compatibility**:
-- TaskCard uses `useSortable` from @dnd-kit for drag-and-drop
-- In chat context, we don't need drag-and-drop
-- Options:
-  1. Make drag-and-drop optional in TaskCard (check if sortable context exists)
-  2. Create a simplified ChatTaskCard variant
-  3. Wrap in a DndContext provider (unnecessary overhead)
-
-**Recommendation**: Option 1 - Make TaskCard handle missing sortable context gracefully.
+**Note**: Since todoIds are already limited to 2 from the backend, no additional limiting is needed in this component.
 
 ### Phase 5: Frontend - Integrate ChatTaskCards into ChatMessage
 
@@ -457,22 +456,28 @@ export default function TaskCard({ todo, onToggleComplete, ... }: TaskCardProps)
 ## Technical Considerations
 
 ### 1. Tool Result Format
-**Decision**: Return JSON from `create_todo` tool with structured data including todo ID.
+**Decision**: Return JSON from existing tools (`get_todays_todos`, `search_user_content`) when todos are present, with structured data including todo IDs.
 **Rationale**: 
 - Easy to parse on frontend
-- Extensible for future metadata
-- Clear distinction between regular text results and todo creation
+- Backward compatible (tools can still return plain text)
+- Clear way to pass todo IDs without breaking existing text display
 
 ### 2. SSE Event Structure
-**Option A**: Enhance existing `tool_result` event with `todo_ids` field
-**Option B**: Add new `todo_created` event type
-
-**Recommendation**: Option A (enhance existing event)
+**Decision**: Enhance existing `tool_result` event with optional `todo_ids` field
+**Rationale**:
 - Simpler mental model
 - Backward compatible (frontend can ignore missing field)
-- Groups todo IDs with the tool that created them
+- Groups todo IDs with the tool that returned them
+- No new event types needed
 
-### 3. TaskCard Reusability
+### 3. Two-Todo Limit
+**Implementation Points**:
+- Backend enforces limit when building todo_ids array (`.slice(0, 2)`)
+- Frontend also enforces limit when aggregating todo IDs from multiple tool results
+- Prevents UI clutter while still showing representative samples
+**Future Enhancement**: Could add "Show all X todos" button if more than 2 exist
+
+### 4. TaskCard Reusability
 **Challenge**: TaskCard is designed for drag-and-drop context (Today Sheet)
 **Options**:
 1. Make drag-and-drop optional (conditional rendering)
@@ -484,154 +489,169 @@ export default function TaskCard({ todo, onToggleComplete, ... }: TaskCardProps)
 - Reduces code duplication
 - TaskCard already has many features (editing, feedback) we want in chat
 
-### 4. Todo Fetching Strategy
-**Current**: Fetch todos by ID when displaying ChatTaskCards
+### 5. Todo Fetching Strategy
+**Decision**: Fetch todos by ID when displaying ChatTaskCards
 **Alternative**: Include full todo data in tool result
 
 **Recommendation**: Fetch by ID
 - Ensures fresh data (if user updates todo elsewhere)
 - Smaller SSE payload
 - Consistent with rest of app architecture
+- Only 2 todos max = minimal performance impact
 
-### 5. Performance Considerations
-- **Parallel fetching**: Use `Promise.all()` to fetch multiple todos concurrently
+### 6. Performance Considerations
+- **Parallel fetching**: Use `Promise.all()` to fetch 2 todos concurrently
 - **Caching**: Consider using TanStack Query for todo fetching (if already used elsewhere)
-- **Lazy loading**: Only fetch todos when message is visible (intersection observer)
+- **Limited scope**: Max 2 todos per message means performance is not a concern
 
-### 6. Error Handling
+### 7. Error Handling
 - **Todo not found**: Display error message in card slot
 - **Network error**: Show retry button
 - **Partial failures**: Display successful todos, show error for failed ones
+- **JSON parse errors**: Fallback to plain text display
 
 ## Testing Strategy
 
 ### Unit Tests
 1. **ChatToolExecutor.test.ts**:
-   - Test `create_todo` tool handler
-   - Verify JSON response format
-   - Test error cases (missing content, invalid dates)
+   - Test JSON response format from `get_todays_todos`
+   - Test JSON response format from `search_user_content` with todos
+   - Verify todo_ids array is limited to 2
+   - Test plain text fallback when no todos
 
 2. **ChatTaskCards.test.tsx**:
    - Test loading state
    - Test error state
-   - Test successful todo rendering
+   - Test successful todo rendering (1 and 2 todos)
    - Test todo interactions (complete, edit, feedback)
 
 ### Integration Tests
-1. **Chat Flow**:
-   - Send message asking to create todo
-   - Verify SSE stream includes todo_created event
-   - Verify TodoCard renders with correct data
+1. **Chat Flow with Todos**:
+   - Send message asking "What are my todos for today?"
+   - Verify SSE stream includes todo_ids in tool_result
+   - Verify up to 2 TaskCards render with correct data
    - Verify todo updates reflect in card
 
 2. **Cross-page Consistency**:
-   - Create todo in chat
+   - View todos in chat
    - Navigate to /todos page
-   - Verify todo appears in list
+   - Complete todo on /todos page
+   - Return to chat
+   - Verify todo status is updated (requires refresh or refetch)
 
 ### Manual Testing Scenarios
-1. **Basic Creation**:
-   - "Remind me to call John tomorrow at 2pm"
-   - Verify TaskCard appears with due date and time estimate
+1. **Basic Todo Display**:
+   - "Show me my todos for today"
+   - Verify up to 2 TaskCards appear
+   - Verify text list still shows in tool results section
 
-2. **Multiple Todos**:
-   - "Create tasks: 1) Review PR, 2) Update docs, 3) Deploy to staging"
-   - Verify multiple TaskCards appear
-
-3. **Todo Interactions**:
-   - Complete todo from chat
+2. **Todo Interactions**:
+   - Complete todo from chat card
    - Edit description
    - Submit feedback
    - Verify updates persist
 
+3. **Limit Enforcement**:
+   - Search for todos that would return 5+ results
+   - Verify only 2 TaskCards show
+   - Verify all results still show in text format in tool results
+
 4. **Edge Cases**:
    - Very long todo content
-   - Special characters in content
-   - Invalid due dates
+   - Todo with no due date
+   - Completed todos in results
    - Network timeout during fetch
+   - Invalid todo ID in response
 
 ## Migration Plan
 
-### Phase 1: Backend (1-2 days)
-- [ ] Add `create_todo` tool definition
-- [ ] Implement `create_todo` handler in ChatToolExecutor
-- [ ] Enhance SSE streaming to include todo IDs
+### Phase 1: Backend - Tool Result Enhancement (1 day)
+- [ ] Update `handleGetTodaysTodos` to return JSON with todo IDs
+- [ ] Update `handleSearchContent` to return JSON with todo IDs when todos present
+- [ ] Add JSON parsing logic in SSE streaming endpoint
 - [ ] Test tool execution manually with curl/Postman
+- [ ] Verify backward compatibility (plain text still works)
 
 ### Phase 2: Frontend - Data Layer (1 day)
-- [ ] Update DisplayMessage interface
-- [ ] Modify ChatPage SSE parsing to capture todo IDs
+- [ ] Update DisplayMessage interface to include todoIds
+- [ ] Modify ChatPage SSE parsing to extract todo IDs from tool results
+- [ ] Enforce 2-todo limit in frontend state
 - [ ] Test SSE data capture with console logs
 
-### Phase 3: Frontend - UI Components (2 days)
-- [ ] Create ChatTaskCards component
+### Phase 3: Frontend - UI Components (1-2 days)
+- [ ] Create ChatTaskCards component with 2-todo limit
 - [ ] Integrate ChatTaskCards into ChatMessage
 - [ ] Make TaskCard drag-and-drop optional
 - [ ] Style TaskCards for chat context (if needed)
 
-### Phase 4: Testing & Refinement (1-2 days)
-- [ ] Write unit tests
+### Phase 4: Testing & Refinement (1 day)
+- [ ] Write unit tests for tool result JSON format
 - [ ] Manual testing across browsers
+- [ ] Test 2-todo limit enforcement
 - [ ] Address edge cases
-- [ ] Performance optimization
+- [ ] Performance verification
 
 ### Phase 5: Documentation (0.5 day)
-- [ ] Update README with new chat feature
+- [ ] Update README with todo display feature
 - [ ] Add JSDoc comments to new components
 - [ ] Update PROJECT_SPEC.md if needed
+
+**Total Estimated Effort**: 4-5 days
 
 ## Success Criteria
 
 1. **Functional**:
-   - ✅ AI can create todos via chat
-   - ✅ Created todos appear as TaskCards in chat
+   - ✅ Existing tools (`get_todays_todos`, `search_user_content`) return todo IDs
+   - ✅ Up to 2 todos appear as TaskCards in chat messages
    - ✅ Users can interact with todos (complete, edit, feedback) from chat
    - ✅ Todo updates persist to database
    - ✅ Cross-page consistency (todo visible in /todos page)
+   - ✅ Text results still display in tool results section
 
 2. **UX**:
    - ✅ Clear visual distinction between text results and todo cards
-   - ✅ Smooth loading states
+   - ✅ Smooth loading states for TaskCards
    - ✅ Graceful error handling
+   - ✅ UI not cluttered (max 2 todos per message)
    - ✅ Responsive design
 
 3. **Technical**:
    - ✅ Clean code following existing patterns
    - ✅ No performance regressions
-   - ✅ Backward compatible (existing tool results still work)
+   - ✅ Backward compatible (plain text tool results still work)
    - ✅ Test coverage for new code
+   - ✅ No new tools created (uses existing tools only)
 
 ## Future Enhancements (Out of Scope)
 
+- **Show all todos**: "Show all 5 todos" button when more than 2 exist
 - **Batch operations**: "Complete all todos in this conversation"
-- **Todo suggestions**: AI proactively suggests creating todos based on conversation
+- **Todo creation tool**: Add `create_todo` tool for AI to create todos directly
 - **Rich todo preview**: Show original capture link in chat context
-- **Todo threading**: Link related todos created in same conversation
-- **Undo support**: "Undo creating that todo"
-- **Bulk creation UI**: Better handling of multiple todos in single message
+- **Todo threading**: Link related todos discussed in same conversation
+- **Configurable limit**: User preference for how many todos to display (2-5)
 
 ## Dependencies
 
 ### Required
-- None (uses existing TodosRepository, TaskCard, chat infrastructure)
+- None (uses existing TodosRepository, TaskCard, chat infrastructure, existing tools)
 
 ### Optional
 - TanStack Query (if implementing caching layer)
-- Intersection Observer API (if implementing lazy loading)
 
 ## Risks & Mitigation
 
 ### Risk 1: TaskCard complexity in chat context
-**Mitigation**: Test thoroughly, consider simplified variant if issues arise
+**Mitigation**: Test thoroughly, make drag-and-drop optional, consider simplified variant if issues arise
 
-### Risk 2: SSE event parsing errors
-**Mitigation**: Comprehensive error handling, fallback to text display
+### Risk 2: JSON parsing errors in tool results
+**Mitigation**: Comprehensive error handling, fallback to plain text display, try-catch around JSON.parse
 
-### Risk 3: Performance with many todos
-**Mitigation**: Implement pagination or lazy loading if needed
+### Risk 3: Performance with todo fetching
+**Mitigation**: Limited to 2 todos per message, parallel fetching with Promise.all, minimal impact
 
-### Risk 4: Race conditions (todo created but not yet fetched)
-**Mitigation**: Add retry logic, optimistic UI updates
+### Risk 4: Race conditions (todo updated elsewhere while viewing in chat)
+**Mitigation**: Fetch by ID ensures fresh data on load, optimistic UI updates for user interactions
 
 ## Appendix
 
@@ -669,13 +689,19 @@ updated_at TIMESTAMP
 ## Summary
 
 This implementation plan provides a clear path to implementing Issue #81's requirements:
-1. **Backend**: Add `create_todo` tool and enhance SSE streaming with todo IDs
-2. **Frontend**: Capture todo IDs in chat state and display them as TaskCards
-3. **Component**: Reuse existing TaskCard with optional drag-and-drop
-4. **Testing**: Comprehensive unit and integration tests
+1. **Backend**: Enhance existing tools (`get_todays_todos`, `search_user_content`) to return JSON with todo IDs when todos are present
+2. **SSE Streaming**: Parse JSON tool results and include todo_ids in SSE events
+3. **Frontend**: Capture todo IDs in chat state and display up to 2 as TaskCards
+4. **Component**: Reuse existing TaskCard with optional drag-and-drop
+5. **Testing**: Comprehensive unit and integration tests
 
 The design maintains consistency with existing patterns, reuses components where possible, and provides a foundation for future chat-based todo management features.
 
-**Estimated Effort**: 5-7 days for full implementation and testing
-**Complexity**: Medium (requires coordination between backend tools, SSE streaming, and frontend state management)
+**Key Constraints**:
+- No new tool creation (uses existing tools only)
+- Maximum 2 todos displayed per message (avoid UI clutter)
+- Backward compatible (plain text tool results still work)
+
+**Estimated Effort**: 4-5 days for full implementation and testing
+**Complexity**: Low-Medium (simpler than original plan, no new tool creation)
 **Priority**: High (improves user experience and chat utility significantly)
