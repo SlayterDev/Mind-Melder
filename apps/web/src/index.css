@@ -309,15 +309,18 @@
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
+    padding-block: 20px;
   }
 
   ::-webkit-scrollbar-track {
     background: transparent;
+    margin-block: 20px;
   }
 
   ::-webkit-scrollbar-thumb {
     background-color: rgb(107 114 128 / 0.6);
     border-radius: 5px;
+    padding-block: 20px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
