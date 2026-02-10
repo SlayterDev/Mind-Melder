@@ -1,10 +1,50 @@
 import { Router, type Router as ExpressRouter, type Response } from 'express';
 import { ConversationsRepository, Database, SettingsRepository } from 'database';
-import { createConversationSchema, chatMessageInputSchema } from 'types';
+import { createConversationSchema, chatMessageInputSchema, updateConversationSchema } from 'types';
 import { ProviderFactory, chatTools, type ChatMessage, type ToolCall, type LLMProvider } from 'llm';
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, ApiError } from '../middleware/index.js';
 import { ChatToolExecutor } from '../services/chat-tool-executor.js';
+
+/**
+ * Normalizes and sanitizes a generated title from LLM output.
+ * Handles wrapping quotes, newlines, excessive length, etc.
+ */
+function normalizeGeneratedTitle(raw: string | null | undefined): string {
+  if (!raw) return '';
+
+  let title = raw.trim();
+
+  // Strip a single pair of wrapping quotes if present
+  if (
+    title.length >= 2 &&
+    ((title.startsWith('"') && title.endsWith('"')) ||
+      (title.startsWith("'") && title.endsWith("'")))
+  ) {
+    title = title.slice(1, -1).trim();
+  }
+
+  // Replace newlines with spaces and collapse repeated whitespace
+  title = title.replace(/[\r\n]+/g, ' ');
+  title = title.replace(/\s+/g, ' ').trim();
+
+  if (!title) return '';
+
+  // Limit to a reasonable number of words (e.g., 15)
+  const maxWords = 15;
+  const words = title.split(' ');
+  if (words.length > maxWords) {
+    title = words.slice(0, maxWords).join(' ');
+  }
+
+  // Enforce max length consistent with createConversationSchema (200 chars)
+  const maxLength = 200;
+  if (title.length > maxLength) {
+    title = title.slice(0, maxLength).trim();
+  }
+
+  return title;
+}
 
 export function createConversationsRouter(
   db: Database,
@@ -64,6 +104,7 @@ export function createConversationsRouter(
   // PATCH /api/v1/conversations/:id - Update conversation
   router.patch(
     '/:id',
+    validateBody(updateConversationSchema),
     asyncHandler(async (req, res) => {
       const { id } = req.params;
       const { title } = req.body;
@@ -72,6 +113,11 @@ export function createConversationsRouter(
       const conversation = await conversationsRepo.findById(id);
       if (!conversation || conversation.userId !== userId) {
         throw new ApiError(404, 'Conversation not found');
+      }
+
+      // Ensure we have at least one field to update
+      if (title === undefined) {
+        throw new ApiError(400, 'No fields to update');
       }
 
       const updated = await conversationsRepo.update(id, { title });
@@ -118,17 +164,38 @@ export function createConversationsRouter(
         throw new ApiError(400, 'Need at least one user and one assistant message');
       }
 
+      // Validate that both messages have non-empty content
+      const userContent =
+        typeof firstUser.content === 'string' ? firstUser.content.trim() : '';
+      const assistantContent =
+        typeof firstAssistant.content === 'string' ? firstAssistant.content.trim() : '';
+
+      if (!userContent || !assistantContent) {
+        throw new ApiError(
+          400,
+          'Cannot generate title: conversation messages are missing content'
+        );
+      }
+
       const settings = await settingsRepo.getOrCreate(userId);
       const llmProvider = ProviderFactory.createFromSettings(settings);
 
-      const title = await llmProvider.generateTitle([
-        { role: 'user', content: firstUser.content },
-        { role: 'assistant', content: firstAssistant.content },
+      const rawTitle = await llmProvider.generateTitle([
+        { role: 'user', content: userContent },
+        { role: 'assistant', content: assistantContent },
       ]);
 
-      await conversationsRepo.update(id, { title });
+      const normalizedTitle = normalizeGeneratedTitle(rawTitle);
 
-      res.json({ title });
+      // If the LLM output is unusable after normalization, fall back to a safe default
+      const safeTitle =
+        normalizedTitle ||
+        normalizeGeneratedTitle(conversation.title) ||
+        'Untitled conversation';
+
+      await conversationsRepo.update(id, { title: safeTitle });
+
+      res.json({ title: safeTitle });
     })
   );
 
