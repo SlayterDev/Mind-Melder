@@ -118,7 +118,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     const response = await this.client.chat({
       model: this.model,
       messages: [
-        { role: 'system', content: 'Generate a concise title (6 words max) for this conversation. Return ONLY the title text, no quotes or punctuation wrapping.' },
+        { role: 'system', content: this.buildChatTitleSystemPrompt() },
         { role: 'user', content: conversationText },
       ],
       stream: false,
