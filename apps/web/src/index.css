@@ -305,7 +305,7 @@
     @apply border-l-2 border-accent/50 pl-4 italic text-gray-400 my-3;
   }
 
-  /* Scrollbar Styles - respects system theme */
+  /* Scrollbar Styles - dark theme */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
