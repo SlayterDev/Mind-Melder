@@ -90,7 +90,8 @@ function createQuickCaptureWindow() {
   quickCaptureWindow.on('closed', () => {
     quickCaptureWindow = null;
     // Hide the app to return focus to the previously active application
-    if (process.platform === 'darwin') {
+    // Only hide if the main window is not visible
+    if (process.platform === 'darwin' && (!mainWindow || !mainWindow.isVisible())) {
       app.hide();
     }
   });
