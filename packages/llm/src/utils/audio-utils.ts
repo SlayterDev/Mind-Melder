@@ -25,7 +25,7 @@ export function getAudioFilename(mimeType: string, originalName?: string): strin
   const fallbackExt = AUDIO_MIME_TO_EXTENSION[mimeType] || 'bin';
   
   // Use original name if it has an extension
-  if (originalName && originalName.trim() !== '' && originalName.includes('.')) {
+  if (originalName && originalName.includes('.')) {
     return originalName;
   }
   

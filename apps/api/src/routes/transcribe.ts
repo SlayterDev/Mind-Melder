@@ -68,7 +68,7 @@ export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepos
 
           if (useWhisper) {
             // Use local whisper.cpp server
-            const mimeType = req.file?.mimetype || 'application/octet-stream';
+            const mimeType = req.file?.mimetype || 'audio/webm';
             const filename = getAudioFilename(mimeType, req.file?.originalname);
 
             const fileBlob = new Blob([audioBuffer], { type: mimeType });
