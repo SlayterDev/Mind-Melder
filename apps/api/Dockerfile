@@ -31,6 +31,10 @@ RUN pnpm --filter database build && \
 # Production stage
 FROM node:20-alpine
 
+LABEL org.opencontainers.image.source="https://github.com/SlayterDev/Mind-Melder"
+LABEL org.opencontainers.image.description="Mind-Melder API server"
+LABEL org.opencontainers.image.licenses="TBD"
+
 # Install wget for healthcheck
 RUN apk add --no-cache wget
 
