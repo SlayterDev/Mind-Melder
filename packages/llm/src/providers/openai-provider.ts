@@ -3,6 +3,7 @@ import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
 import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, ToolCall, ToolDefinition, TodaySheetInput, TodaySheetOutput, TranscribeOptions, TranscriptionResult } from '../types.js';
 import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
+import { getAudioFilename } from '../utils/audio-utils.js';
 
 export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
   private client: OpenAI;
@@ -231,31 +232,8 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
   }
 
   async transcribe(audioBuffer: Buffer, options?: TranscribeOptions): Promise<TranscriptionResult> {
-    // Map known audio MIME types to reasonable file extensions
-    const extensionFromMime: Record<string, string> = {
-      'audio/mpeg': 'mp3',
-      'audio/mp4': 'm4a',
-      'audio/x-m4a': 'm4a',
-      'audio/wav': 'wav',
-      'audio/x-wav': 'wav',
-      'audio/webm': 'webm',
-      'video/webm': 'webm',
-      'video/mp4': 'mp4',
-      'audio/ogg': 'ogg',
-      'audio/flac': 'flac',
-      'audio/x-flac': 'flac',
-    };
-
-    // Determine filename and MIME type
     const mimeType = options?.mimeType || 'audio/webm';
-    const fallbackExt = extensionFromMime[mimeType] || 'bin';
-    
-    let filename: string;
-    if (options?.filename && options.filename.trim() !== '' && options.filename.includes('.')) {
-      filename = options.filename;
-    } else {
-      filename = `audio.${fallbackExt}`;
-    }
+    const filename = getAudioFilename(mimeType, options?.filename);
 
     const file = new File([audioBuffer], filename, { type: mimeType });
 

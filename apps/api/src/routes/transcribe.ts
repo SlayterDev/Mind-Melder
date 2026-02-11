@@ -1,6 +1,6 @@
 import { Router, type Router as ExpressRouter } from 'express';
 import multer from 'multer';
-import { ProviderFactory } from 'llm';
+import { ProviderFactory, getAudioFilename } from 'llm';
 import type { Database, SettingsRepository, OrganizedNotesRepository } from 'database';
 import { ApiError } from '../middleware/index.js';
 import { asyncHandler } from '../utils/async-handler.js';
@@ -69,29 +69,7 @@ export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepos
           if (useWhisper) {
             // Use local whisper.cpp server
             const mimeType = req.file?.mimetype || 'application/octet-stream';
-            const originalName = req.file?.originalname;
-
-            // Map known audio MIME types to reasonable file extensions
-            const extensionFromMime: Record<string, string> = {
-              'audio/mpeg': 'mp3',
-              'audio/mp4': 'm4a',
-              'audio/x-m4a': 'm4a',
-              'audio/wav': 'wav',
-              'audio/x-wav': 'wav',
-              'audio/webm': 'webm',
-              'video/webm': 'webm',
-              'video/mp4': 'mp4',
-              'audio/ogg': 'ogg',
-              'audio/flac': 'flac',
-              'audio/x-flac': 'flac',
-            };
-
-            const fallbackExt = extensionFromMime[mimeType] || 'bin';
-            const hasExtension =
-              typeof originalName === 'string' && originalName.trim() !== '' && originalName.includes('.');
-            const filename = hasExtension && originalName
-              ? originalName
-              : `audio.${fallbackExt}`;
+            const filename = getAudioFilename(mimeType, req.file?.originalname);
 
             const fileBlob = new Blob([audioBuffer], { type: mimeType });
 
