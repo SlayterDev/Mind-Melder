@@ -4,7 +4,7 @@ A self-hosted productivity tool that captures quick notes throughout the day and
 
 ## Key Features
 
-- Quick capture with keyboard shortcut (Cmd/Ctrl+Shift+N)
+- Quick capture with keyboard shortcut (Cmd/Ctrl+Shift+C)
 - LLM-powered organization (OpenAI, Anthropic, Ollama)
 - Today Sheet — AI-generated daily prioritized plan
 - Full-text search across captures, notes, and todos
@@ -45,6 +45,8 @@ docker compose -f docker-compose.prod.yml up -d
 
 The UI is available at `http://localhost:8080`.
 
+Download the native app from releases for hotkey quick capture and system audio recording and transcription.
+
 ## Configuration
 
 | Variable | Default | Description |
@@ -65,7 +67,7 @@ See [LLM_SETUP.md](./docs/LLM_SETUP.md) for detailed LLM provider configuration.
 
 ## Usage Flow
 
-1. **Capture** — Hit keyboard shortcut anywhere, type a note, press Enter
+1. **Capture** — Hit keyboard shortcut anywhere (`cmd+shift+C`), type a note, press Enter
 2. **Organize** — Click "Organize Now" or let the scheduler run to process captures with AI
 3. **Today Sheet** — Generate an AI-powered daily plan from captures and todos
 4. **Search** — Full-text search across all captures, notes, and todos
