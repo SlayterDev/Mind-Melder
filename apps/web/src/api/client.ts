@@ -188,8 +188,19 @@ export interface Settings {
   llmModel: string | null;
   llmTemperature: number;
   ollamaBaseUrl: string;
+  
+  // Legacy CRON-based scheduling (deprecated but kept for compatibility)
   organizationSchedule: string;
   scheduleEnabled: boolean;
+  
+  // New scheduling fields
+  todaySheetScheduleEnabled: boolean;
+  todaySheetTime: string; // HH:MM format
+  organizeScheduleEnabled: boolean;
+  organizeScheduleFrequency: 'daily' | 'weekly';
+  organizeScheduleTime: string; // HH:MM format
+  organizeScheduleWeekday: string; // 0-6 (Sunday-Saturday)
+  
   createdAt: string;
   updatedAt: string;
 }

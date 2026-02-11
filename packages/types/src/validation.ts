@@ -73,17 +73,35 @@ export type UpdateTemplateInput = z.infer<typeof updateTemplateSchema>;
 
 // Settings validation schemas
 export const llmProviderSchema = z.enum(['openai', 'anthropic', 'ollama']);
+export const scheduleFrequencySchema = z.enum(['daily', 'weekly']);
+
+// Time format validation (HH:MM in 24-hour format)
+const timeFormatRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+export const timeStringSchema = z.string().regex(timeFormatRegex, 'Time must be in HH:MM format (00:00-23:59)');
 
 export const updateSettingsSchema = z.object({
   llmProvider: llmProviderSchema.optional(),
   llmModel: z.string().max(100).nullable().optional(),
   llmTemperature: z.number().min(0).max(2).optional(),
   ollamaBaseUrl: z.string().url().max(500).optional(),
+  
+  // Legacy CRON-based scheduling (kept for backwards compatibility)
   organizationSchedule: z.string().max(100).optional(),
   scheduleEnabled: z.boolean().optional(),
+  
+  // Today Sheet scheduling
+  todaySheetScheduleEnabled: z.boolean().optional(),
+  todaySheetTime: timeStringSchema.optional(),
+  
+  // Organization scheduling
+  organizeScheduleEnabled: z.boolean().optional(),
+  organizeScheduleFrequency: scheduleFrequencySchema.optional(),
+  organizeScheduleTime: timeStringSchema.optional(),
+  organizeScheduleWeekday: z.string().regex(/^[0-6]$/, 'Weekday must be 0-6 (Sunday-Saturday)').optional(),
 });
 
 export type LLMProvider = z.infer<typeof llmProviderSchema>;
+export type ScheduleFrequency = z.infer<typeof scheduleFrequencySchema>;
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;
 
 // Tag validation schemas

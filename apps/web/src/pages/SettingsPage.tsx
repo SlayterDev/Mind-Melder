@@ -51,11 +51,13 @@ export default function SettingsPage() {
 
   // Local state for text inputs to prevent defocus on keystroke
   const [localOllamaUrl, setLocalOllamaUrl] = useState('');
-  const [localSchedule, setLocalSchedule] = useState('');
+  const [localTodaySheetTime, setLocalTodaySheetTime] = useState('');
+  const [localOrganizeTime, setLocalOrganizeTime] = useState('');
   
   // Track which fields are currently being edited to avoid overwriting user input
   const [isEditingOllamaUrl, setIsEditingOllamaUrl] = useState(false);
-  const [isEditingSchedule, setIsEditingSchedule] = useState(false);
+  const [isEditingTodaySheetTime, setIsEditingTodaySheetTime] = useState(false);
+  const [isEditingOrganizeTime, setIsEditingOrganizeTime] = useState(false);
 
   // Ollama models state
   const [ollamaModels, setOllamaModels] = useState<OllamaModel[]>([]);
@@ -115,7 +117,8 @@ export default function SettingsPage() {
       setSettings(data);
       // Initialize local state from loaded settings
       setLocalOllamaUrl(data.ollamaBaseUrl ?? DEFAULT_OLLAMA_URL);
-      setLocalSchedule(data.organizationSchedule ?? DEFAULT_SCHEDULE);
+      setLocalTodaySheetTime(data.todaySheetTime ?? '08:00');
+      setLocalOrganizeTime(data.organizeScheduleTime ?? '17:00');
     } catch (err) {
       setError('Failed to load settings');
       console.error('Failed to load settings:', err);
@@ -134,11 +137,14 @@ export default function SettingsPage() {
       if (!isEditingOllamaUrl) {
         setLocalOllamaUrl(settings.ollamaBaseUrl ?? DEFAULT_OLLAMA_URL);
       }
-      if (!isEditingSchedule) {
-        setLocalSchedule(settings.organizationSchedule ?? DEFAULT_SCHEDULE);
+      if (!isEditingTodaySheetTime) {
+        setLocalTodaySheetTime(settings.todaySheetTime ?? '08:00');
+      }
+      if (!isEditingOrganizeTime) {
+        setLocalOrganizeTime(settings.organizeScheduleTime ?? '17:00');
       }
     }
-  }, [settings, isEditingOllamaUrl, isEditingSchedule]);
+  }, [settings, isEditingOllamaUrl, isEditingTodaySheetTime, isEditingOrganizeTime]);
 
   const handleUpdate = async (updates: Partial<Settings>) => {
     if (!settings) return;
@@ -370,53 +376,140 @@ export default function SettingsPage() {
 
         {/* Schedule Settings */}
         <div className="sheet-card p-6">
-          <h3 className="text-lg font-semibold mb-4">Organization Schedule</h3>
+          <h3 className="text-lg font-semibold mb-6">Scheduled Generation</h3>
 
-          <div className="space-y-4">
-            {/* Enable Toggle */}
+          {/* Today Sheet Schedule */}
+          <div className="space-y-4 pb-6 border-b border-gray-700">
+            <h4 className="text-md font-medium text-gray-300">Today Sheet Generation</h4>
+            
             <div className="flex items-center gap-3">
               <button
-                onClick={() => handleUpdate({ scheduleEnabled: !settings.scheduleEnabled })}
+                onClick={() => handleUpdate({ todaySheetScheduleEnabled: !settings.todaySheetScheduleEnabled })}
                 disabled={isSaving}
                 className={`relative w-12 h-6 rounded-full transition-colors ${
-                  settings.scheduleEnabled ? 'bg-accent' : 'bg-gray-700'
+                  settings.todaySheetScheduleEnabled ? 'bg-accent' : 'bg-gray-700'
                 }`}
               >
                 <span
                   className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                    settings.scheduleEnabled ? 'left-7' : 'left-1'
+                    settings.todaySheetScheduleEnabled ? 'left-7' : 'left-1'
                   }`}
                 />
               </button>
               <span className="text-gray-300">
-                {settings.scheduleEnabled ? 'Enabled' : 'Disabled'}
+                {settings.todaySheetScheduleEnabled ? 'Enabled' : 'Disabled'}
               </span>
             </div>
 
-            {/* Cron Schedule */}
-            <div className={settings.scheduleEnabled ? '' : 'opacity-50'}>
+            <div className={settings.todaySheetScheduleEnabled ? '' : 'opacity-50'}>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Schedule (cron format)
+                Generation Time (Daily)
               </label>
               <input
-                type="text"
-                value={localSchedule}
-                onChange={(e) => setLocalSchedule(e.target.value)}
-                onFocus={() => setIsEditingSchedule(true)}
+                type="time"
+                value={localTodaySheetTime}
+                onChange={(e) => setLocalTodaySheetTime(e.target.value)}
+                onFocus={() => setIsEditingTodaySheetTime(true)}
                 onBlur={() => {
-                  setIsEditingSchedule(false);
-                  const currentValue = settings.organizationSchedule ?? DEFAULT_SCHEDULE;
-                  if (localSchedule !== currentValue) {
-                    handleUpdate({ organizationSchedule: localSchedule });
+                  setIsEditingTodaySheetTime(false);
+                  const currentValue = settings.todaySheetTime ?? '08:00';
+                  if (localTodaySheetTime !== currentValue) {
+                    handleUpdate({ todaySheetTime: localTodaySheetTime });
                   }
                 }}
-                disabled={isSaving || !settings.scheduleEnabled}
-                placeholder={DEFAULT_SCHEDULE}
-                className="input-accent w-full max-w-md font-mono"
+                disabled={isSaving || !settings.todaySheetScheduleEnabled}
+                className="input-accent w-48"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Default: "0 17 * * *" (5:00 PM daily). Format: minute hour day month weekday
+                Today Sheet will be generated daily at this time
               </p>
+            </div>
+          </div>
+
+          {/* Organization Schedule */}
+          <div className="space-y-4 pt-6">
+            <h4 className="text-md font-medium text-gray-300">Organization Flow</h4>
+            
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => handleUpdate({ organizeScheduleEnabled: !settings.organizeScheduleEnabled })}
+                disabled={isSaving}
+                className={`relative w-12 h-6 rounded-full transition-colors ${
+                  settings.organizeScheduleEnabled ? 'bg-accent' : 'bg-gray-700'
+                }`}
+              >
+                <span
+                  className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                    settings.organizeScheduleEnabled ? 'left-7' : 'left-1'
+                  }`}
+                />
+              </button>
+              <span className="text-gray-300">
+                {settings.organizeScheduleEnabled ? 'Enabled' : 'Disabled'}
+              </span>
+            </div>
+
+            <div className={settings.organizeScheduleEnabled ? 'space-y-3' : 'opacity-50 space-y-3'}>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Frequency
+                </label>
+                <select
+                  value={settings.organizeScheduleFrequency}
+                  onChange={(e) => handleUpdate({ organizeScheduleFrequency: e.target.value as 'daily' | 'weekly' })}
+                  disabled={isSaving || !settings.organizeScheduleEnabled}
+                  className="input-accent w-48"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                </select>
+              </div>
+
+              {settings.organizeScheduleFrequency === 'weekly' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Day of Week
+                  </label>
+                  <select
+                    value={settings.organizeScheduleWeekday}
+                    onChange={(e) => handleUpdate({ organizeScheduleWeekday: e.target.value })}
+                    disabled={isSaving || !settings.organizeScheduleEnabled}
+                    className="input-accent w-48"
+                  >
+                    <option value="0">Sunday</option>
+                    <option value="1">Monday</option>
+                    <option value="2">Tuesday</option>
+                    <option value="3">Wednesday</option>
+                    <option value="4">Thursday</option>
+                    <option value="5">Friday</option>
+                    <option value="6">Saturday</option>
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Time
+                </label>
+                <input
+                  type="time"
+                  value={localOrganizeTime}
+                  onChange={(e) => setLocalOrganizeTime(e.target.value)}
+                  onFocus={() => setIsEditingOrganizeTime(true)}
+                  onBlur={() => {
+                    setIsEditingOrganizeTime(false);
+                    const currentValue = settings.organizeScheduleTime ?? '17:00';
+                    if (localOrganizeTime !== currentValue) {
+                      handleUpdate({ organizeScheduleTime: localOrganizeTime });
+                    }
+                  }}
+                  disabled={isSaving || !settings.organizeScheduleEnabled}
+                  className="input-accent w-48"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Captures will be organized {settings.organizeScheduleFrequency === 'weekly' ? 'weekly' : 'daily'} at this time
+                </p>
+              </div>
             </div>
           </div>
         </div>

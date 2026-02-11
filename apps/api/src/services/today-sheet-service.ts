@@ -21,6 +21,7 @@ export interface TodaySheet {
   totalEstimatedMinutes: number;
   capturesProcessed: number;
   todosIncluded: number;
+  generatedAt?: string; // ISO timestamp when the sheet was generated
 }
 
 export class TodaySheetService {
@@ -202,6 +203,7 @@ export class TodaySheetService {
       totalEstimatedMinutes: aiResult.totalEstimatedMinutes,
       capturesProcessed: captures.length,
       todosIncluded: existingTodos.length,
+      generatedAt: todaySheet.generatedAt.toISOString(),
     };
   }
 
@@ -243,6 +245,7 @@ export class TodaySheetService {
       totalEstimatedMinutes,
       capturesProcessed: latestSheet?.capturesProcessed || 0,
       todosIncluded: todos.length,
+      generatedAt: latestSheet?.generatedAt.toISOString(),
     };
   }
 }
