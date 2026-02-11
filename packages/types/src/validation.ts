@@ -84,7 +84,11 @@ export const updateSettingsSchema = z.object({
   llmModel: z.string().max(100).nullable().optional(),
   llmTemperature: z.number().min(0).max(2).optional(),
   ollamaBaseUrl: z.string().url().max(500).optional(),
-  
+
+  // Local Whisper (whisper.cpp server)
+  whisperEnabled: z.boolean().optional(),
+  whisperUrl: z.string().url().max(500).optional(),
+
   // Legacy CRON-based scheduling (kept for backwards compatibility)
   organizationSchedule: z.string().max(100).optional(),
   scheduleEnabled: z.boolean().optional(),

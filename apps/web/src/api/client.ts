@@ -188,7 +188,11 @@ export interface Settings {
   llmModel: string | null;
   llmTemperature: number;
   ollamaBaseUrl: string;
-  
+
+  // Local Whisper
+  whisperEnabled: boolean;
+  whisperUrl: string;
+
   // Legacy CRON-based scheduling (deprecated but kept for compatibility)
   organizationSchedule: string;
   scheduleEnabled: boolean;
@@ -209,4 +213,24 @@ export const settingsAPI = {
   get: () => fetchAPI<Settings>('/settings'),
   update: (data: Partial<Omit<Settings, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>) =>
     fetchAPI<Settings>('/settings', { method: 'PATCH', body: JSON.stringify(data) }),
+};
+
+// Transcription
+export const transcribeAPI = {
+  upload: async (blob: Blob): Promise<{ success: boolean; message: string }> => {
+    const formData = new FormData();
+    formData.append('audio', blob, 'recording.webm');
+
+    const response = await fetch(`${getApiUrl()}/transcribe`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  },
 };

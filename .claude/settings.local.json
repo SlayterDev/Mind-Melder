@@ -53,7 +53,8 @@
       "Bash(npx vitest run:*)",
       "Bash(git remote get-url:*)",
       "Bash(psql:*)",
-      "Bash(source:*)"
+      "Bash(source:*)",
+      "mcp__github__search_issues"
     ]
   }
 }

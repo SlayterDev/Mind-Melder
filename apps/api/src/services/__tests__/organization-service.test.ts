@@ -116,6 +116,7 @@ describe('OrganizationService', () => {
       generateTodaySheet: vi.fn(),
       streamChat: vi.fn().mockResolvedValue(undefined),
       generateTitle: vi.fn().mockResolvedValue('Mock Title'),
+      transcribe: vi.fn().mockRejectedValue(new Error('Not supported')),
     };
 
     // Create mock database
