@@ -25,7 +25,7 @@ COPY apps/web ./apps/web
 # Build packages in dependency order, then web
 RUN pnpm --filter database build && \
     pnpm --filter types build && \
-    pnpm --filter web build
+    pnpm --filter "./apps/web" build
 
 # Production stage with nginx
 FROM nginx:alpine

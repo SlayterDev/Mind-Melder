@@ -26,7 +26,7 @@ COPY apps/api ./apps/api
 RUN pnpm --filter database build && \
     pnpm --filter types build && \
     pnpm --filter llm build && \
-    pnpm --filter api build
+    pnpm --filter "./apps/api" build
 
 # Production stage
 FROM node:20-alpine
