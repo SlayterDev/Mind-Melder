@@ -1,4 +1,4 @@
-import cron from 'node-cron';
+import cron, { ScheduledTask } from 'node-cron';
 import type { Database, SettingsRepository } from 'database';
 import { ProviderFactory } from 'llm';
 import { TodaySheetService } from './today-sheet-service.js';
@@ -6,7 +6,7 @@ import { OrganizationService } from './organization-service.js';
 import { timeToCron, cronToDescription } from '../utils/time-utils.js';
 
 interface ScheduledJob {
-  task: cron.ScheduledTask;
+  task: ScheduledTask;
   description: string;
 }
 
@@ -108,8 +108,8 @@ export class SchedulerService {
         const llmProvider = ProviderFactory.createFromSettings(settings);
         const organizationService = new OrganizationService(this.db, llmProvider);
         
-        const result = await organizationService.organize(this.userId);
-        console.log(`[Scheduler] Organization completed. Created ${result.notes.length} notes and ${result.todos.length} todos.`);
+        const result = await organizationService.organizeCaptures(this.userId);
+        console.log(`[Scheduler] Organization completed. Created ${result.todosCount} todos from ${result.capturesProcessed} captures.`);
       } catch (error) {
         console.error('[Scheduler] Organization flow failed:', error);
       }
