@@ -46,6 +46,7 @@ interface TodaySheet {
   totalEstimatedMinutes: number;
   capturesProcessed: number;
   todosIncluded: number;
+  generatedAt?: string; // ISO timestamp when the sheet was generated
 }
 
 interface CompletionStates {
@@ -559,6 +560,20 @@ export default function TodaySheetPage() {
             {sheet.summary && (
               <div className="mb-6 summary-box">
                 <p className="text-gray-200 italic font-serif leading-relaxed">{sheet.summary}</p>
+                {sheet.generatedAt && (
+                  <div className="mt-2 pt-2 border-t border-gray-700">
+                    <p className="text-xs text-gray-500">
+                      Created at: {new Date(sheet.generatedAt).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true,
+                      })}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
