@@ -1,8 +1,9 @@
 import OpenAI from 'openai';
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
-import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, ToolCall, ToolDefinition, TodaySheetInput, TodaySheetOutput } from '../types.js';
+import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, ToolCall, ToolDefinition, TodaySheetInput, TodaySheetOutput, TranscribeOptions, TranscriptionResult } from '../types.js';
 import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
+import { getAudioFilename } from '../utils/audio-utils.js';
 
 export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
   private client: OpenAI;
@@ -228,5 +229,21 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
         callbacks.onComplete(fullResponse);
       }
     }
+  }
+
+  async transcribe(audioBuffer: Buffer, options?: TranscribeOptions): Promise<TranscriptionResult> {
+    const mimeType = options?.mimeType || 'audio/webm';
+    const filename = getAudioFilename(mimeType, options?.filename);
+
+    const file = new File([audioBuffer], filename, { type: mimeType });
+
+    const response = await this.client.audio.transcriptions.create({
+      model: 'whisper-1',
+      file,
+      ...(options?.language ? { language: options.language } : {}),
+      ...(options?.prompt ? { prompt: options.prompt } : {}),
+    });
+
+    return { text: response.text };
   }
 }

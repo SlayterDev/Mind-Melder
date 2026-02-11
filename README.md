@@ -65,6 +65,8 @@ Download the native app from releases for hotkey quick capture and system audio 
 
 See [LLM_SETUP.md](./docs/LLM_SETUP.md) for detailed LLM provider configuration.
 
+See [LOCAL_WHISPER_SETUP.md](./docs/LOCAL_WHISPER_SETUP.md) for transcribing recordings locally.
+
 ## Usage Flow
 
 1. **Capture** — Hit keyboard shortcut anywhere (`cmd+shift+C`), type a note, press Enter

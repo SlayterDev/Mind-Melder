@@ -7,3 +7,4 @@ export * from './tags.js';
 export * from './search.js';
 export * from './ollama.js';
 export * from './conversations.js';
+export * from './transcribe.js';

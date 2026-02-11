@@ -107,6 +107,26 @@ export interface LLMProvider {
    * @returns A short descriptive title (roughly 6 words max)
    */
   generateTitle(messages: ChatMessage[]): Promise<string>;
+
+  /**
+   * Transcribe audio to text
+   * @param audioBuffer - Raw audio data
+   * @param options - Optional language hint and prompt
+   * @returns Transcribed text
+   */
+  transcribe(audioBuffer: Buffer, options?: TranscribeOptions): Promise<TranscriptionResult>;
+}
+
+// Transcription types
+export interface TranscribeOptions {
+  language?: string;
+  prompt?: string;
+  filename?: string; // Optional original filename for the audio file
+  mimeType?: string; // Optional MIME type for the audio file
+}
+
+export interface TranscriptionResult {
+  text: string;
 }
 
 // Provider configuration

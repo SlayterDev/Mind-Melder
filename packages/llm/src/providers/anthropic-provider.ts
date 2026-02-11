@@ -3,7 +3,8 @@ import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
 import type {
   LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput,
-  TodaySheetOutput, ChatMessage, StreamCallbacks, ToolCall, ToolDefinition
+  TodaySheetOutput, ChatMessage, StreamCallbacks, ToolCall, ToolDefinition,
+  TranscribeOptions, TranscriptionResult
 } from '../types.js';
 import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
 
@@ -215,5 +216,9 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
 
     await stream.finalMessage();
     callbacks.onComplete(fullTextResponse);
+  }
+
+  async transcribe(_audioBuffer: Buffer, _options?: TranscribeOptions): Promise<TranscriptionResult> {
+    throw new Error('Transcription is not supported by the Anthropic provider.');
   }
 }
