@@ -231,7 +231,33 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
   }
 
   async transcribe(audioBuffer: Buffer, options?: TranscribeOptions): Promise<TranscriptionResult> {
-    const file = new File([audioBuffer], 'audio.webm', { type: 'audio/webm' });
+    // Map known audio MIME types to reasonable file extensions
+    const extensionFromMime: Record<string, string> = {
+      'audio/mpeg': 'mp3',
+      'audio/mp4': 'm4a',
+      'audio/x-m4a': 'm4a',
+      'audio/wav': 'wav',
+      'audio/x-wav': 'wav',
+      'audio/webm': 'webm',
+      'video/webm': 'webm',
+      'video/mp4': 'mp4',
+      'audio/ogg': 'ogg',
+      'audio/flac': 'flac',
+      'audio/x-flac': 'flac',
+    };
+
+    // Determine filename and MIME type
+    const mimeType = options?.mimeType || 'audio/webm';
+    const fallbackExt = extensionFromMime[mimeType] || 'bin';
+    
+    let filename: string;
+    if (options?.filename && options.filename.trim() !== '' && options.filename.includes('.')) {
+      filename = options.filename;
+    } else {
+      filename = `audio.${fallbackExt}`;
+    }
+
+    const file = new File([audioBuffer], filename, { type: mimeType });
 
     const response = await this.client.audio.transcriptions.create({
       model: 'whisper-1',

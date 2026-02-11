@@ -1,8 +1,7 @@
 import { Router, type Router as ExpressRouter } from 'express';
 import multer from 'multer';
 import { ProviderFactory } from 'llm';
-import type { Database, SettingsRepository } from 'database';
-import { OrganizedNotesRepository } from 'database';
+import type { Database, SettingsRepository, OrganizedNotesRepository } from 'database';
 import { ApiError } from '../middleware/index.js';
 import { asyncHandler } from '../utils/async-handler.js';
 
@@ -34,9 +33,8 @@ const upload = multer({
   },
 });
 
-export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepository): ExpressRouter {
+export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepository, notesRepo: OrganizedNotesRepository): ExpressRouter {
   const router = Router();
-  const notesRepo = new OrganizedNotesRepository(db);
 
   // POST /api/v1/transcribe - Upload audio for transcription
   router.post(
@@ -70,8 +68,35 @@ export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepos
 
           if (useWhisper) {
             // Use local whisper.cpp server
+            const mimeType = req.file?.mimetype || 'application/octet-stream';
+            const originalName = req.file?.originalname;
+
+            // Map known audio MIME types to reasonable file extensions
+            const extensionFromMime: Record<string, string> = {
+              'audio/mpeg': 'mp3',
+              'audio/mp4': 'm4a',
+              'audio/x-m4a': 'm4a',
+              'audio/wav': 'wav',
+              'audio/x-wav': 'wav',
+              'audio/webm': 'webm',
+              'video/webm': 'webm',
+              'video/mp4': 'mp4',
+              'audio/ogg': 'ogg',
+              'audio/flac': 'flac',
+              'audio/x-flac': 'flac',
+            };
+
+            const fallbackExt = extensionFromMime[mimeType] || 'bin';
+            const hasExtension =
+              typeof originalName === 'string' && originalName.trim() !== '' && originalName.includes('.');
+            const filename = hasExtension && originalName
+              ? originalName
+              : `audio.${fallbackExt}`;
+
+            const fileBlob = new Blob([audioBuffer], { type: mimeType });
+
             const formData = new FormData();
-            formData.append('file', new Blob([audioBuffer]), 'audio.webm');
+            formData.append('file', fileBlob, filename);
             formData.append('temperature', '0.0');
             formData.append('temperature_inc', '0.2');
             formData.append('response_format', 'json');
@@ -91,7 +116,10 @@ export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepos
           } else {
             // Use LLM provider (OpenAI Whisper)
             const provider = ProviderFactory.createFromSettings(settings);
-            const result = await provider.transcribe(audioBuffer);
+            const result = await provider.transcribe(audioBuffer, {
+              filename: req.file?.originalname,
+              mimeType: req.file?.mimetype,
+            });
             text = result.text;
           }
 
