@@ -2,6 +2,9 @@
  * Utility functions for time formatting and conversion
  */
 
+// Time format regex (HH:MM in 24-hour format) - matches validation.ts
+const TIME_FORMAT_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
 /**
  * Convert time in HH:MM format to CRON format
  * @param time - Time in HH:MM format (e.g., "08:00", "17:30")
@@ -55,6 +58,5 @@ export function cronToDescription(cron: string): string {
  * @returns true if valid, false otherwise
  */
 export function isValidTime(time: string): boolean {
-  const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-  return timeRegex.test(time);
+  return TIME_FORMAT_REGEX.test(time);
 }
