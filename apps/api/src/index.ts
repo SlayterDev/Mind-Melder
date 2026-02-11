@@ -17,6 +17,7 @@ import { createCapturesRouter, createTodosRouter, createNotesRouter, createTempl
 import { createOrganizeRouter } from './routes/organize.js';
 import { createTodaySheetRouter } from './routes/today-sheet.js';
 import { errorHandler, requestLogger } from './middleware/index.js';
+import { SchedulerService } from './services/scheduler-service.js';
 
 // Load .env from project root
 const __filename = fileURLToPath(import.meta.url);
@@ -41,6 +42,9 @@ const settingsRepo = new SettingsRepository(db);
 const tagsRepo = new TagsRepository(db);
 const conversationsRepo = new ConversationsRepository(db);
 
+// Initialize scheduler
+const scheduler = new SchedulerService(db, settingsRepo);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -56,7 +60,7 @@ app.use('/api/v1/captures', createCapturesRouter(capturesRepo));
 app.use('/api/v1/todos', createTodosRouter(todosRepo));
 app.use('/api/v1/notes', createNotesRouter(db, notesRepo));
 app.use('/api/v1/templates', createTemplatesRouter(templatesRepo));
-app.use('/api/v1/settings', createSettingsRouter(settingsRepo));
+app.use('/api/v1/settings', createSettingsRouter(settingsRepo, scheduler));
 app.use('/api/v1/tags', createTagsRouter(tagsRepo));
 app.use('/api/v1/search', createSearchRouter(db));
 app.use('/api/v1/organize', createOrganizeRouter(db, settingsRepo));
@@ -67,6 +71,9 @@ app.use('/api/v1/conversations', createConversationsRouter(db, conversationsRepo
 // Error handler (must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`API server running on http://localhost:${PORT}`);
+  
+  // Initialize scheduled jobs
+  await scheduler.initialize();
 });
