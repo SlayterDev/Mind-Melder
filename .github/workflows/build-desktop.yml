@@ -46,12 +46,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build web app
-        run: pnpm --filter web build
+        run: pnpm --filter "./apps/web" build
         env:
           ELECTRON: 'true'
 
       - name: Build Electron app
-        run: pnpm --filter web exec electron-builder ${{ matrix.build_args }} --publish never
+        run: pnpm --filter "./apps/web" exec electron-builder ${{ matrix.build_args }} --publish never
 
       - name: Upload artifacts (macOS)
         if: matrix.platform == 'mac'
