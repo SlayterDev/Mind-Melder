@@ -30,6 +30,10 @@ RUN pnpm --filter database build && \
 # Production stage with nginx
 FROM nginx:alpine
 
+LABEL org.opencontainers.image.source="https://github.com/SlayterDev/Mind-Melder"
+LABEL org.opencontainers.image.description="Mind-Melder web frontend"
+LABEL org.opencontainers.image.licenses="TBD"
+
 # Install wget for healthcheck
 RUN apk add --no-cache wget
 
