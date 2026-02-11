@@ -21,6 +21,10 @@ export const settings = pgTable(
     organizationSchedule: text('organization_schedule').notNull().default('0 17 * * *'),
     scheduleEnabled: boolean('schedule_enabled').notNull().default(false),
     
+    // Local Whisper (whisper.cpp server)
+    whisperEnabled: boolean('whisper_enabled').notNull().default(false),
+    whisperUrl: text('whisper_url').notNull().default('http://127.0.0.1:3005'),
+
     // New Organization scheduling
     organizeScheduleEnabled: boolean('organize_schedule_enabled').notNull().default(false),
     organizeScheduleFrequency: scheduleFrequencyEnum('organize_schedule_frequency').notNull().default('daily'),

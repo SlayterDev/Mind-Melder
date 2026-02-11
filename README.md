@@ -124,6 +124,8 @@ TZ=America/Chicago
 
 See [LLM_SETUP.md](./docs/LLM_SETUP.md) for detailed LLM provider setup.
 
+See [LOCAL_WHISPER_SETUP.md](./docs/LOCAL_WHISPER_SETUP.md) for transcribing recordings locally.
+
 ---
 
 ## Usage Flow

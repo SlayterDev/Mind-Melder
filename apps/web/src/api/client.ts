@@ -188,7 +188,11 @@ export interface Settings {
   llmModel: string | null;
   llmTemperature: number;
   ollamaBaseUrl: string;
-  
+
+  // Local Whisper
+  whisperEnabled: boolean;
+  whisperUrl: string;
+
   // Legacy CRON-based scheduling (deprecated but kept for compatibility)
   organizationSchedule: string;
   scheduleEnabled: boolean;

@@ -49,16 +49,14 @@ export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepos
         throw new ApiError(400, 'No audio file provided. Send a multipart form with an "audio" field.');
       }
 
-      // Validate provider supports transcription before accepting
       const settings = await settingsRepo.getOrCreate(userId);
-      const provider = ProviderFactory.createFromSettings(settings);
-
-      // Quick check: try to detect unsupported providers early
-      if (settings.llmProvider !== 'openai') {
-        throw new ApiError(400, `Transcription is not supported by the ${settings.llmProvider} provider. Please switch to OpenAI.`);
-      }
-
       const audioBuffer = req.file.buffer;
+      const useWhisper = settings.whisperEnabled;
+
+      // If not using local whisper, validate the LLM provider supports transcription
+      if (!useWhisper && settings.llmProvider !== 'openai') {
+        throw new ApiError(400, `Transcription is not supported by the ${settings.llmProvider} provider. Enable local whisper or switch to OpenAI.`);
+      }
 
       // Return 202 immediately, run transcription in background
       res.status(202).json({ success: true, message: 'Transcription started' });
@@ -67,7 +65,36 @@ export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepos
       (async () => {
         try {
           console.log(`[Transcribe] Starting transcription for user ${userId}, file ${req.file?.originalname}`);
-          const result = await provider.transcribe(audioBuffer);
+
+          let text: string;
+
+          if (useWhisper) {
+            // Use local whisper.cpp server
+            const formData = new FormData();
+            formData.append('file', new Blob([audioBuffer]), 'audio.webm');
+            formData.append('temperature', '0.0');
+            formData.append('temperature_inc', '0.2');
+            formData.append('response_format', 'json');
+
+            const whisperResponse = await fetch(`${settings.whisperUrl}/inference`, {
+              method: 'POST',
+              body: formData,
+            });
+
+            if (!whisperResponse.ok) {
+              const body = await whisperResponse.text().catch(() => '');
+              throw new Error(`Whisper server error (${whisperResponse.status}): ${body}`);
+            }
+
+            const whisperResult = await whisperResponse.json() as { text: string };
+            text = whisperResult.text;
+          } else {
+            // Use LLM provider (OpenAI Whisper)
+            const provider = ProviderFactory.createFromSettings(settings);
+            const result = await provider.transcribe(audioBuffer);
+            text = result.text;
+          }
+
           console.log(`[Transcribe] Transcription completed for user ${userId}, file ${req.file?.originalname}`);
 
           const dateStr = new Date().toLocaleDateString('en-US', {
@@ -79,7 +106,7 @@ export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepos
           await notesRepo.create({
             userId,
             title: `Transcription - ${dateStr}`,
-            content: result.text,
+            content: text,
             tags: ['transcription'],
           });
           console.log(`[Transcribe] Transcription saved for user ${userId}, file ${req.file?.originalname}`);

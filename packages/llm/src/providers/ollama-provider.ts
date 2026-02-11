@@ -7,6 +7,7 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
   private client: Ollama;
+  private baseURL: string;
   private model: string;
   private temperature: number;
   
@@ -18,8 +19,8 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
   constructor(config: ProviderConfig) {
     super();
 
-    const baseURL = config.baseURL || 'http://localhost:11434';
-    this.client = new Ollama({ host: baseURL });
+    this.baseURL = config.baseURL || 'http://localhost:11434';
+    this.client = new Ollama({ host: this.baseURL });
     this.model = config.model || 'mistral';
     this.temperature = config.temperature ?? 0.7;
     
@@ -264,6 +265,6 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
   }
 
   async transcribe(_audioBuffer: Buffer, _options?: TranscribeOptions): Promise<TranscriptionResult> {
-    throw new Error('Transcription is not supported by the Ollama provider.');
+    throw new Error('Transcription is not supported by the Ollama provider. Enable local whisper in settings.');
   }
 }

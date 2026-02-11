@@ -1,0 +1,2 @@
+ALTER TABLE "settings" ADD COLUMN "whisper_enabled" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "settings" ADD COLUMN "whisper_url" text DEFAULT 'http://127.0.0.1:3005' NOT NULL;

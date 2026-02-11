@@ -51,11 +51,13 @@ export default function SettingsPage() {
 
   // Local state for text inputs to prevent defocus on keystroke
   const [localOllamaUrl, setLocalOllamaUrl] = useState('');
+  const [localWhisperUrl, setLocalWhisperUrl] = useState('');
   const [localTodaySheetTime, setLocalTodaySheetTime] = useState('');
   const [localOrganizeTime, setLocalOrganizeTime] = useState('');
-  
+
   // Track which fields are currently being edited to avoid overwriting user input
   const [isEditingOllamaUrl, setIsEditingOllamaUrl] = useState(false);
+  const [isEditingWhisperUrl, setIsEditingWhisperUrl] = useState(false);
   const [isEditingTodaySheetTime, setIsEditingTodaySheetTime] = useState(false);
   const [isEditingOrganizeTime, setIsEditingOrganizeTime] = useState(false);
 
@@ -117,6 +119,7 @@ export default function SettingsPage() {
       setSettings(data);
       // Initialize local state from loaded settings
       setLocalOllamaUrl(data.ollamaBaseUrl ?? DEFAULT_OLLAMA_URL);
+      setLocalWhisperUrl(data.whisperUrl ?? 'http://127.0.0.1:3005');
       setLocalTodaySheetTime(data.todaySheetTime ?? '08:00');
       setLocalOrganizeTime(data.organizeScheduleTime ?? '17:00');
     } catch (err) {
@@ -137,6 +140,9 @@ export default function SettingsPage() {
       if (!isEditingOllamaUrl) {
         setLocalOllamaUrl(settings.ollamaBaseUrl ?? DEFAULT_OLLAMA_URL);
       }
+      if (!isEditingWhisperUrl) {
+        setLocalWhisperUrl(settings.whisperUrl ?? 'http://127.0.0.1:3005');
+      }
       if (!isEditingTodaySheetTime) {
         setLocalTodaySheetTime(settings.todaySheetTime ?? '08:00');
       }
@@ -144,7 +150,7 @@ export default function SettingsPage() {
         setLocalOrganizeTime(settings.organizeScheduleTime ?? '17:00');
       }
     }
-  }, [settings, isEditingOllamaUrl, isEditingTodaySheetTime, isEditingOrganizeTime]);
+  }, [settings, isEditingOllamaUrl, isEditingWhisperUrl, isEditingTodaySheetTime, isEditingOrganizeTime]);
 
   const handleUpdate = async (updates: Partial<Settings>) => {
     if (!settings) return;
@@ -370,6 +376,57 @@ export default function SettingsPage() {
                   />
                 </div>
               )}
+
+              {/* Local Whisper */}
+              <div className="border-t border-gray-800 pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300">
+                      Local Whisper
+                    </label>
+                    <p className="text-xs text-gray-500">
+                      Use a local whisper.cpp server for audio transcription
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleUpdate({ whisperEnabled: !settings.whisperEnabled })}
+                    disabled={isSaving}
+                    className={`relative w-12 h-6 rounded-full transition-colors ${
+                      settings.whisperEnabled ? 'bg-accent' : 'bg-gray-600'
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                        settings.whisperEnabled ? 'translate-x-7' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {settings.whisperEnabled && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Whisper Server URL
+                    </label>
+                    <input
+                      type="url"
+                      value={localWhisperUrl}
+                      onChange={(e) => setLocalWhisperUrl(e.target.value)}
+                      onFocus={() => setIsEditingWhisperUrl(true)}
+                      onBlur={async () => {
+                        setIsEditingWhisperUrl(false);
+                        const currentValue = settings.whisperUrl ?? 'http://127.0.0.1:3005';
+                        if (localWhisperUrl !== currentValue) {
+                          await handleUpdate({ whisperUrl: localWhisperUrl });
+                        }
+                      }}
+                      disabled={isSaving}
+                      placeholder="http://127.0.0.1:3005"
+                      className="input-accent w-full max-w-md"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
