@@ -121,6 +121,8 @@ export interface LLMProvider {
 export interface TranscribeOptions {
   language?: string;
   prompt?: string;
+  filename?: string; // Optional original filename for the audio file
+  mimeType?: string; // Optional MIME type for the audio file
 }
 
 export interface TranscriptionResult {

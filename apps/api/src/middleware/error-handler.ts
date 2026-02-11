@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
+import { MulterError } from 'multer';
 
 export class ApiError extends Error {
   constructor(
@@ -13,6 +14,19 @@ export class ApiError extends Error {
 
 export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
   console.error('Error:', err);
+
+  // Multer error (file upload issues)
+  if (err instanceof MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({
+        error: 'File too large. Maximum size is 50MB.',
+      });
+    }
+    // Other multer errors
+    return res.status(400).json({
+      error: `File upload error: ${err.message}`,
+    });
+  }
 
   // Zod validation error
   if (err instanceof ZodError) {

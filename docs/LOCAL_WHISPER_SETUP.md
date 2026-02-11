@@ -15,6 +15,6 @@ Be sure to install `ffmpeg` on the machine running `whisper.cpp` for audio conve
 
 ./build/bin/whisper-server --model models/ggml-tiny.en.bin --port 3005 --convert
 ```
-**Note:** the `--convert` option is required because Mind Melder records in `.webm` and `whisper.cpp` reuires `.wav`.
+**Note:** the `--convert` option is required because Mind Melder records in `.webm` and `whisper.cpp` requires `.wav`.
 
 In Mind Melder under "Advanced Settings" you can enable local whisper and set the url where the whisper server is running. Note the `--port` if you need to change it.
