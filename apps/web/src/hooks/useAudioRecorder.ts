@@ -184,10 +184,10 @@ export function useAudioRecorder() {
     [cleanup, startTimer]
   );
 
-  const stopRecording = useCallback(async () => {
+  const stopRecording = useCallback(async (): Promise<Blob | null> => {
     const recorder = mediaRecorderRef.current;
     const api = window.electronAPI;
-    if (!recorder || !api) return;
+    if (!recorder || !api) return null;
 
     setState('saving');
 
@@ -201,8 +201,10 @@ export function useAudioRecorder() {
       recorder.stop();
     });
 
+    let blob: Blob | null = null;
+
     try {
-      const blob = new Blob(chunksRef.current, { type: recorder.mimeType });
+      blob = new Blob(chunksRef.current, { type: recorder.mimeType });
       const arrayBuffer = await blob.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
 
@@ -231,6 +233,8 @@ export function useAudioRecorder() {
 
     setElapsedSeconds(0);
     setState('idle');
+
+    return blob;
   }, []);
 
   const pauseRecording = useCallback(() => {

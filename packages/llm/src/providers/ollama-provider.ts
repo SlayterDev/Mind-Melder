@@ -1,7 +1,7 @@
 import { Ollama } from 'ollama';
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
-import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, ToolCall, ToolDefinition, TodaySheetInput, TodaySheetOutput } from '../types.js';
+import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, ToolCall, ToolDefinition, TodaySheetInput, TodaySheetOutput, TranscribeOptions, TranscriptionResult } from '../types.js';
 import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -261,5 +261,9 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     }
 
     callbacks.onComplete(fullMessage);
+  }
+
+  async transcribe(_audioBuffer: Buffer, _options?: TranscribeOptions): Promise<TranscriptionResult> {
+    throw new Error('Transcription is not supported by the Ollama provider.');
   }
 }

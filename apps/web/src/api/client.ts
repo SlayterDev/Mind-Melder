@@ -210,3 +210,23 @@ export const settingsAPI = {
   update: (data: Partial<Omit<Settings, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>) =>
     fetchAPI<Settings>('/settings', { method: 'PATCH', body: JSON.stringify(data) }),
 };
+
+// Transcription
+export const transcribeAPI = {
+  upload: async (blob: Blob): Promise<{ success: boolean; message: string }> => {
+    const formData = new FormData();
+    formData.append('audio', blob, 'recording.webm');
+
+    const response = await fetch(`${getApiUrl()}/transcribe`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  },
+};

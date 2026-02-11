@@ -13,7 +13,18 @@ import {
   TagsRepository,
   ConversationsRepository,
 } from 'database';
-import { createCapturesRouter, createTodosRouter, createNotesRouter, createTemplatesRouter, createSettingsRouter, createTagsRouter, createSearchRouter, createOllamaRouter, createConversationsRouter } from './routes/index.js';
+import { 
+  createCapturesRouter,
+  createTodosRouter,
+  createNotesRouter,
+  createTemplatesRouter,
+  createSettingsRouter,
+  createTagsRouter,
+  createSearchRouter,
+  createOllamaRouter,
+  createConversationsRouter,
+  createTranscribeRouter
+} from './routes/index.js';
 import { createOrganizeRouter } from './routes/organize.js';
 import { createTodaySheetRouter } from './routes/today-sheet.js';
 import { errorHandler, requestLogger } from './middleware/index.js';
@@ -67,6 +78,7 @@ app.use('/api/v1/organize', createOrganizeRouter(db, settingsRepo));
 app.use('/api/v1/today-sheet', createTodaySheetRouter(db, settingsRepo));
 app.use('/api/v1/ollama', createOllamaRouter(settingsRepo));
 app.use('/api/v1/conversations', createConversationsRouter(db, conversationsRepo, settingsRepo));
+app.use('/api/v1/transcribe', createTranscribeRouter(db, settingsRepo));
 
 // Error handler (must be last)
 app.use(errorHandler);

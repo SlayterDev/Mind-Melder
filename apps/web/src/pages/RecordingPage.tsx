@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Mic, Monitor, Pause, Play, Square, Loader2, Headphones } from 'lucide-react';
+import { X, Mic, Monitor, Pause, Play, Square, Loader2, Headphones, Check, AlertCircle } from 'lucide-react';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import RecordingPermissionPrompt from '../components/RecordingPermissionPrompt';
+import { transcribeAPI } from '../api/client';
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -11,9 +12,12 @@ function formatTime(seconds: number): string {
   return `${m}:${s}`;
 }
 
+type TranscriptionStatus = null | 'uploading' | 'sent' | 'error';
+
 export default function RecordingPage() {
   const [micEnabled, setMicEnabled] = useState(true);
   const [systemAudioEnabled, setSystemAudioEnabled] = useState(false);
+  const [transcriptionStatus, setTranscriptionStatus] = useState<TranscriptionStatus>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<ResizeObserver | null>(null);
 
@@ -53,6 +57,21 @@ export default function RecordingPage() {
 
   const handleRecord = () => {
     startRecording({ micEnabled, systemAudioEnabled });
+  };
+
+  const handleStop = async () => {
+    const blob = await stopRecording();
+    if (!blob) return;
+
+    setTranscriptionStatus('uploading');
+    try {
+      await transcribeAPI.upload(blob);
+      setTranscriptionStatus('sent');
+    } catch {
+      setTranscriptionStatus('error');
+    }
+    // Auto-clear status after 4 seconds
+    setTimeout(() => setTranscriptionStatus(null), 4000);
   };
 
   const handleMicPermission = async () => {
@@ -189,7 +208,7 @@ export default function RecordingPage() {
               </div>
             )}
 
-            <div className="flex items-center justify-center mt-3">
+            <div className="flex flex-col items-center gap-2 mt-3">
               <button
                 onClick={handleRecord}
                 disabled={(!micEnabled && !systemAudioEnabled) || !!needsPermissions}
@@ -197,6 +216,25 @@ export default function RecordingPage() {
               >
                 <div className="w-5 h-5 bg-white rounded-full" />
               </button>
+
+              {transcriptionStatus === 'uploading' && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>Transcribing...</span>
+                </div>
+              )}
+              {transcriptionStatus === 'sent' && (
+                <div className="flex items-center gap-1.5 text-xs text-green-400">
+                  <Check className="w-3 h-3" />
+                  <span>Sent for transcription</span>
+                </div>
+              )}
+              {transcriptionStatus === 'error' && (
+                <div className="flex items-center gap-1.5 text-xs text-red-400">
+                  <AlertCircle className="w-3 h-3" />
+                  <span>Transcription failed</span>
+                </div>
+              )}
             </div>
           </>
         )}
@@ -232,7 +270,7 @@ export default function RecordingPage() {
               </button>
 
               <button
-                onClick={stopRecording}
+                onClick={handleStop}
                 className="w-12 h-12 rounded-full bg-red-600 hover:bg-red-500 transition-colors flex items-center justify-center"
               >
                 <Square className="w-5 h-5 text-white fill-white" />
