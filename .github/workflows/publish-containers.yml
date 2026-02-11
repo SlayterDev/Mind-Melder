@@ -1,9 +1,15 @@
 name: Publish Container Images
 
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: false
+        type: string
   push:
-    branches: [main]
-    tags: ['v*']
+    tags:
+      - 'v*'
 
 env:
   REGISTRY: ghcr.io
