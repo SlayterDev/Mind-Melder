@@ -103,6 +103,11 @@ export default function QuickCaptureInput({
       setMessage('success:Captured!');
       setTimeout(() => setMessage(''), 2000);
 
+      // Notify Electron main window if running in Electron
+      if (window.electronAPI?.notifyCaptureCreated) {
+        await window.electronAPI.notifyCaptureCreated();
+      }
+
       if (onSuccess) {
         onSuccess();
       }

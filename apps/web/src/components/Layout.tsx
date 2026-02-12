@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useInboxCount } from '../api/queries';
 import { PenLine, CalendarDays, Inbox, FileText, ListChecks, Layers, MessageSquare, Cog, Menu, X, Mic } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
@@ -12,6 +13,20 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const { data: inboxCount = 0 } = useInboxCount();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Listen for capture created events from Quick Capture window
+  useEffect(() => {
+    if (!window.electronAPI?.onCaptureCreated) return;
+
+    const unsubscribe = window.electronAPI.onCaptureCreated(() => {
+      // Invalidate inbox count when a capture is created
+      queryClient.invalidateQueries({ queryKey: ['inboxCount'] });
+      queryClient.invalidateQueries({ queryKey: ['captures'] });
+    });
+
+    return unsubscribe;
+  }, [queryClient]);
 
   const location = useLocation();
 
