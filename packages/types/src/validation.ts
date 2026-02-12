@@ -138,7 +138,6 @@ export type UpdateTagInput = z.infer<typeof updateTagSchema>;
 export const createConversationSchema = z.object({
   title: z.string().max(200).optional(),
   model: z.string().max(100).optional(),
-  systemPrompt: z.string().max(10000).optional(),
 });
 
 export const updateConversationSchema = z.object({

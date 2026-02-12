@@ -174,7 +174,7 @@ export interface ConversationWithMessages extends Conversation {
 
 export const conversationsAPI = {
   list: () => fetchAPI<Conversation[]>('/conversations'),
-  create: (data: { title?: string; systemPrompt?: string }) =>
+  create: (data: { title?: string }) =>
     fetchAPI<Conversation>('/conversations', { method: 'POST', body: JSON.stringify(data) }),
   get: (id: string) => fetchAPI<ConversationWithMessages>(`/conversations/${id}`),
   update: (id: string, data: { title?: string }) =>
