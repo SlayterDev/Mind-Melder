@@ -6,7 +6,13 @@ export const createCaptureSchema = z.object({
   metadata: z.record(z.unknown()).optional(),
 });
 
+export const updateCaptureSchema = z.object({
+  content: z.string().min(1, 'Content is required').max(10000, 'Content too long').optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
+
 export type CreateCaptureInput = z.infer<typeof createCaptureSchema>;
+export type UpdateCaptureInput = z.infer<typeof updateCaptureSchema>;
 
 // Organized Note validation schemas
 export const createOrganizedNoteSchema = z.object({

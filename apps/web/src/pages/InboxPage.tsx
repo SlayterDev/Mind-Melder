@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { capturesAPI, organizeAPI } from '../api/client';
-import { Zap, MailOpen, X } from 'lucide-react';
+import { Zap, MailOpen, X, Pencil, Save } from 'lucide-react';
 import TemplateSelector from '../components/TemplateSelector';
 
 export default function InboxPage() {
@@ -10,6 +10,8 @@ export default function InboxPage() {
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [message, setMessage] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editedContent, setEditedContent] = useState('');
   const queryClient = useQueryClient();
 
   const loadCaptures = async () => {
@@ -60,6 +62,34 @@ export default function InboxPage() {
       console.error('Failed to delete capture:', error);
       // Revert on error
       setCaptures(previousCaptures);
+    }
+  };
+
+  const handleStartEdit = (capture: any) => {
+    setEditingId(capture.id);
+    setEditedContent(capture.content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditedContent('');
+  };
+
+  const handleSaveEdit = async (id: string) => {
+    // Optimistic update - update UI immediately
+    const previousCaptures = captures;
+    setCaptures((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, content: editedContent } : c))
+    );
+    setEditingId(null);
+
+    try {
+      await capturesAPI.update(id, { content: editedContent });
+    } catch (error) {
+      console.error('Failed to update capture:', error);
+      // Revert on error
+      setCaptures(previousCaptures);
+      setEditingId(id);
     }
   };
 
@@ -114,22 +144,70 @@ export default function InboxPage() {
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <p className="text-gray-100 font-mono text-sm leading-relaxed">
-                    {capture.content}
-                  </p>
+                  {editingId === capture.id ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={editedContent}
+                        onChange={(e) => setEditedContent(e.target.value)}
+                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-gray-200 font-mono leading-relaxed focus:outline-none focus:border-accent-highlight resize-y min-h-[60px]"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && e.ctrlKey) {
+                            handleSaveEdit(capture.id);
+                          } else if (e.key === 'Escape') {
+                            handleCancelEdit();
+                          }
+                        }}
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleSaveEdit(capture.id)}
+                          className="flex items-center gap-1 px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
+                        >
+                          <Save className="w-3 h-3" />
+                          Save
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="flex items-center gap-1 px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs rounded transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                          Cancel
+                        </button>
+                        <span className="text-xs text-gray-500 self-center ml-2">
+                          Ctrl+Enter to save, Esc to cancel
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative group/content">
+                      <p className="text-gray-100 font-mono text-sm leading-relaxed pr-16">
+                        {capture.content}
+                      </p>
+                      <button
+                        onClick={() => handleStartEdit(capture)}
+                        className="absolute top-0 right-8 opacity-0 group-hover/content:opacity-100 transition-opacity p-1 hover:bg-gray-700 rounded"
+                        title="Edit capture"
+                      >
+                        <Pencil className="w-3 h-3 text-gray-400" />
+                      </button>
+                    </div>
+                  )}
                   <p className="text-gray-500 text-xs mt-2">
                     {new Date(capture.timestamp).toLocaleString()}
                   </p>
                 </div>
 
-                <button
-                  onClick={() => handleDelete(capture.id)}
-                  className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400
-                           transition-all text-sm px-3 py-1 rounded hover:bg-gray-800"
-                  title="Delete"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                {editingId !== capture.id && (
+                  <button
+                    onClick={() => handleDelete(capture.id)}
+                    className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400
+                             transition-all text-sm px-3 py-1 rounded hover:bg-gray-800"
+                    title="Delete"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           ))}

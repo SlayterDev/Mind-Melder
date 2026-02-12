@@ -42,6 +42,15 @@ export class CapturesRepository {
       .orderBy(sql`${captures.createdAt} DESC`);
   }
 
+  async update(id: string, data: Partial<Pick<Capture, 'content' | 'metadata'>>): Promise<Capture | undefined> {
+    const [capture] = await this.db
+      .update(captures)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(captures.id, id))
+      .returning();
+    return capture;
+  }
+
   async markAsOrganized(id: string): Promise<Capture | undefined> {
     const [capture] = await this.db
       .update(captures)
