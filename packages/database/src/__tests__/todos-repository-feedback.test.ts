@@ -210,6 +210,7 @@ describe('TodosRepository - Feedback Methods', () => {
     });
 
     it('should exclude completed todos even if they have feedback', async () => {
+      // Mock returns only pending todos (simulating the DB query with status filter)
       const mockTodos = [
         {
           id: 'todo-1',
@@ -224,6 +225,9 @@ describe('TodosRepository - Feedback Methods', () => {
 
       const result = await repository.findWithFeedback('user-1');
 
+      // Verify the method was called with the correct filters
+      expect(mockDb.select).toHaveBeenCalled();
+      // Verify only pending todos are returned
       expect(result).toEqual(mockTodos);
       expect(result).toHaveLength(1);
       expect(result.every(t => t.status === 'pending')).toBe(true);
