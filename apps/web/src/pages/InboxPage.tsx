@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { capturesAPI, organizeAPI } from '../api/client';
 import { Zap, MailOpen } from 'lucide-react';
 import TemplateSelector from '../components/TemplateSelector';
-import CaptureCard from '../components/CaptureCard';
+import CapturesList from '../components/CapturesList';
 
 // Define Capture type for better type safety
 interface Capture {
@@ -132,16 +132,11 @@ export default function InboxPage() {
           <p className="text-gray-500">All captures have been organized!</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {captures.map((capture) => (
-            <CaptureCard
-              key={capture.id}
-              capture={capture}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+        <CapturesList
+          captures={captures}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       )}
     </div>
   );
