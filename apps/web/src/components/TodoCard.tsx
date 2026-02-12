@@ -353,7 +353,7 @@ export default function TodoCard({
 
         <div className="flex items-center gap-2">
           {/* Today Sheet Dropdown */}
-          <div className="relative opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className={`relative ${currentSection ? '' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
             <button
               onClick={() => setShowTodaySheetDropdown(!showTodaySheetDropdown)}
               className="text-gray-400 hover:text-accent-highlight text-sm px-3 py-1 rounded hover:bg-gray-800 transition-all flex items-center gap-2"
