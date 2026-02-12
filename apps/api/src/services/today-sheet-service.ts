@@ -110,6 +110,7 @@ export class TodaySheetService {
     if (existingSheetTodoIds.length > 0) {
       await this.todosRepo.removeFromTodaySheet(existingSheetTodoIds);
     }
+    await this.todosRepo.removeCompletedFromTodaySheet(userId);
 
     // 6. Create/update todos from AI result
     const createdTodos: {
