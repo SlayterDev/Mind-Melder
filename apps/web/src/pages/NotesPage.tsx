@@ -65,10 +65,7 @@ export default function NotesPage() {
             </select>
           )}
 
-          <Link
-            to="/notes/new"
-            className="btn-accent px-4 py-2 flex items-center gap-2"
-          >
+          <Link to="/notes/new" className="btn-accent px-4 py-2 flex items-center gap-2">
             <Plus className="w-4 h-4" />
             New Note
           </Link>
@@ -79,9 +76,7 @@ export default function NotesPage() {
         <div className="sheet-card-inner p-12 text-center">
           <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
           <h3 className="text-xl font-semibold text-gray-300 mb-2">No notes yet</h3>
-          <p className="text-gray-500 mb-6">
-            Create your first note to get started
-          </p>
+          <p className="text-gray-500 mb-6">Create your first note to get started</p>
           <Link to="/notes/new" className="btn-accent px-6 py-3 inline-flex items-center gap-2">
             <Plus className="w-4 h-4" />
             New Note
@@ -90,19 +85,13 @@ export default function NotesPage() {
       ) : (
         <div className="space-y-4">
           {notes.map((note) => (
-            <div
-              key={note.id}
-              className="task-card task-card-active group p-5"
-            >
+            <div key={note.id} className="task-card task-card-active group p-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   {note.tags && note.tags.length > 0 && (
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                       {note.tags.map((tag: string) => (
-                        <span
-                          key={tag}
-                          className="badge-accent px-3 py-1 shadow-inner text-xs"
-                        >
+                        <span key={tag} className="badge-accent px-3 py-1 shadow-inner text-xs">
                           {tag}
                         </span>
                       ))}

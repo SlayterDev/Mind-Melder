@@ -1,7 +1,19 @@
 import { Ollama } from 'ollama';
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
-import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, ToolCall, ToolDefinition, TodaySheetInput, TodaySheetOutput, TranscribeOptions, TranscriptionResult } from '../types.js';
+import type {
+  ChatMessage,
+  LLMProvider,
+  OrganizedOutput,
+  ProviderConfig,
+  StreamCallbacks,
+  ToolCall,
+  ToolDefinition,
+  TodaySheetInput,
+  TodaySheetOutput,
+  TranscribeOptions,
+  TranscriptionResult,
+} from '../types.js';
 import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -10,7 +22,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
   private baseURL: string;
   private model: string;
   private temperature: number;
-  
+
   // Cache converted JSON schemas to avoid repeated conversions
   private organizedOutputJsonSchema: ReturnType<typeof zodToJsonSchema>;
   private todaySheetOutputJsonSchema: ReturnType<typeof zodToJsonSchema>;
@@ -23,11 +35,11 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     this.client = new Ollama({ host: this.baseURL });
     this.model = config.model || 'mistral';
     this.temperature = config.temperature ?? 0.7;
-    
+
     // Pre-convert schemas once during construction
     this.organizedOutputJsonSchema = zodToJsonSchema(organizedOutputSchema, 'organizedOutput');
     this.todaySheetOutputJsonSchema = zodToJsonSchema(todaySheetOutputSchema, 'todaySheetOutput');
-    
+
     // Define task extraction schema
     this.taskExtractionJsonSchema = {
       type: 'object',
@@ -48,9 +60,19 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     };
   }
 
-  async organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean): Promise<OrganizedOutput> {
+  async organize(
+    captures: Capture[],
+    template: Template,
+    tags?: Tag[],
+    includeDescriptions?: boolean
+  ): Promise<OrganizedOutput> {
     const systemPrompt = this.buildSystemPrompt();
-    const userPrompt = this.buildOrganizePrompt(captures, template, tags, includeDescriptions ?? false);
+    const userPrompt = this.buildOrganizePrompt(
+      captures,
+      template,
+      tags,
+      includeDescriptions ?? false
+    );
 
     const response = await this.client.chat({
       model: this.model,
@@ -112,8 +134,8 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
 
   async generateTitle(messages: ChatMessage[]): Promise<string> {
     const conversationText = messages
-      .filter(m => m.role === 'user' || m.role === 'assistant')
-      .map(m => `${m.role}: ${m.content ?? ''}`)
+      .filter((m) => m.role === 'user' || m.role === 'assistant')
+      .map((m) => `${m.role}: ${m.content ?? ''}`)
       .join('\n');
 
     const response = await this.client.chat({
@@ -132,10 +154,14 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     return response.message.content.trim();
   }
 
-  async streamChat(messages: ChatMessage[], callbacks: StreamCallbacks, tools?: ToolDefinition[]): Promise<void> {
+  async streamChat(
+    messages: ChatMessage[],
+    callbacks: StreamCallbacks,
+    tools?: ToolDefinition[]
+  ): Promise<void> {
     // Map messages to Ollama format
     // Tool results are converted to user messages since not all models support tool role
-    const ollamaMessages = messages.map(m => {
+    const ollamaMessages = messages.map((m) => {
       if (m.role === 'tool') {
         // Convert tool result to a user message the model can understand
         return {
@@ -145,9 +171,9 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       }
       if (m.role === 'assistant' && m.toolCalls?.length) {
         // Include tool call info in assistant message
-        const toolInfo = m.toolCalls.map(tc =>
-          `[Called tool: ${tc.name} with args: ${JSON.stringify(tc.arguments)}]`
-        ).join('\n');
+        const toolInfo = m.toolCalls
+          .map((tc) => `[Called tool: ${tc.name} with args: ${JSON.stringify(tc.arguments)}]`)
+          .join('\n');
         return {
           role: 'assistant' as const,
           content: `${m.content ?? ''}\n${toolInfo}`.trim(),
@@ -160,18 +186,21 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     });
 
     // Convert tools to Ollama format
-    const ollamaTools = tools?.map(t => ({
+    const ollamaTools = tools?.map((t) => ({
       type: 'function' as const,
       function: {
         name: t.name,
         description: t.description,
         parameters: {
           type: 'object' as const,
-          properties: t.input_schema.properties as Record<string, {
-            type?: string | string[];
-            description?: string;
-            enum?: unknown[];
-          }>,
+          properties: t.input_schema.properties as Record<
+            string,
+            {
+              type?: string | string[];
+              description?: string;
+              enum?: unknown[];
+            }
+          >,
           required: t.input_schema.required,
         },
       },
@@ -211,7 +240,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       } catch (error: unknown) {
         // Check if this is a "tools not supported" error
         const errorMessage = error instanceof Error ? error.message : String(error);
-        const isToolsNotSupported = 
+        const isToolsNotSupported =
           errorMessage.includes('does not support tools') ||
           (errorMessage.includes('tool') && errorMessage.includes('not supported'));
 
@@ -264,7 +293,12 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     callbacks.onComplete(fullMessage);
   }
 
-  async transcribe(_audioBuffer: Buffer, _options?: TranscribeOptions): Promise<TranscriptionResult> {
-    throw new Error('Transcription is not supported by the Ollama provider. Enable local whisper in settings.');
+  async transcribe(
+    _audioBuffer: Buffer,
+    _options?: TranscribeOptions
+  ): Promise<TranscriptionResult> {
+    throw new Error(
+      'Transcription is not supported by the Ollama provider. Enable local whisper in settings.'
+    );
   }
 }

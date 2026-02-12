@@ -10,7 +10,10 @@ const organizeRequestSchema = z.object({
   templateId: z.string().uuid().optional(),
 });
 
-export function createOrganizeRouter(db: Database, settingsRepo: SettingsRepository): ExpressRouter {
+export function createOrganizeRouter(
+  db: Database,
+  settingsRepo: SettingsRepository
+): ExpressRouter {
   const router = Router();
 
   // POST /api/v1/organize - Trigger batch organization

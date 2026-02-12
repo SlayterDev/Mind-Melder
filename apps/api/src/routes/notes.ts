@@ -9,10 +9,16 @@ import { NotesService } from '../services/notes-service.js';
 // Route-specific validation schemas
 const appendNoteSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
-  contentToAppend: z.string().min(1, 'Content to append is required').max(50000, 'Content too long'),
+  contentToAppend: z
+    .string()
+    .min(1, 'Content to append is required')
+    .max(50000, 'Content too long'),
 });
 
-export function createNotesRouter(db: Database, notesRepo: OrganizedNotesRepository): ExpressRouter {
+export function createNotesRouter(
+  db: Database,
+  notesRepo: OrganizedNotesRepository
+): ExpressRouter {
   const router = Router();
 
   // GET /api/v1/notes - List notes (optional: filter by tag)

@@ -83,7 +83,12 @@ export interface LLMProvider {
    * @param includeDescriptions - Whether to include tag descriptions in prompts (default: false)
    * @returns Extracted todos
    */
-  organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean): Promise<OrganizedOutput>;
+  organize(
+    captures: Capture[],
+    template: Template,
+    tags?: Tag[],
+    includeDescriptions?: boolean
+  ): Promise<OrganizedOutput>;
 
   /**
    * Extract actionable tasks from text
@@ -99,7 +104,11 @@ export interface LLMProvider {
    */
   generateTodaySheet(input: TodaySheetInput): Promise<TodaySheetOutput>;
 
-  streamChat(messages: ChatMessage[], callbacks: StreamCallbacks, tools?: ToolDefinition[]): Promise<void>;
+  streamChat(
+    messages: ChatMessage[],
+    callbacks: StreamCallbacks,
+    tools?: ToolDefinition[]
+  ): Promise<void>;
 
   /**
    * Generate a concise title for a conversation based on its messages

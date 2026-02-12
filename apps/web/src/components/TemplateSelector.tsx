@@ -13,7 +13,11 @@ interface TemplateSelectorProps {
   className?: string;
 }
 
-export default function TemplateSelector({ value, onChange, className = '' }: TemplateSelectorProps) {
+export default function TemplateSelector({
+  value,
+  onChange,
+  className = '',
+}: TemplateSelectorProps) {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

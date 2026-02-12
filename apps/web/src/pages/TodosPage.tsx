@@ -31,7 +31,11 @@ export default function TodosPage() {
     setTodos(
       todos.map((t) =>
         t.id === id
-          ? { ...t, status: newStatus, completedAt: newStatus === 'completed' ? new Date().toISOString() : null }
+          ? {
+              ...t,
+              status: newStatus,
+              completedAt: newStatus === 'completed' ? new Date().toISOString() : null,
+            }
           : t
       )
     );

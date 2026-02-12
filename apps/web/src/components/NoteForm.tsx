@@ -108,10 +108,7 @@ export default function NoteForm({
         </label>
         <div className="input-accent w-full px-3 py-2 flex flex-wrap items-center gap-2 min-h-[46px]">
           {tags.map((tag) => (
-            <span
-              key={tag}
-              className="badge-accent px-3 py-1 text-xs flex items-center gap-1"
-            >
+            <span key={tag} className="badge-accent px-3 py-1 text-xs flex items-center gap-1">
               {tag}
               <button
                 type="button"

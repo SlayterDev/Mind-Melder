@@ -49,22 +49,32 @@ export const todosAPI = {
   get: (id: string) => fetchAPI<any>(`/todos/${id}`),
   create: (data: { content: string; dueDate?: string }) =>
     fetchAPI('/todos', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: { content?: string; status?: string; dueDate?: string | null; description?: string; timeEstimate?: TimeEstimate; todaySheetSection?: string }) =>
-    fetchAPI(`/todos/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  update: (
+    id: string,
+    data: {
+      content?: string;
+      status?: string;
+      dueDate?: string | null;
+      description?: string;
+      timeEstimate?: TimeEstimate;
+      todaySheetSection?: string;
+    }
+  ) => fetchAPI(`/todos/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   markComplete: (id: string) => fetchAPI(`/todos/${id}/complete`, { method: 'PATCH' }),
-  submitFeedback: (id: string, data: { vote: 'thumbs_up' | 'thumbs_down' | 'none'; feedbackText?: string }) =>
-    fetchAPI<any>(`/todos/${id}/feedback`, { method: 'PATCH', body: JSON.stringify(data) }),
+  submitFeedback: (
+    id: string,
+    data: { vote: 'thumbs_up' | 'thumbs_down' | 'none'; feedbackText?: string }
+  ) => fetchAPI<any>(`/todos/${id}/feedback`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => fetchAPI(`/todos/${id}`, { method: 'DELETE' }),
 };
 
 // Organized Notes
 export const notesAPI = {
-  list: (tag?: string) =>
-    fetchAPI<any[]>(`/notes${tag ? `?tag=${tag}` : ''}`),
+  list: (tag?: string) => fetchAPI<any[]>(`/notes${tag ? `?tag=${tag}` : ''}`),
   get: (id: string) => fetchAPI<any>(`/notes/${id}`),
   create: (data: { title: string; content: string; tags?: string[] }) =>
     fetchAPI('/notes', { method: 'POST', body: JSON.stringify(data) }),
-  append: (data: {title: string, contentToAppend: string}) =>
+  append: (data: { title: string; contentToAppend: string }) =>
     fetchAPI('/notes/append', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: { title?: string; content?: string; tags?: string[] }) =>
     fetchAPI(`/notes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
@@ -104,21 +114,30 @@ export const tagsAPI = {
 // Organization
 export const organizeAPI = {
   trigger: (templateId?: string) =>
-    fetchAPI<{ success: boolean; result: any; message: string }>(
-      '/organize',
-      { method: 'POST', body: templateId ? JSON.stringify({ templateId }) : undefined }
-    ),
+    fetchAPI<{ success: boolean; result: any; message: string }>('/organize', {
+      method: 'POST',
+      body: templateId ? JSON.stringify({ templateId }) : undefined,
+    }),
 };
 
 // Today Sheet
 export const todaySheetAPI = {
   generate: (templateId?: string) =>
-    fetchAPI<{ success: boolean; sheet: any; message: string }>(
-      '/today-sheet/generate',
-      { method: 'POST', body: JSON.stringify(templateId ? { templateId } : {}) }
-    ),
+    fetchAPI<{ success: boolean; sheet: any; message: string }>('/today-sheet/generate', {
+      method: 'POST',
+      body: JSON.stringify(templateId ? { templateId } : {}),
+    }),
   get: () => fetchAPI<any>('/today-sheet'),
-  updateTodo: (id: string, updates: { content?: string; description?: string; status?: string; dueDate?: string | null; timeEstimate?: TimeEstimate }) =>
+  updateTodo: (
+    id: string,
+    updates: {
+      content?: string;
+      description?: string;
+      status?: string;
+      dueDate?: string | null;
+      timeEstimate?: TimeEstimate;
+    }
+  ) =>
     fetchAPI<any>(`/today-sheet/todos/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
@@ -200,7 +219,7 @@ export interface Settings {
   // Legacy CRON-based scheduling (deprecated but kept for compatibility)
   organizationSchedule: string;
   scheduleEnabled: boolean;
-  
+
   // New scheduling fields
   todaySheetScheduleEnabled: boolean;
   todaySheetTime: string; // HH:MM format
@@ -208,7 +227,7 @@ export interface Settings {
   organizeScheduleFrequency: 'daily' | 'weekly';
   organizeScheduleTime: string; // HH:MM format
   organizeScheduleWeekday: string; // 0-6 (Sunday-Saturday)
-  
+
   createdAt: string;
   updatedAt: string;
 }

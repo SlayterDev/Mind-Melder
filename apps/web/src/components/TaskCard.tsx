@@ -2,9 +2,21 @@ import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-  Zap, Clock, Hourglass, GripVertical, Check, ChevronDown, ChevronRight, FileText, Pencil, Save, X,
-  Calendar, ThumbsUp, ThumbsDown
- } from 'lucide-react';
+  Zap,
+  Clock,
+  Hourglass,
+  GripVertical,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Pencil,
+  Save,
+  X,
+  Calendar,
+  ThumbsUp,
+  ThumbsDown,
+} from 'lucide-react';
 import { capturesAPI } from '../api/client';
 
 type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
@@ -41,15 +53,19 @@ interface TaskCardProps {
   onSubmitFeedback?: (id: string, vote: FeedbackVote, feedbackText?: string) => void;
 }
 
-export default function TaskCard({ todo, showDragHandle = true, onToggleComplete, onUpdateDueDate, onUpdateDescription, onUpdateContent, onUpdateTimeEstimate, onSubmitFeedback }: TaskCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: todo.id });
+export default function TaskCard({
+  todo,
+  showDragHandle = true,
+  onToggleComplete,
+  onUpdateDueDate,
+  onUpdateDescription,
+  onUpdateContent,
+  onUpdateTimeEstimate,
+  onSubmitFeedback,
+}: TaskCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: todo.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -129,7 +145,10 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
     return new Date(year, month - 1, day);
   };
 
-  const isOverdue = todo.dueDate && getDateOnly(todo.dueDate) < getDateOnly(new Date().toISOString()) && todo.status === 'pending';
+  const isOverdue =
+    todo.dueDate &&
+    getDateOnly(todo.dueDate) < getDateOnly(new Date().toISOString()) &&
+    todo.status === 'pending';
 
   return (
     <div
@@ -142,12 +161,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
       <div className="flex items-start gap-3">
         {/* Drag Handle */}
         {showDragHandle && (
-          <button
-            {...attributes}
-            {...listeners}
-            className="drag-handle"
-            title="Drag to reorder"
-          >
+          <button {...attributes} {...listeners} className="drag-handle" title="Drag to reorder">
             <GripVertical className="w-4 h-4" />
           </button>
         )}
@@ -233,69 +247,87 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
 
             {/* AI Utils */}
             {!isEditingContent && todo.captureId && (
-            <div className="flex items-center gap-2 ml-2">
-              {/* Feedback Buttons */}
-              <button
-                onClick={() => {
-                  if (onSubmitFeedback) {
-                    if (todo.feedbackVote === 'thumbs_up') {
-                      onSubmitFeedback(todo.id, 'none');
-                    } else {
-                      onSubmitFeedback(todo.id, 'thumbs_up');
-                      setShowFeedbackInput(false);
-                    }
-                  }
-                }}
-                className={`flex-shrink-0 mt-0.5 transition-opacity ${
-                  todo.feedbackVote === 'thumbs_up' ? 'opacity-100' : 'opacity-40 hover:opacity-100'
-                }`}
-                title="Thumbs Up"
-              >
-                <ThumbsUp className={`w-3.5 h-3.5 ${
-                  todo.feedbackVote === 'thumbs_up' ? 'text-green-400' : 'text-gray-400 hover:text-green-400'
-                }`} />
-              </button>
-              <div className="relative group/feedback">
+              <div className="flex items-center gap-2 ml-2">
+                {/* Feedback Buttons */}
                 <button
                   onClick={() => {
-                    if (todo.feedbackVote === 'thumbs_down') {
-                      // Toggle off
-                      if (onSubmitFeedback) {
+                    if (onSubmitFeedback) {
+                      if (todo.feedbackVote === 'thumbs_up') {
                         onSubmitFeedback(todo.id, 'none');
+                      } else {
+                        onSubmitFeedback(todo.id, 'thumbs_up');
+                        setShowFeedbackInput(false);
                       }
-                      setShowFeedbackInput(false);
-                      setFeedbackText('');
-                    } else {
-                      // Show input for feedback text
-                      setShowFeedbackInput(true);
-                      setFeedbackText(todo.feedbackText || '');
                     }
                   }}
                   className={`flex-shrink-0 mt-0.5 transition-opacity ${
-                    todo.feedbackVote === 'thumbs_down' ? 'opacity-100' : 'opacity-40 hover:opacity-100'
+                    todo.feedbackVote === 'thumbs_up'
+                      ? 'opacity-100'
+                      : 'opacity-40 hover:opacity-100'
                   }`}
-                  title={todo.feedbackVote === 'thumbs_down' && todo.feedbackText ? todo.feedbackText : 'Thumbs Down'}
+                  title="Thumbs Up"
                 >
-                  <ThumbsDown className={`w-3.5 h-3.5 ${
-                    todo.feedbackVote === 'thumbs_down' ? 'text-red-400' : 'text-gray-400 hover:text-red-400'
-                  }`} />
+                  <ThumbsUp
+                    className={`w-3.5 h-3.5 ${
+                      todo.feedbackVote === 'thumbs_up'
+                        ? 'text-green-400'
+                        : 'text-gray-400 hover:text-green-400'
+                    }`}
+                  />
                 </button>
-                {/* Tooltip for feedback text */}
-                {todo.feedbackVote === 'thumbs_down' && todo.feedbackText && !showFeedbackInput && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs text-gray-300 whitespace-nowrap opacity-0 group-hover/feedback:opacity-100 transition-opacity pointer-events-none z-10 max-w-xs">
-                    {todo.feedbackText}
-                  </div>
-                )}
+                <div className="relative group/feedback">
+                  <button
+                    onClick={() => {
+                      if (todo.feedbackVote === 'thumbs_down') {
+                        // Toggle off
+                        if (onSubmitFeedback) {
+                          onSubmitFeedback(todo.id, 'none');
+                        }
+                        setShowFeedbackInput(false);
+                        setFeedbackText('');
+                      } else {
+                        // Show input for feedback text
+                        setShowFeedbackInput(true);
+                        setFeedbackText(todo.feedbackText || '');
+                      }
+                    }}
+                    className={`flex-shrink-0 mt-0.5 transition-opacity ${
+                      todo.feedbackVote === 'thumbs_down'
+                        ? 'opacity-100'
+                        : 'opacity-40 hover:opacity-100'
+                    }`}
+                    title={
+                      todo.feedbackVote === 'thumbs_down' && todo.feedbackText
+                        ? todo.feedbackText
+                        : 'Thumbs Down'
+                    }
+                  >
+                    <ThumbsDown
+                      className={`w-3.5 h-3.5 ${
+                        todo.feedbackVote === 'thumbs_down'
+                          ? 'text-red-400'
+                          : 'text-gray-400 hover:text-red-400'
+                      }`}
+                    />
+                  </button>
+                  {/* Tooltip for feedback text */}
+                  {todo.feedbackVote === 'thumbs_down' &&
+                    todo.feedbackText &&
+                    !showFeedbackInput && (
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs text-gray-300 whitespace-nowrap opacity-0 group-hover/feedback:opacity-100 transition-opacity pointer-events-none z-10 max-w-xs">
+                        {todo.feedbackText}
+                      </div>
+                    )}
+                </div>
+                {/* Original capture icon - subtle and on the right */}
+                <button
+                  onClick={toggleOriginal}
+                  className="flex-shrink-0 mt-0.5 opacity-40 hover:opacity-100 transition-opacity"
+                  title="View original capture"
+                >
+                  <FileText className="w-3.5 h-3.5 text-gray-400" />
+                </button>
               </div>
-              {/* Original capture icon - subtle and on the right */}
-              <button
-                onClick={toggleOriginal}
-                className="flex-shrink-0 mt-0.5 opacity-40 hover:opacity-100 transition-opacity"
-                title="View original capture"
-              >
-                <FileText className="w-3.5 h-3.5 text-gray-400" />
-              </button>
-            </div>
             )}
           </div>
 
@@ -373,7 +405,11 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                 onClick={() => setShowDescription(!showDescription)}
                 className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-300"
               >
-                {showDescription ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                {showDescription ? (
+                  <ChevronDown className="w-3 h-3" />
+                ) : (
+                  <ChevronRight className="w-3 h-3" />
+                )}
                 <span className="font-medium">Details</span>
               </button>
               {showDescription && (
@@ -414,7 +450,9 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                     </div>
                   ) : (
                     <div className="group/edit">
-                      <p className="text-sm text-gray-300 leading-relaxed pr-8">{todo.description}</p>
+                      <p className="text-sm text-gray-300 leading-relaxed pr-8">
+                        {todo.description}
+                      </p>
                       <button
                         onClick={() => setIsEditingDescription(true)}
                         className="absolute top-0 right-0 opacity-0 group-hover/edit:opacity-100 transition-opacity p-1 hover:bg-gray-700 rounded"
@@ -441,20 +479,24 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                 <Clock className="w-3 h-3" />
               </button>
             )}
-            {todo.timeEstimate && todo.timeEstimate !== 'none' && !showTimePicker && getTimeEstimateDisplay(todo.timeEstimate) && (() => {
-              const display = getTimeEstimateDisplay(todo.timeEstimate!);
-              const Icon = display.icon;
-              return (
-                <button
-                  onClick={() => setShowTimePicker(true)}
-                  className="px-2 py-0.5 badge-chip flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
-                  title="Change time estimate"
-                >
-                  <Icon className="w-3 h-3" />
-                  {display.label}
-                </button>
-              );
-            })()}
+            {todo.timeEstimate &&
+              todo.timeEstimate !== 'none' &&
+              !showTimePicker &&
+              getTimeEstimateDisplay(todo.timeEstimate) &&
+              (() => {
+                const display = getTimeEstimateDisplay(todo.timeEstimate!);
+                const Icon = display.icon;
+                return (
+                  <button
+                    onClick={() => setShowTimePicker(true)}
+                    className="px-2 py-0.5 badge-chip flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
+                    title="Change time estimate"
+                  >
+                    <Icon className="w-3 h-3" />
+                    {display.label}
+                  </button>
+                );
+              })()}
             {showTimePicker && (
               <div className="relative flex gap-1">
                 {TIME_ESTIMATE_OPTIONS.map((option) => {

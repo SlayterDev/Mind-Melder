@@ -84,7 +84,9 @@ const createMockTag = (overrides: Partial<Tag> = {}): Tag => ({
   ...overrides,
 });
 
-const createMockTodoItem = (overrides: Partial<OrganizedOutput['todos'][0]> = {}): OrganizedOutput['todos'][0] => ({
+const createMockTodoItem = (
+  overrides: Partial<OrganizedOutput['todos'][0]> = {}
+): OrganizedOutput['todos'][0] => ({
   title: 'Action item',
   timeEstimate: 'medium',
   priorityScore: 50,
@@ -223,7 +225,10 @@ describe('OrganizationService', () => {
     it('should pass user tags to LLM provider', async () => {
       const captures = [createMockCapture()];
       const template = createMockTemplate();
-      const tags = [createMockTag({ name: 'work' }), createMockTag({ id: 'tag-2', name: 'personal' })];
+      const tags = [
+        createMockTag({ name: 'work' }),
+        createMockTag({ id: 'tag-2', name: 'personal' }),
+      ];
 
       mockRepos.captures.findUnorganized.mockResolvedValue(captures);
       mockRepos.templates.findActiveTemplate.mockResolvedValue(template);

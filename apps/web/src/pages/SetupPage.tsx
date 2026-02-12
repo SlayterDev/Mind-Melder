@@ -48,9 +48,7 @@ export default function SetupPage({ onComplete }: SetupPageProps) {
 
         <div className="sheet-card p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Server URL
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Server URL</label>
             <input
               type="url"
               value={serverUrl}

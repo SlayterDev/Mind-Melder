@@ -1,5 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Mic, Monitor, Pause, Play, Square, Loader2, Headphones, Check, AlertCircle } from 'lucide-react';
+import {
+  X,
+  Mic,
+  Monitor,
+  Pause,
+  Play,
+  Square,
+  Loader2,
+  Headphones,
+  Check,
+  AlertCircle,
+} from 'lucide-react';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import RecordingPermissionPrompt from '../components/RecordingPermissionPrompt';
 import { transcribeAPI } from '../api/client';
@@ -93,8 +104,7 @@ export default function RecordingPage() {
   // 'denied' even when granted).  If system audio capture actually fails,
   // the error from getDisplayMedia is already caught and shown in the UI.
   const needsPermissions =
-    permissionStatus &&
-    micEnabled && permissionStatus.microphone !== 'granted';
+    permissionStatus && micEnabled && permissionStatus.microphone !== 'granted';
 
   return (
     <div
@@ -278,7 +288,6 @@ export default function RecordingPage() {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

@@ -23,10 +23,7 @@ export class TodosRepository {
       .orderBy(desc(todos.createdAt));
   }
 
-  async findByStatus(
-    userId: string,
-    status: 'pending' | 'completed'
-  ): Promise<Todo[]> {
+  async findByStatus(userId: string, status: 'pending' | 'completed'): Promise<Todo[]> {
     return this.db
       .select()
       .from(todos)
@@ -46,7 +43,9 @@ export class TodosRepository {
       .where(
         and(
           eq(todos.userId, userId),
-          includeCompleted ? inArray(todos.status, ['pending', 'completed']) : eq(todos.status, 'pending'),
+          includeCompleted
+            ? inArray(todos.status, ['pending', 'completed'])
+            : eq(todos.status, 'pending'),
           lt(todos.dueDate, tomorrow)
         )
       )
@@ -85,12 +84,7 @@ export class TodosRepository {
     return this.db
       .select()
       .from(todos)
-      .where(
-        and(
-          eq(todos.userId, userId),
-          ne(todos.todaySheetSection, 'none')
-        )
-      )
+      .where(and(eq(todos.userId, userId), ne(todos.todaySheetSection, 'none')))
       .orderBy(asc(todos.todaySheetOrder));
   }
 
@@ -107,7 +101,7 @@ export class TodosRepository {
           .set({
             todaySheetSection: update.section as any, // Type assertion for enum
             todaySheetOrder: update.order,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .where(eq(todos.id, update.id));
       }
@@ -123,7 +117,7 @@ export class TodosRepository {
       .set({
         todaySheetSection: 'none' as any,
         todaySheetOrder: null,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(inArray(todos.id, ids));
   }
@@ -137,7 +131,7 @@ export class TodosRepository {
       .set({
         todaySheetSection: 'none' as any,
         todaySheetOrder: null,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(
         and(
@@ -162,7 +156,7 @@ export class TodosRepository {
         feedbackVote: vote,
         feedbackText: feedbackText || null,
         feedbackTimestamp: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .where(eq(todos.id, id))
       .returning();
@@ -224,8 +218,6 @@ export class TodosRepository {
           sql`${todos}.search_vector @@ plainto_tsquery('english', ${query})`
         )
       )
-      .orderBy(
-        sql`ts_rank(${todos}.search_vector, plainto_tsquery('english', ${query})) DESC`
-      );
+      .orderBy(sql`ts_rank(${todos}.search_vector, plainto_tsquery('english', ${query})) DESC`);
   }
 }

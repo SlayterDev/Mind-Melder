@@ -13,7 +13,18 @@ import TaskCard from '../components/TaskCard';
 import QuickCaptureInput from '../components/QuickCaptureInput';
 import TemplateSelector from '../components/TemplateSelector';
 import { useInboxCount } from '../api/queries';
-import { ClipboardList, Sparkles, Flame, Target, Lightbulb, Package, Loader2, EyeOff, Eye, Check } from 'lucide-react';
+import {
+  ClipboardList,
+  Sparkles,
+  Flame,
+  Target,
+  Lightbulb,
+  Package,
+  Loader2,
+  EyeOff,
+  Eye,
+  Check,
+} from 'lucide-react';
 import { triggerSmallConfetti, triggerLargeConfetti } from '../utils/confetti';
 
 type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
@@ -150,14 +161,17 @@ export default function TodaySheetPage() {
       sheetData.sections.must_do_today.every((t) => t.status === 'completed');
 
     // Check other sections (excluding must_do_today which we already checked)
-    const otherSectionsCompleted = ['likely_today', 'opportunistic', 'overflow'].every((sectionKey) => {
-      const section = sheetData.sections[sectionKey as keyof typeof sheetData.sections];
-      return section.length === 0 || section.every((t) => t.status === 'completed');
-    });
+    const otherSectionsCompleted = ['likely_today', 'opportunistic', 'overflow'].every(
+      (sectionKey) => {
+        const section = sheetData.sections[sectionKey as keyof typeof sheetData.sections];
+        return section.length === 0 || section.every((t) => t.status === 'completed');
+      }
+    );
 
     // All sections complete if: (must_do_today is complete OR empty) AND other sections complete
     const isAllCompleted =
-      (isMustDoCompleted || sheetData.sections.must_do_today.length === 0) && otherSectionsCompleted;
+      (isMustDoCompleted || sheetData.sections.must_do_today.length === 0) &&
+      otherSectionsCompleted;
 
     return { isMustDoCompleted, isAllCompleted };
   };
@@ -184,14 +198,22 @@ export default function TodaySheetPage() {
         const afterStates = checkCompletionStates(updatedSheet);
 
         // Check if we just completed the entire today sheet
-        if (afterStates.isAllCompleted && !beforeStates.isAllCompleted && !prevAllCompletedRef.current) {
+        if (
+          afterStates.isAllCompleted &&
+          !beforeStates.isAllCompleted &&
+          !prevAllCompletedRef.current
+        ) {
           triggerLargeConfetti();
           prevAllCompletedRef.current = true;
           // Also mark must-do as completed to avoid double confetti
           prevMustDoCompletedRef.current = true;
         }
         // Check if we just completed all must-do tasks (but not the entire sheet)
-        else if (afterStates.isMustDoCompleted && !beforeStates.isMustDoCompleted && !prevMustDoCompletedRef.current) {
+        else if (
+          afterStates.isMustDoCompleted &&
+          !beforeStates.isMustDoCompleted &&
+          !prevMustDoCompletedRef.current
+        ) {
           triggerSmallConfetti();
           prevMustDoCompletedRef.current = true;
         }
@@ -318,7 +340,9 @@ export default function TodaySheetPage() {
       Object.keys(updatedSheet.sections).forEach((sectionKey) => {
         const section = sectionKey as keyof typeof updatedSheet.sections;
         updatedSheet.sections[section] = updatedSheet.sections[section].map((t) =>
-          t.id === id ? { ...t, feedbackVote: vote, feedbackText: vote === 'none' ? undefined : feedbackText } : t
+          t.id === id
+            ? { ...t, feedbackVote: vote, feedbackText: vote === 'none' ? undefined : feedbackText }
+            : t
         );
       });
       setSheet(updatedSheet);
@@ -473,23 +497,29 @@ export default function TodaySheetPage() {
       {/* Card wrapper for Today's Plan and content */}
       <div className="sheet-card p-4 md:p-8 -mx-4 md:-mx-[50px]">
         {/* Journal Page Header */}
-        <div className={`mb-6 pb-4 section-divider ${isGenerating ? 'section-divider-generating' : ''}`}>
+        <div
+          className={`mb-6 pb-4 section-divider ${isGenerating ? 'section-divider-generating' : ''}`}
+        >
           <div className="flex flex-col md:flex-row items-start md:items-start justify-between gap-4">
             <div className="flex-1 flex flex-col">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-100 mb-1">Today's Plan</h1>
               <p className="text-gray-400 text-sm font-serif italic">{dateStr}</p>
               <div className="mt-2 flex items-center gap-2 inset-x-0 bottom-0">
-                <button 
-                  id="hideCompleted" 
+                <button
+                  id="hideCompleted"
                   className={`checkbox-accent ${
                     hideCompleted ? 'checkbox-setting-accent-checked' : 'checkbox-accent-unchecked'
                   }`}
-                  onClick={() => setHideCompleted(!hideCompleted)} 
+                  onClick={() => setHideCompleted(!hideCompleted)}
                 >
                   {hideCompleted && <Check className="w-3 h-3 text-white" />}
                 </button>
-                <label htmlFor="hideCompleted" className="flex items-center gap-2 text-sm font-medium text-gray-300 transition-all cursor-pointer" title="Hide completed tasks">
-                    Hide Completed
+                <label
+                  htmlFor="hideCompleted"
+                  className="flex items-center gap-2 text-sm font-medium text-gray-300 transition-all cursor-pointer"
+                  title="Hide completed tasks"
+                >
+                  Hide Completed
                 </label>
               </div>
             </div>
@@ -518,10 +548,7 @@ export default function TodaySheetPage() {
                   </>
                 )}
               </button>
-              <TemplateSelector
-                value={selectedTemplateId}
-                onChange={setSelectedTemplateId}
-              />
+              <TemplateSelector value={selectedTemplateId} onChange={setSelectedTemplateId} />
               {inboxCount > 0 && (
                 <div className="mt-2 text-sm text-gray-400 italic text-right pr-1">
                   <span className="text-accent-highlight">{inboxCount}</span> items unorganized
@@ -563,7 +590,8 @@ export default function TodaySheetPage() {
                 {sheet.generatedAt && (
                   <div className="mt-2 pt-2 border-t border-gray-700">
                     <p className="text-xs text-gray-500">
-                      Created at: {new Date(sheet.generatedAt).toLocaleString('en-US', {
+                      Created at:{' '}
+                      {new Date(sheet.generatedAt).toLocaleString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',

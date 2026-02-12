@@ -1,9 +1,4 @@
-import {
-  Database,
-  CapturesRepository,
-  TodosRepository,
-  OrganizedNotesRepository,
-} from 'database';
+import { Database, CapturesRepository, TodosRepository, OrganizedNotesRepository } from 'database';
 import type { Capture, Todo, OrganizedNote } from 'database';
 
 export type SearchType = 'captures' | 'todos' | 'notes' | 'all';

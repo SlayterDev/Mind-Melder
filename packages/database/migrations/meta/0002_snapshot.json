@@ -64,23 +64,17 @@
       "indexes": {
         "captures_user_id_idx": {
           "name": "captures_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "captures_organized_idx": {
           "name": "captures_organized_idx",
-          "columns": [
-            "organized_at"
-          ],
+          "columns": ["organized_at"],
           "isUnique": false
         },
         "captures_timestamp_idx": {
           "name": "captures_timestamp_idx",
-          "columns": [
-            "timestamp"
-          ],
+          "columns": ["timestamp"],
           "isUnique": false
         }
       },
@@ -142,23 +136,17 @@
       "indexes": {
         "organized_notes_user_id_idx": {
           "name": "organized_notes_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "organized_notes_date_idx": {
           "name": "organized_notes_date_idx",
-          "columns": [
-            "date"
-          ],
+          "columns": ["date"],
           "isUnique": false
         },
         "organized_notes_category_idx": {
           "name": "organized_notes_category_idx",
-          "columns": [
-            "category"
-          ],
+          "columns": ["category"],
           "isUnique": false
         }
       },
@@ -241,16 +229,12 @@
       "indexes": {
         "today_sheets_user_id_idx": {
           "name": "today_sheets_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "today_sheets_generated_at_idx": {
           "name": "today_sheets_generated_at_idx",
-          "columns": [
-            "generated_at"
-          ],
+          "columns": ["generated_at"],
           "isUnique": false
         }
       },
@@ -369,37 +353,27 @@
       "indexes": {
         "todos_user_id_idx": {
           "name": "todos_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "todos_status_idx": {
           "name": "todos_status_idx",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         },
         "todos_due_date_idx": {
           "name": "todos_due_date_idx",
-          "columns": [
-            "due_date"
-          ],
+          "columns": ["due_date"],
           "isUnique": false
         },
         "todos_today_sheet_section_idx": {
           "name": "todos_today_sheet_section_idx",
-          "columns": [
-            "today_sheet_section"
-          ],
+          "columns": ["today_sheet_section"],
           "isUnique": false
         },
         "todos_today_sheet_order_idx": {
           "name": "todos_today_sheet_order_idx",
-          "columns": [
-            "today_sheet_order"
-          ],
+          "columns": ["today_sheet_order"],
           "isUnique": false
         }
       },
@@ -408,12 +382,8 @@
           "name": "todos_today_sheet_id_today_sheets_id_fk",
           "tableFrom": "todos",
           "tableTo": "today_sheets",
-          "columnsFrom": [
-            "today_sheet_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["today_sheet_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -421,12 +391,8 @@
           "name": "todos_capture_id_captures_id_fk",
           "tableFrom": "todos",
           "tableTo": "captures",
-          "columnsFrom": [
-            "capture_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["capture_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -488,16 +454,12 @@
       "indexes": {
         "templates_user_id_idx": {
           "name": "templates_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "templates_is_active_idx": {
           "name": "templates_is_active_idx",
-          "columns": [
-            "is_active"
-          ],
+          "columns": ["is_active"],
           "isUnique": false
         }
       },

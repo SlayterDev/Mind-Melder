@@ -19,8 +19,20 @@ export function ChatTaskCards({ todoIds }: ChatTaskCardsProps) {
     setLoading(true);
     setError(null);
     try {
-      const fetched = await Promise.all(todoIds.map(id => todosAPI.get(id)));
-      setTodos(fetched.filter(Boolean));
+      const results = await Promise.allSettled(todoIds.map((id) => todosAPI.get(id)));
+      const successfulTodos = results
+        .filter(
+          (result): result is PromiseFulfilledResult<any> =>
+            result.status === 'fulfilled' && Boolean(result.value)
+        )
+        .map((result) => result.value);
+
+      setTodos(successfulTodos);
+
+      const hadFailures = results.some((result) => result.status === 'rejected');
+      if (hadFailures) {
+        setError('Some todos could not be loaded');
+      }
     } catch {
       setError('Failed to load todos');
     } finally {
@@ -93,7 +105,7 @@ export function ChatTaskCards({ todoIds }: ChatTaskCardsProps) {
   if (loading) {
     return (
       <div className="mt-3 space-y-2">
-        {todoIds.map(id => (
+        {todoIds.map((id) => (
           <div key={id} className="h-16 bg-gray-800/30 rounded-lg animate-pulse" />
         ))}
       </div>
@@ -111,8 +123,8 @@ export function ChatTaskCards({ todoIds }: ChatTaskCardsProps) {
   return (
     <div className="mt-2 ml-2 mr-24 space-y-2">
       <DndContext collisionDetection={closestCenter} onDragEnd={() => {}}>
-        <SortableContext items={todos.map(t => t.id)} strategy={verticalListSortingStrategy}>
-          {todos.map(todo => (
+        <SortableContext items={todos.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+          {todos.map((todo) => (
             <TaskCard
               key={todo.id}
               todo={todo}

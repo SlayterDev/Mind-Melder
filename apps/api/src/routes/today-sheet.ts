@@ -15,7 +15,9 @@ const generateSheetSchema = z.object({
 const updateTodoSchema = z.object({
   content: z.string().min(1).max(1000).optional(),
   description: z.string().max(5000).optional(),
-  todaySheetSection: z.enum(['must_do_today', 'likely_today', 'opportunistic', 'overflow', 'none']).optional(),
+  todaySheetSection: z
+    .enum(['must_do_today', 'likely_today', 'opportunistic', 'overflow', 'none'])
+    .optional(),
   todaySheetOrder: z.number().int().optional(),
   timeEstimate: z.enum(['quick', 'medium', 'long', 'none']).optional(),
   tags: z.array(z.string()).optional(),
@@ -24,11 +26,13 @@ const updateTodoSchema = z.object({
 });
 
 const reorderSchema = z.object({
-  updates: z.array(z.object({
-    id: z.string().uuid(),
-    section: z.string(),
-    order: z.number().int(),
-  })),
+  updates: z.array(
+    z.object({
+      id: z.string().uuid(),
+      section: z.string(),
+      order: z.number().int(),
+    })
+  ),
 });
 
 export function createTodaySheetRouter(db: Database, settingsRepo: SettingsRepository): Router {

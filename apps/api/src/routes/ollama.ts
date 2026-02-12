@@ -28,9 +28,10 @@ export function createOllamaRouter(settingsRepo: SettingsRepository): ExpressRou
 
         const models: OllamaModel[] = response.models.map((model) => ({
           name: model.name,
-          modifiedAt: typeof model.modified_at === 'string'
-            ? model.modified_at
-            : (model.modified_at as Date).toISOString(),
+          modifiedAt:
+            typeof model.modified_at === 'string'
+              ? model.modified_at
+              : (model.modified_at as Date).toISOString(),
           size: model.size,
         }));
 

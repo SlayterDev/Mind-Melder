@@ -7,7 +7,14 @@ export type { Todo, NewTodo } from 'database';
 export type { Template, NewTemplate } from 'database';
 export type { Settings, NewSettings } from 'database';
 export type { Tag, NewTag } from 'database';
-export type { Conversation, NewConversation, ChatMessage, NewChatMessage, ToolCall, ToolResult } from 'database';
+export type {
+  Conversation,
+  NewConversation,
+  ChatMessage,
+  NewChatMessage,
+  ToolCall,
+  ToolResult,
+} from 'database';
 
 // Export validation schemas and types
 export * from './validation.js';

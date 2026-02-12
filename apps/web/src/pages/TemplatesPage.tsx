@@ -19,10 +19,7 @@ export default function TemplatesPage() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [templatesData, tagsData] = await Promise.all([
-        templatesAPI.list(),
-        tagsAPI.list(),
-      ]);
+      const [templatesData, tagsData] = await Promise.all([templatesAPI.list(), tagsAPI.list()]);
       setTemplates(templatesData);
       setTags(tagsData);
     } catch (error) {
@@ -282,10 +279,7 @@ export default function TemplatesPage() {
           </div>
 
           {!isCreating && !editingId && (
-            <button
-              onClick={() => setIsCreating(true)}
-              className="btn-accent-lg"
-            >
+            <button onClick={() => setIsCreating(true)} className="btn-accent-lg">
               + New Template
             </button>
           )}
@@ -299,10 +293,12 @@ export default function TemplatesPage() {
 
             <form
               onSubmit={
-                isCreating ? handleCreate : (e) => {
-                  e.preventDefault();
-                  if (editingId) handleUpdate(editingId);
-                }
+                isCreating
+                  ? handleCreate
+                  : (e) => {
+                      e.preventDefault();
+                      if (editingId) handleUpdate(editingId);
+                    }
               }
               className="space-y-4"
             >
@@ -333,10 +329,7 @@ export default function TemplatesPage() {
               </div>
 
               <div className="flex gap-3">
-                <button
-                  type="submit"
-                  className="btn-accent px-6 py-2"
-                >
+                <button type="submit" className="btn-accent px-6 py-2">
                   {isCreating ? 'Create' : 'Save'}
                 </button>
                 <button
@@ -356,15 +349,14 @@ export default function TemplatesPage() {
           <div className="sheet-card-inner p-12 text-center">
             <Settings className="w-16 h-16 mx-auto mb-4 text-gray-400" />
             <h3 className="text-xl font-semibold text-gray-300 mb-2">No templates yet</h3>
-            <p className="text-gray-500">Create a template to define how AI should organize your notes</p>
+            <p className="text-gray-500">
+              Create a template to define how AI should organize your notes
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
             {templates.map((template) => (
-              <div
-                key={template.id}
-                className="task-card task-card-active group p-5"
-              >
+              <div key={template.id} className="task-card task-card-active group p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-100 mb-2">{template.name}</h3>
@@ -385,16 +377,18 @@ export default function TemplatesPage() {
                       className="flex items-center gap-2 px-3 py-1 rounded hover:bg-gray-800 transition-colors"
                       title="Set as default template"
                     >
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
-                        template.isActive
-                          ? 'border-accent bg-accent'
-                          : 'border-gray-500 hover:border-accent'
-                      }`}>
-                        {template.isActive && (
-                          <div className="w-2 h-2 rounded-full bg-white"></div>
-                        )}
+                      <div
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
+                          template.isActive
+                            ? 'border-accent bg-accent'
+                            : 'border-gray-500 hover:border-accent'
+                        }`}
+                      >
+                        {template.isActive && <div className="w-2 h-2 rounded-full bg-white"></div>}
                       </div>
-                      <span className={`text-sm ${template.isActive ? 'text-accent' : 'text-gray-500'}`}>
+                      <span
+                        className={`text-sm ${template.isActive ? 'text-accent' : 'text-gray-500'}`}
+                      >
                         {template.isActive ? 'Default' : 'Set Default'}
                       </span>
                     </button>

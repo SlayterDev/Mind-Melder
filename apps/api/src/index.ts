@@ -13,7 +13,7 @@ import {
   TagsRepository,
   ConversationsRepository,
 } from 'database';
-import { 
+import {
   createCapturesRouter,
   createTodosRouter,
   createNotesRouter,
@@ -23,7 +23,7 @@ import {
   createSearchRouter,
   createOllamaRouter,
   createConversationsRouter,
-  createTranscribeRouter
+  createTranscribeRouter,
 } from './routes/index.js';
 import { createOrganizeRouter } from './routes/organize.js';
 import { createTodaySheetRouter } from './routes/today-sheet.js';
@@ -37,12 +37,12 @@ dotenv.config({ path: path.join(__dirname, '../../../.env') });
 
 const app = express();
 const PORT = process.env.API_PORT || 3000;
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/capture';
+const DATABASE_URL =
+  process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/capture';
 
 // Initialize database
 const db = createDatabaseClient(DATABASE_URL);
 console.log('Database connected');
-
 
 // Initialize repositories
 const capturesRepo = new CapturesRepository(db);
@@ -85,7 +85,7 @@ app.use(errorHandler);
 
 app.listen(PORT, async () => {
   console.log(`API server running on http://localhost:${PORT}`);
-  
+
   // Initialize scheduled jobs
   await scheduler.initialize();
 });

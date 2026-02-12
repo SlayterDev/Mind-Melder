@@ -27,15 +27,15 @@ export class SchedulerService {
    */
   async initialize(): Promise<void> {
     console.log('[Scheduler] Initializing scheduled jobs...');
-    
+
     try {
       const settings = await this.settingsRepo.getOrCreate(this.userId);
-      
+
       // Schedule today sheet generation
       if (settings.todaySheetScheduleEnabled && settings.todaySheetTime) {
         this.scheduleTodaySheet(settings.todaySheetTime);
       }
-      
+
       // Schedule organization flow
       if (settings.organizeScheduleEnabled && settings.organizeScheduleTime) {
         this.scheduleOrganize(
@@ -44,7 +44,7 @@ export class SchedulerService {
           settings.organizeScheduleWeekday
         );
       }
-      
+
       console.log(`[Scheduler] Initialization complete. Active jobs: ${this.jobs.size}`);
     } catch (error) {
       console.error('[Scheduler] Failed to initialize:', error);
@@ -56,16 +56,16 @@ export class SchedulerService {
    */
   scheduleTodaySheet(time: string): void {
     const jobKey = 'today-sheet';
-    
+
     // Stop existing job if any
     this.stopJob(jobKey);
-    
+
     // Convert time to CRON
     const cronExpression = timeToCron(time, 'daily');
     const description = `Today Sheet generation: ${cronToDescription(cronExpression)}`;
-    
+
     console.log(`[Scheduler] Scheduling: ${description}`);
-    
+
     // Create the scheduled task
     const task = cron.schedule(cronExpression, async () => {
       console.log('[Scheduler] Executing today sheet generation...');
@@ -73,14 +73,16 @@ export class SchedulerService {
         const settings = await this.settingsRepo.getOrCreate(this.userId);
         const llmProvider = ProviderFactory.createFromSettings(settings);
         const todaySheetService = new TodaySheetService(this.db, llmProvider);
-        
+
         const sheet = await todaySheetService.generateSheet(this.userId);
-        console.log(`[Scheduler] Today sheet generated successfully. Processed ${sheet.capturesProcessed} captures.`);
+        console.log(
+          `[Scheduler] Today sheet generated successfully. Processed ${sheet.capturesProcessed} captures.`
+        );
       } catch (error) {
         console.error('[Scheduler] Today sheet generation failed:', error);
       }
     });
-    
+
     this.jobs.set(jobKey, { task, description });
     console.log(`[Scheduler] Job scheduled: ${description}`);
   }
@@ -90,16 +92,16 @@ export class SchedulerService {
    */
   scheduleOrganize(time: string, frequency: 'daily' | 'weekly', weekday: string): void {
     const jobKey = 'organize';
-    
+
     // Stop existing job if any
     this.stopJob(jobKey);
-    
+
     // Convert time to CRON
     const cronExpression = timeToCron(time, frequency, weekday);
     const description = `Organization flow: ${cronToDescription(cronExpression)}`;
-    
+
     console.log(`[Scheduler] Scheduling: ${description}`);
-    
+
     // Create the scheduled task
     const task = cron.schedule(cronExpression, async () => {
       console.log('[Scheduler] Executing organization flow...');
@@ -107,14 +109,16 @@ export class SchedulerService {
         const settings = await this.settingsRepo.getOrCreate(this.userId);
         const llmProvider = ProviderFactory.createFromSettings(settings);
         const organizationService = new OrganizationService(this.db, llmProvider);
-        
+
         const result = await organizationService.organizeCaptures(this.userId);
-        console.log(`[Scheduler] Organization completed. Created ${result.todosCount} todos from ${result.capturesProcessed} captures.`);
+        console.log(
+          `[Scheduler] Organization completed. Created ${result.todosCount} todos from ${result.capturesProcessed} captures.`
+        );
       } catch (error) {
         console.error('[Scheduler] Organization flow failed:', error);
       }
     });
-    
+
     this.jobs.set(jobKey, { task, description });
     console.log(`[Scheduler] Job scheduled: ${description}`);
   }

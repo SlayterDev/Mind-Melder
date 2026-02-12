@@ -14,7 +14,7 @@ export const todaySheetTaskItemSchema = z.object({
 
 // Validation schema for OrganizedOutput
 export const organizedOutputSchema = z.object({
-  todos: z.array(todaySheetTaskItemSchema)
+  todos: z.array(todaySheetTaskItemSchema),
 });
 
 // Validation schema for TodaySheetOutput

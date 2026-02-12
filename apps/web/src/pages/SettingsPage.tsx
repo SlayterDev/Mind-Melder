@@ -10,7 +10,10 @@ const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectr
 const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
 const DEFAULT_SCHEDULE = '0 17 * * *';
 
-const PROVIDER_MODELS: Record<string, { label: string; models: { value: string; label: string }[] }> = {
+const PROVIDER_MODELS: Record<
+  string,
+  { label: string; models: { value: string; label: string }[] }
+> = {
   openai: {
     label: 'OpenAI',
     models: [
@@ -66,26 +69,29 @@ export default function SettingsPage() {
   const [isLoadingOllamaModels, setIsLoadingOllamaModels] = useState(false);
   const [ollamaModelsError, setOllamaModelsError] = useState<string | null>(null);
 
-  const fetchOllamaModels = useCallback(async (autoSelectFirst = false) => {
-    setIsLoadingOllamaModels(true);
-    setOllamaModelsError(null);
-    try {
-      const response = await ollamaAPI.listModels();
-      setOllamaModels(response.models);
-      if (response.error) {
-        setOllamaModelsError(response.error);
+  const fetchOllamaModels = useCallback(
+    async (autoSelectFirst = false) => {
+      setIsLoadingOllamaModels(true);
+      setOllamaModelsError(null);
+      try {
+        const response = await ollamaAPI.listModels();
+        setOllamaModels(response.models);
+        if (response.error) {
+          setOllamaModelsError(response.error);
+        }
+        // Auto-select first model if none selected and models available
+        if (autoSelectFirst && response.models.length > 0 && !settings?.llmModel) {
+          handleUpdate({ llmModel: response.models[0].name });
+        }
+      } catch (err) {
+        setOllamaModelsError('Failed to fetch Ollama models');
+        console.error('Failed to fetch Ollama models:', err);
+      } finally {
+        setIsLoadingOllamaModels(false);
       }
-      // Auto-select first model if none selected and models available
-      if (autoSelectFirst && response.models.length > 0 && !settings?.llmModel) {
-        handleUpdate({ llmModel: response.models[0].name });
-      }
-    } catch (err) {
-      setOllamaModelsError('Failed to fetch Ollama models');
-      console.error('Failed to fetch Ollama models:', err);
-    } finally {
-      setIsLoadingOllamaModels(false);
-    }
-  }, [settings?.llmModel]);
+    },
+    [settings?.llmModel]
+  );
 
   // Fetch Ollama models when provider is ollama
   useEffect(() => {
@@ -150,7 +156,13 @@ export default function SettingsPage() {
         setLocalOrganizeTime(settings.organizeScheduleTime ?? '17:00');
       }
     }
-  }, [settings, isEditingOllamaUrl, isEditingWhisperUrl, isEditingTodaySheetTime, isEditingOrganizeTime]);
+  }, [
+    settings,
+    isEditingOllamaUrl,
+    isEditingWhisperUrl,
+    isEditingTodaySheetTime,
+    isEditingOrganizeTime,
+  ]);
 
   const handleUpdate = async (updates: Partial<Settings>) => {
     if (!settings) return;
@@ -233,14 +245,14 @@ export default function SettingsPage() {
           <div className="space-y-4">
             {/* Provider Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Provider
-              </label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Provider</label>
               <div className="flex gap-2">
                 {Object.entries(PROVIDER_MODELS).map(([key, { label }]) => (
                   <button
                     key={key}
-                    onClick={() => handleUpdate({ llmProvider: key as Settings['llmProvider'], llmModel: null })}
+                    onClick={() =>
+                      handleUpdate({ llmProvider: key as Settings['llmProvider'], llmModel: null })
+                    }
                     disabled={isSaving}
                     className={`px-4 py-2 rounded-lg font-medium transition-all ${
                       settings.llmProvider === key
@@ -256,9 +268,7 @@ export default function SettingsPage() {
 
             {/* Model Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Model
-              </label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Model</label>
               {settings.llmProvider === 'ollama' ? (
                 <div className="space-y-2">
                   <div className="flex gap-2 items-center">
@@ -268,9 +278,7 @@ export default function SettingsPage() {
                       disabled={isSaving || isLoadingOllamaModels}
                       className="input-accent w-full max-w-md"
                     >
-                      {ollamaModels.length === 0 && (
-                        <option value="">No models found</option>
-                      )}
+                      {ollamaModels.length === 0 && <option value="">No models found</option>}
                       {ollamaModels.map((model) => (
                         <option key={model.name} value={model.name}>
                           {model.name} - {(model.size / (1024 * 1024 * 1024)).toFixed(2)} GB
@@ -283,7 +291,9 @@ export default function SettingsPage() {
                       className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
                       title="Refresh models"
                     >
-                      <RefreshCw className={`w-4 h-4 ${isLoadingOllamaModels ? 'animate-spin' : ''}`} />
+                      <RefreshCw
+                        className={`w-4 h-4 ${isLoadingOllamaModels ? 'animate-spin' : ''}`}
+                      />
                     </button>
                   </div>
                   {isLoadingOllamaModels && (
@@ -293,7 +303,9 @@ export default function SettingsPage() {
                     <p className="text-xs text-amber-400">{ollamaModelsError}</p>
                   )}
                   {!isLoadingOllamaModels && !ollamaModelsError && ollamaModels.length === 0 && (
-                    <p className="text-xs text-gray-500">No models found. Pull a model with: ollama pull llama3.1</p>
+                    <p className="text-xs text-gray-500">
+                      No models found. Pull a model with: ollama pull llama3.1
+                    </p>
                   )}
                 </div>
               ) : (
@@ -381,9 +393,7 @@ export default function SettingsPage() {
               <div className="border-t border-gray-800 pt-4">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300">
-                      Local Whisper
-                    </label>
+                    <label className="block text-sm font-medium text-gray-300">Local Whisper</label>
                     <p className="text-xs text-gray-500">
                       Use a local whisper.cpp server for audio transcription
                     </p>
@@ -438,10 +448,12 @@ export default function SettingsPage() {
           {/* Today Sheet Schedule */}
           <div className="space-y-4 pb-6 border-b border-gray-700">
             <h4 className="text-md font-medium text-gray-300">Today Sheet Generation</h4>
-            
+
             <div className="flex items-center gap-3">
               <button
-                onClick={() => handleUpdate({ todaySheetScheduleEnabled: !settings.todaySheetScheduleEnabled })}
+                onClick={() =>
+                  handleUpdate({ todaySheetScheduleEnabled: !settings.todaySheetScheduleEnabled })
+                }
                 disabled={isSaving}
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   settings.todaySheetScheduleEnabled ? 'bg-accent' : 'bg-gray-700'
@@ -486,10 +498,12 @@ export default function SettingsPage() {
           {/* Organization Schedule */}
           <div className="space-y-4 pt-6">
             <h4 className="text-md font-medium text-gray-300">Organization Flow</h4>
-            
+
             <div className="flex items-center gap-3">
               <button
-                onClick={() => handleUpdate({ organizeScheduleEnabled: !settings.organizeScheduleEnabled })}
+                onClick={() =>
+                  handleUpdate({ organizeScheduleEnabled: !settings.organizeScheduleEnabled })
+                }
                 disabled={isSaving}
                 className={`relative w-12 h-6 rounded-full transition-colors ${
                   settings.organizeScheduleEnabled ? 'bg-accent' : 'bg-gray-700'
@@ -506,14 +520,18 @@ export default function SettingsPage() {
               </span>
             </div>
 
-            <div className={settings.organizeScheduleEnabled ? 'space-y-3' : 'opacity-50 space-y-3'}>
+            <div
+              className={settings.organizeScheduleEnabled ? 'space-y-3' : 'opacity-50 space-y-3'}
+            >
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Frequency
-                </label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Frequency</label>
                 <select
                   value={settings.organizeScheduleFrequency}
-                  onChange={(e) => handleUpdate({ organizeScheduleFrequency: e.target.value as 'daily' | 'weekly' })}
+                  onChange={(e) =>
+                    handleUpdate({
+                      organizeScheduleFrequency: e.target.value as 'daily' | 'weekly',
+                    })
+                  }
                   disabled={isSaving || !settings.organizeScheduleEnabled}
                   className="input-accent w-48"
                 >
@@ -545,9 +563,7 @@ export default function SettingsPage() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Time
-                </label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Time</label>
                 <input
                   type="time"
                   value={localOrganizeTime}
@@ -564,7 +580,9 @@ export default function SettingsPage() {
                   className="input-accent w-48"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Captures will be organized {settings.organizeScheduleFrequency === 'weekly' ? 'weekly' : 'daily'} at this time
+                  Captures will be organized{' '}
+                  {settings.organizeScheduleFrequency === 'weekly' ? 'weekly' : 'daily'} at this
+                  time
                 </p>
               </div>
             </div>
@@ -591,9 +609,8 @@ export default function SettingsPage() {
             <div>
               <h4 className="font-semibold text-gray-200 mb-1">API Keys</h4>
               <p className="text-sm text-gray-400">
-                API keys are configured in your server's .env file for security.
-                Only non-sensitive settings like provider selection and model preferences
-                are stored in the database.
+                API keys are configured in your server's .env file for security. Only non-sensitive
+                settings like provider selection and model preferences are stored in the database.
               </p>
             </div>
           </div>

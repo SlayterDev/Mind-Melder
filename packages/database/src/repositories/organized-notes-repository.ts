@@ -44,12 +44,7 @@ export class OrganizedNotesRepository {
     return this.db
       .select()
       .from(organizedNotes)
-      .where(
-        and(
-          eq(organizedNotes.userId, userId),
-          sql`${organizedNotes.tags} ?| ${tags}::text[]`
-        )
-      )
+      .where(and(eq(organizedNotes.userId, userId), sql`${organizedNotes.tags} ?| ${tags}::text[]`))
       .orderBy(desc(organizedNotes.date));
   }
 

@@ -21,20 +21,17 @@ export class CapturesRepository {
       .from(captures)
       .where(eq(captures.userId, userId))
       .orderBy(sql`${captures.createdAt} DESC`);
-    
+
     return limit !== undefined ? query.limit(limit) : query;
   }
 
   async findUnorganized(userId: string, since?: Date): Promise<Capture[]> {
-    const conditions = [
-      eq(captures.userId, userId),
-      isNull(captures.organized)
-    ];
-    
+    const conditions = [eq(captures.userId, userId), isNull(captures.organized)];
+
     if (since) {
       conditions.push(sql`${captures.createdAt} >= ${since}`);
     }
-    
+
     return this.db
       .select()
       .from(captures)
@@ -42,7 +39,10 @@ export class CapturesRepository {
       .orderBy(sql`${captures.createdAt} DESC`);
   }
 
-  async update(id: string, data: Partial<Pick<Capture, 'content' | 'metadata'>>): Promise<Capture | undefined> {
+  async update(
+    id: string,
+    data: Partial<Pick<Capture, 'content' | 'metadata'>>
+  ): Promise<Capture | undefined> {
     const [capture] = await this.db
       .update(captures)
       .set({ ...data, updatedAt: new Date() })
@@ -78,8 +78,6 @@ export class CapturesRepository {
           sql`${captures}.search_vector @@ plainto_tsquery('english', ${query})`
         )
       )
-      .orderBy(
-        sql`ts_rank(${captures}.search_vector, plainto_tsquery('english', ${query})) DESC`
-      );
+      .orderBy(sql`ts_rank(${captures}.search_vector, plainto_tsquery('english', ${query})) DESC`);
   }
 }

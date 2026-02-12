@@ -1,7 +1,19 @@
 import OpenAI from 'openai';
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
-import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, ToolCall, ToolDefinition, TodaySheetInput, TodaySheetOutput, TranscribeOptions, TranscriptionResult } from '../types.js';
+import type {
+  ChatMessage,
+  LLMProvider,
+  OrganizedOutput,
+  ProviderConfig,
+  StreamCallbacks,
+  ToolCall,
+  ToolDefinition,
+  TodaySheetInput,
+  TodaySheetOutput,
+  TranscribeOptions,
+  TranscriptionResult,
+} from '../types.js';
 import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
 import { getAudioFilename } from '../utils/audio-utils.js';
 
@@ -25,9 +37,19 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
     this.temperature = config.temperature ?? 0.7;
   }
 
-  async organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean): Promise<OrganizedOutput> {
+  async organize(
+    captures: Capture[],
+    template: Template,
+    tags?: Tag[],
+    includeDescriptions?: boolean
+  ): Promise<OrganizedOutput> {
     const systemPrompt = this.buildSystemPrompt();
-    const userPrompt = this.buildOrganizePrompt(captures, template, tags, includeDescriptions ?? false);
+    const userPrompt = this.buildOrganizePrompt(
+      captures,
+      template,
+      tags,
+      includeDescriptions ?? false
+    );
 
     const response = await this.client.chat.completions.create({
       model: this.model,
@@ -93,8 +115,8 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
 
   async generateTitle(messages: ChatMessage[]): Promise<string> {
     const conversationText = messages
-      .filter(m => m.role === 'user' || m.role === 'assistant')
-      .map(m => `${m.role}: ${m.content ?? ''}`)
+      .filter((m) => m.role === 'user' || m.role === 'assistant')
+      .map((m) => `${m.role}: ${m.content ?? ''}`)
       .join('\n');
 
     const response = await this.client.chat.completions.create({
@@ -115,11 +137,15 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
     return content.trim();
   }
 
-  async streamChat(messages: ChatMessage[], callbacks: StreamCallbacks, tools?: ToolDefinition[]): Promise<void> {
+  async streamChat(
+    messages: ChatMessage[],
+    callbacks: StreamCallbacks,
+    tools?: ToolDefinition[]
+  ): Promise<void> {
     let fullResponse = '';
 
     // Map our ChatMessage to OpenAI's expected format
-    const openaiMessages = messages.map(m => {
+    const openaiMessages = messages.map((m) => {
       if (m.role === 'tool') {
         if (!m.toolCallId) {
           throw new Error('toolCallId is required for tool messages');
@@ -134,7 +160,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
         return {
           role: 'assistant' as const,
           content: m.content ?? null,
-          tool_calls: m.toolCalls.map(tc => ({
+          tool_calls: m.toolCalls.map((tc) => ({
             id: tc.id,
             type: 'function' as const,
             function: { name: tc.name, arguments: JSON.stringify(tc.arguments) },
@@ -148,7 +174,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
     });
 
     // Convert tools to OpenAI format
-    const openaiTools = tools?.map(t => ({
+    const openaiTools = tools?.map((t) => ({
       type: 'function' as const,
       function: {
         name: t.name,
@@ -166,7 +192,8 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
     });
 
     // Track tool calls being accumulated (they stream in chunks)
-    const toolCallsInProgress: Map<number, { id: string; name: string; arguments: string }> = new Map();
+    const toolCallsInProgress: Map<number, { id: string; name: string; arguments: string }> =
+      new Map();
 
     for await (const chunk of response) {
       const delta = chunk.choices[0]?.delta;
@@ -210,8 +237,8 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
             const error = err instanceof Error ? err : new Error(String(err));
             callbacks.onError?.(
               new Error(
-                `Failed to parse tool call arguments for tool "${tc.name}" (id: "${tc.id}"): ${error.message}. Raw arguments: ${tc.arguments}`,
-              ),
+                `Failed to parse tool call arguments for tool "${tc.name}" (id: "${tc.id}"): ${error.message}. Raw arguments: ${tc.arguments}`
+              )
             );
             // Skip this tool call and continue processing any others
             continue;

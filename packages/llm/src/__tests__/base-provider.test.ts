@@ -161,9 +161,7 @@ describe('BaseLLMProvider', () => {
     it('should not include tag descriptions when includeDescriptions is false', () => {
       const captures = [createMockCapture()];
       const template = createMockTemplate();
-      const tags = [
-        createMockTag({ name: 'work', description: 'Work-related tasks' }),
-      ];
+      const tags = [createMockTag({ name: 'work', description: 'Work-related tasks' })];
 
       const prompt = provider.testBuildOrganizePrompt(captures, template, tags, false);
 
@@ -345,9 +343,7 @@ describe('BaseLLMProvider', () => {
 
     it('should list captures with IDs', () => {
       const input = createTodaySheetInput({
-        captures: [
-          createMockCapture({ id: 'uuid-123', content: 'Review PR' }),
-        ],
+        captures: [createMockCapture({ id: 'uuid-123', content: 'Review PR' })],
       });
 
       const prompt = provider.testBuildTodaySheetPrompt(input);
@@ -358,10 +354,7 @@ describe('BaseLLMProvider', () => {
 
     it('should include tags when provided', () => {
       const input = createTodaySheetInput({
-        tags: [
-          createMockTag({ name: 'urgent' }),
-          createMockTag({ id: 'tag-2', name: 'meeting' }),
-        ],
+        tags: [createMockTag({ name: 'urgent' }), createMockTag({ id: 'tag-2', name: 'meeting' })],
       });
 
       const prompt = provider.testBuildTodaySheetPrompt(input);
@@ -372,9 +365,7 @@ describe('BaseLLMProvider', () => {
 
     it('should include tag descriptions when includeDescriptions is true', () => {
       const input = createTodaySheetInput({
-        tags: [
-          createMockTag({ name: 'urgent', description: 'High priority items' }),
-        ],
+        tags: [createMockTag({ name: 'urgent', description: 'High priority items' })],
         includeDescriptions: true,
       });
 
@@ -498,10 +489,12 @@ describe('BaseLLMProvider', () => {
 
     it('should validate organize output with todos', () => {
       const schema = z.object({
-        todos: z.array(z.object({
-          content: z.string(),
-          dueDate: z.string().optional(),
-        })),
+        todos: z.array(
+          z.object({
+            content: z.string(),
+            dueDate: z.string().optional(),
+          })
+        ),
       });
       const validJson = '{"todos": [{"content": "Task 1", "dueDate": "2025-01-20"}]}';
 
@@ -513,10 +506,12 @@ describe('BaseLLMProvider', () => {
 
     it('should allow empty todos array', () => {
       const schema = z.object({
-        todos: z.array(z.object({
-          content: z.string(),
-          dueDate: z.string().optional(),
-        })),
+        todos: z.array(
+          z.object({
+            content: z.string(),
+            dueDate: z.string().optional(),
+          })
+        ),
       });
       const validJson = '{"todos": []}';
 

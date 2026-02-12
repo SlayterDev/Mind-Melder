@@ -11,18 +11,12 @@ export class SettingsRepository {
       return existing;
     }
 
-    const [created] = await this.db
-      .insert(settings)
-      .values({ userId })
-      .returning();
+    const [created] = await this.db.insert(settings).values({ userId }).returning();
     return created;
   }
 
   async findByUserId(userId: string): Promise<Settings | undefined> {
-    const [result] = await this.db
-      .select()
-      .from(settings)
-      .where(eq(settings.userId, userId));
+    const [result] = await this.db.select().from(settings).where(eq(settings.userId, userId));
     return result;
   }
 

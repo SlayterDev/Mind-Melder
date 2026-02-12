@@ -9,21 +9,17 @@ export const todaySheetSectionEnum = pgEnum('today_sheet_section', [
   'likely_today',
   'opportunistic',
   'overflow',
-  'none' // For regular todos not in today sheet
+  'none', // For regular todos not in today sheet
 ]);
 
 export const timeEstimateEnum = pgEnum('time_estimate', [
-  'quick',   // <15 min
-  'medium',  // 30-60 min
-  'long',    // >90 min
-  'none'     // Not estimated
+  'quick', // <15 min
+  'medium', // 30-60 min
+  'long', // >90 min
+  'none', // Not estimated
 ]);
 
-export const feedbackVoteEnum = pgEnum('feedback_vote', [
-  'thumbs_up',
-  'thumbs_down',
-  'none'
-]);
+export const feedbackVoteEnum = pgEnum('feedback_vote', ['thumbs_up', 'thumbs_down', 'none']);
 
 export const todos = pgTable(
   'todos',

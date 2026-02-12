@@ -1,11 +1,6 @@
 import type { LLMProvider } from 'llm';
 import type { Database } from 'database';
-import {
-  CapturesRepository,
-  TodosRepository,
-  TemplatesRepository,
-  TagsRepository,
-} from 'database';
+import { CapturesRepository, TodosRepository, TemplatesRepository, TagsRepository } from 'database';
 import type { OrganizationResult } from 'types';
 import { templateTools } from '../utils/template-tools.js';
 
@@ -28,10 +23,7 @@ export class OrganizationService {
   /**
    * Organize unorganized captures for a user using LLM
    */
-  async organizeCaptures(
-    userId: string,
-    templateId?: string
-  ): Promise<OrganizationResult> {
+  async organizeCaptures(userId: string, templateId?: string): Promise<OrganizationResult> {
     // Get unorganized captures
     const captures = await this.capturesRepo.findUnorganized(userId);
 

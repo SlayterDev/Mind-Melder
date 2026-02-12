@@ -70,10 +70,7 @@ export class ConversationsRepository {
   }
 
   async getMessageById(id: string): Promise<ChatMessage | undefined> {
-    const [message] = await this.db
-      .select()
-      .from(chatMessages)
-      .where(eq(chatMessages.id, id));
+    const [message] = await this.db.select().from(chatMessages).where(eq(chatMessages.id, id));
     return message;
   }
 

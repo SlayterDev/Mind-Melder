@@ -1,7 +1,19 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ReactNode, useState } from 'react';
 import { useInboxCount } from '../api/queries';
-import { PenLine, CalendarDays, Inbox, FileText, ListChecks, Layers, MessageSquare, Cog, Menu, X, Mic } from 'lucide-react';
+import {
+  PenLine,
+  CalendarDays,
+  Inbox,
+  FileText,
+  ListChecks,
+  Layers,
+  MessageSquare,
+  Cog,
+  Menu,
+  X,
+  Mic,
+} from 'lucide-react';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
@@ -39,10 +51,7 @@ export default function Layout({ children }: LayoutProps) {
       <aside className="hidden md:block w-64 bg-gray-900 border-r border-gray-800 shadow-2xl flex-shrink-0">
         {/* Draggable title bar region for Electron */}
         {isElectron && (
-          <div
-            className="h-8 w-full"
-            style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
-          />
+          <div className="h-8 w-full" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties} />
         )}
         <div className={`p-6 ${isElectron ? 'pt-2' : ''}`}>
           <h1 className="text-2xl font-bold text-gray-100">Mind Melder</h1>
@@ -68,9 +77,7 @@ export default function Layout({ children }: LayoutProps) {
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
                 {item.path === '/inbox' && inboxCount > 0 && (
-                  <span className="badge-accent">
-                    {inboxCount}
-                  </span>
+                  <span className="badge-accent">{inboxCount}</span>
                 )}
               </Link>
             );
@@ -91,13 +98,13 @@ export default function Layout({ children }: LayoutProps) {
       <div className="md:hidden fixed top-0 left-0 right-0 bg-gray-900 border-b border-gray-800 z-50">
         <div
           className="flex items-center justify-between px-4 py-3"
-          style={isElectron ? { WebkitAppRegion: 'drag' } as React.CSSProperties : undefined}
+          style={isElectron ? ({ WebkitAppRegion: 'drag' } as React.CSSProperties) : undefined}
         >
           <h1 className="text-lg font-bold text-gray-100">Mind Melder</h1>
           <button
             onClick={() => setIsDrawerOpen(true)}
             className="p-2 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800"
-            style={isElectron ? { WebkitAppRegion: 'no-drag' } as React.CSSProperties : undefined}
+            style={isElectron ? ({ WebkitAppRegion: 'no-drag' } as React.CSSProperties) : undefined}
           >
             <Menu className="w-6 h-6" />
           </button>
@@ -106,10 +113,7 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Mobile Drawer Overlay */}
       {isDrawerOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/50 z-50"
-          onClick={closeDrawer}
-        />
+        <div className="md:hidden fixed inset-0 bg-black/50 z-50" onClick={closeDrawer} />
       )}
 
       {/* Mobile Drawer */}
@@ -148,9 +152,7 @@ export default function Layout({ children }: LayoutProps) {
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
                 {item.path === '/inbox' && inboxCount > 0 && (
-                  <span className="badge-accent">
-                    {inboxCount}
-                  </span>
+                  <span className="badge-accent">{inboxCount}</span>
                 )}
               </Link>
             );

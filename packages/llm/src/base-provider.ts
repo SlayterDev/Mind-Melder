@@ -27,15 +27,24 @@ Your job is to:
   /**
    * Build the user prompt with captures and template
    */
-  protected buildOrganizePrompt(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions: boolean = false): string {
+  protected buildOrganizePrompt(
+    captures: Capture[],
+    template: Template,
+    tags?: Tag[],
+    includeDescriptions: boolean = false
+  ): string {
     const captureList = captures
-      .map((c, i) => `${i + 1}. ID: ${c.id} | [${new Date(c.timestamp).toLocaleString()}] ${c.content}`)
+      .map(
+        (c, i) => `${i + 1}. ID: ${c.id} | [${new Date(c.timestamp).toLocaleString()}] ${c.content}`
+      )
       .join('\n');
 
     let tagsInstruction = '';
     if (tags && tags.length > 0) {
       const tagsList = tags
-        .map(tag => includeDescriptions && tag.description ? `${tag.name} (${tag.description})` : tag.name)
+        .map((tag) =>
+          includeDescriptions && tag.description ? `${tag.name} (${tag.description})` : tag.name
+        )
         .join(', ');
       tagsInstruction = `\nCATEGORIZATION TAGS:
 - Use the following tags to categorize tasks: ${tagsList}.
@@ -43,7 +52,8 @@ Your job is to:
 - If no relevant tag exists, leave the "tags" array empty for that task.
 `;
     } else {
-      tagsInstruction = '\nCATEGORIZATION: Use your best judgment to categorize todos with relevant tags.';
+      tagsInstruction =
+        '\nCATEGORIZATION: Use your best judgment to categorize todos with relevant tags.';
     }
 
     return `You are extracting actionable todos from a batch of unorganized captures.
@@ -143,7 +153,9 @@ Format:
     if (input.tags && input.tags.length > 0) {
       const includeDescriptions = input.includeDescriptions ?? false;
       const tagsList = input.tags
-        .map(tag => includeDescriptions && tag.description ? `${tag.name} (${tag.description})` : tag.name)
+        .map((tag) =>
+          includeDescriptions && tag.description ? `${tag.name} (${tag.description})` : tag.name
+        )
         .join(', ');
       tagsInstruction = `\nCATEGORIZATION TAGS:
 - Use the following tags to categorize tasks: ${tagsList}.
@@ -161,14 +173,17 @@ CONTEXT:
 - Date: ${input.context.currentDate}
 
 UNORGANIZED CAPTURES (${input.captures.length}):
-${input.captures.map((c, i) =>
-  `${i + 1}. ID: ${c.id} | [${new Date(c.timestamp).toLocaleString()}] ${c.content}`
-).join('\n')}
+${input.captures
+  .map((c, i) => `${i + 1}. ID: ${c.id} | [${new Date(c.timestamp).toLocaleString()}] ${c.content}`)
+  .join('\n')}
 
 EXISTING TODOS (${input.existingTodos.length}):
-${input.existingTodos.map((t, i) =>
-  `${i + 1}. ID: ${t.id} | ${t.content}${t.dueDate ? ` (Due: ${new Date(t.dueDate).toLocaleDateString()})` : ''}`
-).join('\n')}
+${input.existingTodos
+  .map(
+    (t, i) =>
+      `${i + 1}. ID: ${t.id} | ${t.content}${t.dueDate ? ` (Due: ${new Date(t.dueDate).toLocaleDateString()})` : ''}`
+  )
+  .join('\n')}
 
 YOUR TASK:
 1. Extract actionable tasks from captures (skip pure notes/info)
@@ -190,13 +205,18 @@ YOUR TASK:
 9. Defer to user template instructions below for any additional formatting or organization rules
 10. Look for critical info like people, deadlines, project names to include in titles/descriptions
 
-${input.feedbackTodos.length > 0 
-  ? `PREVIOUS USER FEEDBACK:
+${
+  input.feedbackTodos.length > 0
+    ? `PREVIOUS USER FEEDBACK:
 Use to improve task extraction and prioritization. Don't consider these as input captures unless they are also in the captures or existing todos list above. 
-${input.feedbackTodos.map((t, i) =>
-  `${i + 1}. ID: ${t.id} | ${t.content} | ${t.dueDate ? new Date(t.dueDate).toLocaleDateString() : 'No due date'} | Tags: [${t.tags?.join(', ')}] | Feedback: ${t.feedbackVote === 'thumbs_up' ? 'Helpful' : 'Not Helpful'}${t.feedbackText ? ` | Comments: ${t.feedbackText}` : ''}`
-).join('\n')}` 
-  : ''}
+${input.feedbackTodos
+  .map(
+    (t, i) =>
+      `${i + 1}. ID: ${t.id} | ${t.content} | ${t.dueDate ? new Date(t.dueDate).toLocaleDateString() : 'No due date'} | Tags: [${t.tags?.join(', ')}] | Feedback: ${t.feedbackVote === 'thumbs_up' ? 'Helpful' : 'Not Helpful'}${t.feedbackText ? ` | Comments: ${t.feedbackText}` : ''}`
+  )
+  .join('\n')}`
+    : ''
+}
 
 ${tagsInstruction}
 
@@ -285,7 +305,7 @@ Total should not exceed ${input.context.workingHoursMinutes} minutes.`;
       return undefined;
     }
     if (Array.isArray(obj)) {
-      return obj.map(item => this.normalizeNullValues(item));
+      return obj.map((item) => this.normalizeNullValues(item));
     }
     if (typeof obj === 'object' && obj !== null) {
       const normalized: any = {};

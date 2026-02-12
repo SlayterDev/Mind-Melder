@@ -52,9 +52,9 @@ async function testOllamaStructuredOutput() {
   try {
     console.log('📝 Testing organize() method...\n');
     console.log('Input captures:', mockCaptures.length);
-    
+
     const result = await provider.organize(mockCaptures, mockTemplate);
-    
+
     console.log('✅ Organized output received!');
     console.log('Todos extracted:', result.todos.length);
     console.log('\nTodos:');
@@ -64,7 +64,7 @@ async function testOllamaStructuredOutput() {
         console.log(`     Due: ${todo.dueDate}`);
       }
     });
-    
+
     console.log('\n🎉 Test passed! Ollama structured outputs are working correctly.');
   } catch (error) {
     console.error('❌ Test failed:', error);

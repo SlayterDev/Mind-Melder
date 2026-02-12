@@ -2,9 +2,17 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
 import type {
-  LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput,
-  TodaySheetOutput, ChatMessage, StreamCallbacks, ToolCall, ToolDefinition,
-  TranscribeOptions, TranscriptionResult
+  LLMProvider,
+  OrganizedOutput,
+  ProviderConfig,
+  TodaySheetInput,
+  TodaySheetOutput,
+  ChatMessage,
+  StreamCallbacks,
+  ToolCall,
+  ToolDefinition,
+  TranscribeOptions,
+  TranscriptionResult,
 } from '../types.js';
 import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
 
@@ -28,18 +36,26 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     this.temperature = config.temperature ?? 0.7;
   }
 
-  async organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean): Promise<OrganizedOutput> {
+  async organize(
+    captures: Capture[],
+    template: Template,
+    tags?: Tag[],
+    includeDescriptions?: boolean
+  ): Promise<OrganizedOutput> {
     const systemPrompt = this.buildSystemPrompt();
-    const userPrompt = this.buildOrganizePrompt(captures, template, tags, includeDescriptions ?? false);
+    const userPrompt = this.buildOrganizePrompt(
+      captures,
+      template,
+      tags,
+      includeDescriptions ?? false
+    );
 
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 4096,
       temperature: this.temperature,
       system: systemPrompt,
-      messages: [
-        { role: 'user', content: userPrompt },
-      ],
+      messages: [{ role: 'user', content: userPrompt }],
     });
 
     const content = response.content[0];
@@ -58,9 +74,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       max_tokens: 2048,
       temperature: Math.min(this.temperature, 0.5),
       system: this.buildSystemPrompt(),
-      messages: [
-        { role: 'user', content: prompt },
-      ],
+      messages: [{ role: 'user', content: prompt }],
     });
 
     const content = response.content[0];
@@ -101,11 +115,8 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
 
   async generateTitle(messages: ChatMessage[]): Promise<string> {
     const conversationText = messages
-      .filter(m =>
-        (m.role === 'user' || m.role === 'assistant') &&
-        m.content
-      )
-      .map(m => `${m.role}: ${m.content}`)
+      .filter((m) => (m.role === 'user' || m.role === 'assistant') && m.content)
+      .map((m) => `${m.role}: ${m.content}`)
       .join('\n');
 
     const response = await this.client.messages.create({
@@ -113,9 +124,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       max_tokens: 30,
       temperature: 0.3,
       system: this.buildChatTitleSystemPrompt(),
-      messages: [
-        { role: 'user', content: conversationText },
-      ],
+      messages: [{ role: 'user', content: conversationText }],
     });
 
     const content = response.content[0];
@@ -126,9 +135,13 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     return content.text.trim();
   }
 
-  async streamChat(messages: ChatMessage[], callbacks: StreamCallbacks, tools?: ToolDefinition[]): Promise<void> {
+  async streamChat(
+    messages: ChatMessage[],
+    callbacks: StreamCallbacks,
+    tools?: ToolDefinition[]
+  ): Promise<void> {
     // Extract system message
-    const systemMessage = messages.find(m => m.role === 'system');
+    const systemMessage = messages.find((m) => m.role === 'system');
 
     // Map messages to Anthropic format
     const anthropicMessages: Anthropic.MessageParam[] = [];
@@ -153,15 +166,19 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       } else if (m.role === 'tool') {
         // Tool result - must be in a user message
         if (!m.toolCallId) {
-          throw new Error('AnthropicProvider.streamChat: tool message is missing required toolCallId');
+          throw new Error(
+            'AnthropicProvider.streamChat: tool message is missing required toolCallId'
+          );
         }
         anthropicMessages.push({
           role: 'user',
-          content: [{
-            type: 'tool_result',
-            tool_use_id: m.toolCallId,
-            content: m.content ?? '',
-          }],
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: m.toolCallId,
+              content: m.content ?? '',
+            },
+          ],
         });
       } else {
         anthropicMessages.push({
@@ -172,7 +189,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     }
 
     // Convert tools to Anthropic format
-    const anthropicTools: Anthropic.Tool[] | undefined = tools?.map(t => ({
+    const anthropicTools: Anthropic.Tool[] | undefined = tools?.map((t) => ({
       name: t.name,
       description: t.description,
       input_schema: {
@@ -218,7 +235,10 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     callbacks.onComplete(fullTextResponse);
   }
 
-  async transcribe(_audioBuffer: Buffer, _options?: TranscribeOptions): Promise<TranscriptionResult> {
+  async transcribe(
+    _audioBuffer: Buffer,
+    _options?: TranscribeOptions
+  ): Promise<TranscriptionResult> {
     throw new Error('Transcription is not supported by the Anthropic provider.');
   }
 }

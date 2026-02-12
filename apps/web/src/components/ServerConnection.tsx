@@ -23,17 +23,17 @@ export interface ServerConnectionProps {
 
 /**
  * ServerConnection component - Renders server connection settings for Electron app
- * 
+ *
  * This component is only used in the Electron version of the app to allow users
  * to configure and test the API server URL. It provides:
  * - Editable server URL input
  * - Connection test functionality
  * - Save and reconnect capability
- * 
+ *
  * The component is displayed in two contexts:
  * 1. When settings load successfully (normal settings view)
  * 2. When settings fail to load (error state) - allows users to fix connection issues
- * 
+ *
  * @param props - Component props
  * @returns ServerConnection UI component
  */
@@ -55,9 +55,7 @@ export default function ServerConnection({
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Server URL
-          </label>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Server URL</label>
           <input
             type="url"
             value={serverUrl}

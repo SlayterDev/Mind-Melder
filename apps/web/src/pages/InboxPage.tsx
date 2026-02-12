@@ -58,12 +58,14 @@ export default function InboxPage() {
 
   const handleEdit = async (id: string, content: string) => {
     const previousCaptures = captures;
-    
+
     try {
       const updatedCapture = await capturesAPI.update(id, { content });
       // Update local state after successful API call with server-provided timestamp
       setCaptures((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, ...(updatedCapture as Record<string, unknown>) } : c))
+        prev.map((c) =>
+          c.id === id ? { ...c, ...(updatedCapture as Record<string, unknown>) } : c
+        )
       );
     } catch (error) {
       console.error('Failed to update capture:', error);
@@ -111,10 +113,7 @@ export default function InboxPage() {
               <Zap className="w-5 h-5" />
               {isOrganizing ? 'Organizing...' : 'Organize Now'}
             </button>
-            <TemplateSelector
-              value={selectedTemplateId}
-              onChange={setSelectedTemplateId}
-            />
+            <TemplateSelector value={selectedTemplateId} onChange={setSelectedTemplateId} />
           </div>
         )}
       </div>

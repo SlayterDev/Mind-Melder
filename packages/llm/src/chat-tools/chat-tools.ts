@@ -9,20 +9,21 @@ export const chatTools: ToolDefinition[] = [
       properties: {
         query: {
           type: 'string',
-          description: 'Search query (keywords or natural language question)'
+          description: 'Search query (keywords or natural language question)',
         },
         type: {
           type: 'string',
           enum: ['captures', 'todos', 'notes', 'all'],
-          description: 'Filter by content type: captures, todos, notes, or all. Omit to search all types.'
+          description:
+            'Filter by content type: captures, todos, notes, or all. Omit to search all types.',
         },
         limit: {
           type: 'number',
-          description: 'Maximum results to return (default: 8, max: 20)'
-        }
+          description: 'Maximum results to return (default: 8, max: 20)',
+        },
       },
-      required: ['query']
-    }
+      required: ['query'],
+    },
   },
   {
     name: 'get_todays_todos',
@@ -32,10 +33,10 @@ export const chatTools: ToolDefinition[] = [
       properties: {
         include_completed: {
           type: 'boolean',
-          description: 'Include completed todos (default: false)'
-        }
-      }
-    }
+          description: 'Include completed todos (default: false)',
+        },
+      },
+    },
   },
   {
     name: 'get_recent_captures',
@@ -45,13 +46,13 @@ export const chatTools: ToolDefinition[] = [
       properties: {
         limit: {
           type: 'number',
-          description: 'Number of captures to return (default: 10, max: 50)'
+          description: 'Number of captures to return (default: 10, max: 50)',
         },
         hours: {
           type: 'number',
-          description: 'Only return captures from the last N hours'
-        }
-      }
-    }
-  }
+          description: 'Only return captures from the last N hours',
+        },
+      },
+    },
+  },
 ];

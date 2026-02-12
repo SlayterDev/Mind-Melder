@@ -55,7 +55,7 @@ export default function ChatPage() {
       setMessages([]);
       setLoading(false);
     }
-    
+
     // Cleanup: abort any pending stream when conversation changes
     return () => {
       if (abortControllerRef.current) {
@@ -162,7 +162,11 @@ export default function ChatPage() {
         if (msg.todoIds && msg.toolCalls) {
           // Find the last consecutive assistant message in this turn
           let lastAssistantIdx = i;
-          for (let j = i + 1; j < displayMessages.length && displayMessages[j].role === 'assistant'; j++) {
+          for (
+            let j = i + 1;
+            j < displayMessages.length && displayMessages[j].role === 'assistant';
+            j++
+          ) {
             lastAssistantIdx = j;
           }
           if (lastAssistantIdx !== i) {
@@ -187,7 +191,8 @@ export default function ChatPage() {
     try {
       const conversation = await conversationsAPI.create({
         title: 'New Chat',
-        systemPrompt: 'You are a helpful assistant with access to the user\'s notes, captures, and todos. Use the available tools to search and retrieve information when the user asks about their data.',
+        systemPrompt:
+          "You are a helpful assistant with access to the user's notes, captures, and todos. Use the available tools to search and retrieve information when the user asks about their data.",
       });
       setConversations((prev) => [conversation, ...prev]);
       navigate(`/chat/${conversation.id}`);
@@ -223,7 +228,7 @@ export default function ChatPage() {
     try {
       await conversationsAPI.update(editingConversationId, { title: trimmed });
       setConversations((prev) =>
-        prev.map((c) => c.id === editingConversationId ? { ...c, title: trimmed } : c)
+        prev.map((c) => (c.id === editingConversationId ? { ...c, title: trimmed } : c))
       );
     } catch (error) {
       console.error('Failed to rename conversation:', error);
@@ -237,7 +242,7 @@ export default function ChatPage() {
 
   const sendMessage = async (content: string) => {
     if (!id || isStreaming) return;
-    
+
     // Store the current conversation ID to check against later
     const currentConversationId = id;
 
@@ -467,17 +472,16 @@ export default function ChatPage() {
         setIsStreaming(false);
 
         // Auto-generate title if still "New Chat" using latest conversations from ref
-        const conv = conversationsRef.current.find(c => c.id === currentConversationId);
+        const conv = conversationsRef.current.find((c) => c.id === currentConversationId);
         if (conv && conv.title === 'New Chat') {
-          conversationsAPI.generateTitle(currentConversationId)
+          conversationsAPI
+            .generateTitle(currentConversationId)
             .then(({ title }) => {
-              setConversations(prev =>
-                prev.map(c =>
-                  c.id === currentConversationId ? { ...c, title } : c
-                )
+              setConversations((prev) =>
+                prev.map((c) => (c.id === currentConversationId ? { ...c, title } : c))
               );
             })
-            .catch(err => console.error('Failed to generate title:', err));
+            .catch((err) => console.error('Failed to generate title:', err));
         }
 
         loadConversations(); // Refresh to update titles/timestamps

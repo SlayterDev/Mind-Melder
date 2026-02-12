@@ -9,7 +9,8 @@ import type { NewTodaySheet } from './packages/database/src/schema/today-sheets'
 async function testRepositories() {
   console.log('🧪 Testing Phase 2 - Repository Layer\n');
 
-  const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/capture';
+  const connectionString =
+    process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/capture';
   const client = postgres(connectionString);
   const db = drizzle(client);
 
@@ -54,14 +55,20 @@ async function testRepositories() {
     };
     const created2 = await repo.create(secondSheet);
     const latestNow = await repo.findLatest('test-user-phase2');
-    console.log('   ✅ Latest after 2nd create:', latestNow?.id === created2.id ? 'CORRECT (newest)' : 'WRONG ORDER');
+    console.log(
+      '   ✅ Latest after 2nd create:',
+      latestNow?.id === created2.id ? 'CORRECT (newest)' : 'WRONG ORDER'
+    );
 
     // Test 6: Cleanup - delete test sheets
     console.log('\n6️⃣ Testing delete()...');
     await repo.delete(created.id);
     await repo.delete(created2.id);
     const afterDelete = await repo.findByUserId('test-user-phase2');
-    console.log('   ✅ After deletion:', afterDelete.length === 0 ? 'CLEANED UP' : `${afterDelete.length} remaining`);
+    console.log(
+      '   ✅ After deletion:',
+      afterDelete.length === 0 ? 'CLEANED UP' : `${afterDelete.length} remaining`
+    );
 
     console.log('\n✅ All Phase 2 Repository Tests Passed!');
   } catch (error) {

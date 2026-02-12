@@ -6,12 +6,14 @@ export const createCaptureSchema = z.object({
   metadata: z.record(z.unknown()).optional(),
 });
 
-export const updateCaptureSchema = z.object({
-  content: z.string().min(1, 'Content cannot be empty').max(10000, 'Content too long').optional(),
-  metadata: z.record(z.unknown()).optional(),
-}).refine((data) => data.content !== undefined || data.metadata !== undefined, {
-  message: 'At least one field (content or metadata) must be provided',
-});
+export const updateCaptureSchema = z
+  .object({
+    content: z.string().min(1, 'Content cannot be empty').max(10000, 'Content too long').optional(),
+    metadata: z.record(z.unknown()).optional(),
+  })
+  .refine((data) => data.content !== undefined || data.metadata !== undefined, {
+    message: 'At least one field (content or metadata) must be provided',
+  });
 
 export type CreateCaptureInput = z.infer<typeof createCaptureSchema>;
 export type UpdateCaptureInput = z.infer<typeof updateCaptureSchema>;
@@ -41,7 +43,13 @@ export const createTodoSchema = z.object({
 
 export const timeEstimateSchema = z.enum(['quick', 'medium', 'long', 'none']);
 
-export const todaySheetSectionSchema = z.enum(['must_do_today', 'likely_today', 'opportunistic', 'overflow', 'none']);
+export const todaySheetSectionSchema = z.enum([
+  'must_do_today',
+  'likely_today',
+  'opportunistic',
+  'overflow',
+  'none',
+]);
 
 export const feedbackVoteSchema = z.enum(['thumbs_up', 'thumbs_down', 'none']);
 
@@ -89,7 +97,9 @@ export const scheduleFrequencySchema = z.enum(['daily', 'weekly']);
 
 // Time format validation (HH:MM in 24-hour format)
 const timeFormatRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-export const timeStringSchema = z.string().regex(timeFormatRegex, 'Time must be in HH:MM format (00:00-23:59)');
+export const timeStringSchema = z
+  .string()
+  .regex(timeFormatRegex, 'Time must be in HH:MM format (00:00-23:59)');
 
 export const updateSettingsSchema = z.object({
   llmProvider: llmProviderSchema.optional(),
@@ -104,16 +114,19 @@ export const updateSettingsSchema = z.object({
   // Legacy CRON-based scheduling (kept for backwards compatibility)
   organizationSchedule: z.string().max(100).optional(),
   scheduleEnabled: z.boolean().optional(),
-  
+
   // Today Sheet scheduling
   todaySheetScheduleEnabled: z.boolean().optional(),
   todaySheetTime: timeStringSchema.optional(),
-  
+
   // Organization scheduling
   organizeScheduleEnabled: z.boolean().optional(),
   organizeScheduleFrequency: scheduleFrequencySchema.optional(),
   organizeScheduleTime: timeStringSchema.optional(),
-  organizeScheduleWeekday: z.string().regex(/^[0-6]$/, 'Weekday must be 0-6 (Sunday-Saturday)').optional(),
+  organizeScheduleWeekday: z
+    .string()
+    .regex(/^[0-6]$/, 'Weekday must be 0-6 (Sunday-Saturday)')
+    .optional(),
 });
 
 export type LLMProvider = z.infer<typeof llmProviderSchema>;

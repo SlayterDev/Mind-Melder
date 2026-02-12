@@ -5,7 +5,10 @@ import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody } from '../middleware/index.js';
 import type { SchedulerService } from '../services/scheduler-service.js';
 
-export function createSettingsRouter(settingsRepo: SettingsRepository, scheduler?: SchedulerService): ExpressRouter {
+export function createSettingsRouter(
+  settingsRepo: SettingsRepository,
+  scheduler?: SchedulerService
+): ExpressRouter {
   const router = Router();
 
   // GET /api/v1/settings - Get user settings (creates defaults if none)
@@ -30,12 +33,12 @@ export function createSettingsRouter(settingsRepo: SettingsRepository, scheduler
       await settingsRepo.getOrCreate(userId);
 
       const settings = await settingsRepo.update(userId, req.body);
-      
+
       // Reload scheduler if any schedule-related settings changed
       if (scheduler && hasScheduleChanges(req.body)) {
         await scheduler.reload();
       }
-      
+
       res.json(settings);
     })
   );

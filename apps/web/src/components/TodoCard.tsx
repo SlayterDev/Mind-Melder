@@ -1,5 +1,21 @@
 import { useState } from 'react';
-import { Check, X, ChevronDown, ChevronRight, Pencil, Save, Calendar, Zap, Clock, Hourglass, Flame, Target, Lightbulb, Package, Trash2 } from 'lucide-react';
+import {
+  Check,
+  X,
+  ChevronDown,
+  ChevronRight,
+  Pencil,
+  Save,
+  Calendar,
+  Zap,
+  Clock,
+  Hourglass,
+  Flame,
+  Target,
+  Lightbulb,
+  Package,
+  Trash2,
+} from 'lucide-react';
 import type { TimeEstimate } from '../api/client';
 
 type TodaySheetSection = 'must_do_today' | 'likely_today' | 'opportunistic' | 'overflow' | 'none';
@@ -267,21 +283,24 @@ export default function TodoCard({
                 <Clock className="w-3 h-3" />
               </button>
             )}
-            {todo.timeEstimate && todo.timeEstimate !== 'none' && !showTimePicker && (() => {
-              const display = getTimeEstimateDisplay(todo.timeEstimate);
-              if (!display) return null;
-              const Icon = display.icon;
-              return (
-                <button
-                  onClick={() => setShowTimePicker(true)}
-                  className="px-2 py-0.5 badge-chip flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
-                  title="Change time estimate"
-                >
-                  <Icon className="w-3 h-3" />
-                  {display.label}
-                </button>
-              );
-            })()}
+            {todo.timeEstimate &&
+              todo.timeEstimate !== 'none' &&
+              !showTimePicker &&
+              (() => {
+                const display = getTimeEstimateDisplay(todo.timeEstimate);
+                if (!display) return null;
+                const Icon = display.icon;
+                return (
+                  <button
+                    onClick={() => setShowTimePicker(true)}
+                    className="px-2 py-0.5 badge-chip flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
+                    title="Change time estimate"
+                  >
+                    <Icon className="w-3 h-3" />
+                    {display.label}
+                  </button>
+                );
+              })()}
             {showTimePicker && (
               <div className="relative flex gap-1">
                 {TIME_ESTIMATE_OPTIONS.map((option) => {
@@ -353,7 +372,9 @@ export default function TodoCard({
 
         <div className="flex items-center gap-2">
           {/* Today Sheet Dropdown */}
-          <div className={`relative ${currentSection ? '' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+          <div
+            className={`relative ${currentSection ? '' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}
+          >
             <button
               onClick={() => setShowTodaySheetDropdown(!showTodaySheetDropdown)}
               className="text-gray-400 hover:text-accent-highlight text-sm px-3 py-1 rounded hover:bg-gray-800 transition-all flex items-center gap-2"
@@ -374,7 +395,7 @@ export default function TodoCard({
                 </>
               )}
             </button>
-            
+
             {showTodaySheetDropdown && (
               <div className="absolute right-0 mt-1 w-48 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-10">
                 {TODAY_SHEET_OPTIONS.map((option) => {
@@ -385,9 +406,7 @@ export default function TodoCard({
                       key={option.value}
                       onClick={() => handleTodaySheetChange(option.value)}
                       className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
-                        isSelected
-                          ? 'bg-accent text-white'
-                          : 'text-gray-300 hover:bg-gray-700'
+                        isSelected ? 'bg-accent text-white' : 'text-gray-300 hover:bg-gray-700'
                       }`}
                     >
                       <Icon className="w-4 h-4" />

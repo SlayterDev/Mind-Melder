@@ -23,11 +23,11 @@ export const AUDIO_MIME_TO_EXTENSION: Record<string, string> = {
  */
 export function getAudioFilename(mimeType: string, originalName?: string): string {
   const fallbackExt = AUDIO_MIME_TO_EXTENSION[mimeType] || 'bin';
-  
+
   // Use original name if it has an extension
   if (originalName && originalName.includes('.')) {
     return originalName;
   }
-  
+
   return `audio.${fallbackExt}`;
 }

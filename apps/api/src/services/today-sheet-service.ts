@@ -45,10 +45,7 @@ export class TodaySheetService {
   /**
    * Generate a Today Sheet from unorganized captures and pending todos
    */
-  async generateSheet(
-    userId: string,
-    templateId?: string
-  ): Promise<TodaySheet> {
+  async generateSheet(userId: string, templateId?: string): Promise<TodaySheet> {
     // 1. Gather inputs
     const captures = await this.capturesRepo.findUnorganized(userId);
     const existingTodos = await this.todosRepo.findByStatus(userId, 'pending');
@@ -105,8 +102,8 @@ export class TodaySheetService {
 
     // 5. Clear existing today sheet items (set section to 'none')
     const existingSheetTodoIds = existingTodos
-      .filter(t => t.todaySheetSection !== 'none')
-      .map(t => t.id);
+      .filter((t) => t.todaySheetSection !== 'none')
+      .map((t) => t.id);
     if (existingSheetTodoIds.length > 0) {
       await this.todosRepo.removeFromTodaySheet(existingSheetTodoIds);
     }
@@ -126,8 +123,8 @@ export class TodaySheetService {
     };
 
     // Build sets of valid IDs for validation
-    const validCaptureIds = new Set(captures.map(c => c.id));
-    const validTodoIds = new Set(existingTodos.map(t => t.id));
+    const validCaptureIds = new Set(captures.map((c) => c.id));
+    const validTodoIds = new Set(existingTodos.map((t) => t.id));
 
     for (const [section, items] of Object.entries(aiResult.sections)) {
       for (let i = 0; i < items.length; i++) {
@@ -137,14 +134,14 @@ export class TodaySheetService {
         if (item.sourceType === 'capture' && !validCaptureIds.has(item.sourceId)) {
           console.warn(
             `Skipping item "${item.title}": LLM returned invalid capture sourceId "${item.sourceId}" ` +
-            `(not in ${validCaptureIds.size} valid captures)`
+              `(not in ${validCaptureIds.size} valid captures)`
           );
           continue;
         }
         if (item.sourceType === 'todo' && !validTodoIds.has(item.sourceId)) {
           console.warn(
             `Skipping item "${item.title}": LLM returned invalid todo sourceId "${item.sourceId}" ` +
-            `(not in ${validTodoIds.size} valid todos)`
+              `(not in ${validTodoIds.size} valid todos)`
           );
           continue;
         }
@@ -167,7 +164,7 @@ export class TodaySheetService {
               dueDate: todo.dueDate || (item.dueDate ? new Date(item.dueDate) : null),
               feedbackVote: 'none',
               feedbackText: null,
-              feedbackTimestamp: null
+              feedbackTimestamp: null,
             });
           }
         }
@@ -223,10 +220,10 @@ export class TodaySheetService {
 
     // Group by section
     const sections = {
-      must_do_today: todos.filter(t => t.todaySheetSection === 'must_do_today'),
-      likely_today: todos.filter(t => t.todaySheetSection === 'likely_today'),
-      opportunistic: todos.filter(t => t.todaySheetSection === 'opportunistic'),
-      overflow: todos.filter(t => t.todaySheetSection === 'overflow'),
+      must_do_today: todos.filter((t) => t.todaySheetSection === 'must_do_today'),
+      likely_today: todos.filter((t) => t.todaySheetSection === 'likely_today'),
+      opportunistic: todos.filter((t) => t.todaySheetSection === 'opportunistic'),
+      overflow: todos.filter((t) => t.todaySheetSection === 'overflow'),
     };
 
     // Calculate total estimated time
@@ -234,10 +231,11 @@ export class TodaySheetService {
       quick: 10,
       medium: 45,
       long: 90,
-      none: 0
+      none: 0,
     };
-    const totalEstimatedMinutes = todos.reduce((sum, t) =>
-      sum + (timeEstimateMinutes[t.timeEstimate || 'none'] || 0), 0
+    const totalEstimatedMinutes = todos.reduce(
+      (sum, t) => sum + (timeEstimateMinutes[t.timeEstimate || 'none'] || 0),
+      0
     );
 
     return {

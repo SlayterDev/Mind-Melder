@@ -7,7 +7,8 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '../../.env' });
 
 async function runMigration() {
-  const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/capture';
+  const connectionString =
+    process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/capture';
 
   console.log('Connecting to database...');
   const sql = postgres(connectionString, { max: 1 });

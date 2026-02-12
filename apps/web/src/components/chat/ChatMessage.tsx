@@ -18,7 +18,14 @@ interface ChatMessageProps {
   isStreaming?: boolean;
 }
 
-export function ChatMessage({ role, content, toolCalls, toolResults, todoIds, isStreaming }: ChatMessageProps) {
+export function ChatMessage({
+  role,
+  content,
+  toolCalls,
+  toolResults,
+  todoIds,
+  isStreaming,
+}: ChatMessageProps) {
   const [toolsExpanded, setToolsExpanded] = useState(false);
 
   if (role === 'user') {
@@ -43,12 +50,17 @@ export function ChatMessage({ role, content, toolCalls, toolResults, todoIds, is
             >
               {toolsExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               <Wrench size={14} />
-              <span>{toolCalls.length} tool{toolCalls.length > 1 ? 's' : ''} used</span>
+              <span>
+                {toolCalls.length} tool{toolCalls.length > 1 ? 's' : ''} used
+              </span>
             </button>
             {toolsExpanded && (
               <div className="mt-2 space-y-2 pl-5">
                 {toolCalls.map((tc, i) => (
-                  <div key={tc.id} className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                  <div
+                    key={tc.id}
+                    className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50"
+                  >
                     <div className="font-mono text-xs text-accent">{tc.name}</div>
                     <pre className="text-xs text-gray-400 mt-1 overflow-x-auto">
                       {JSON.stringify(tc.arguments, null, 2)}
@@ -80,9 +92,7 @@ export function ChatMessage({ role, content, toolCalls, toolResults, todoIds, is
         )}
 
         {/* Todo task cards */}
-        {todoIds && todoIds.length > 0 && !isStreaming && (
-          <ChatTaskCards todoIds={todoIds} />
-        )}
+        {todoIds && todoIds.length > 0 && !isStreaming && <ChatTaskCards todoIds={todoIds} />}
       </div>
     );
   }

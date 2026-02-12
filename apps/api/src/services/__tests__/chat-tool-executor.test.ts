@@ -108,13 +108,15 @@ describe('ChatToolExecutor', () => {
         query: 'test',
       });
 
-      expect(result).toContain('Search Results:');
-      expect(result).toContain('Captures:');
-      expect(result).toContain('Test capture content');
-      expect(result).toContain('Todos:');
-      expect(result).toContain('Test todo');
-      expect(result).toContain('Notes:');
-      expect(result).toContain('Test note');
+      expect(result.text).toContain('Search Results:');
+      expect(result.text).toContain('Captures:');
+      expect(result.text).toContain('Test capture content');
+      expect(result.text).toContain('Todos:');
+      expect(result.text).toContain('Test todo');
+      expect(result.text).toContain('Notes:');
+      expect(result.text).toContain('Test note');
+      expect(result.todoIds).toHaveLength(1);
+      expect(result.todoIds?.[0]).toBe('todo-1');
       expect(mockSearchService.search).toHaveBeenCalledWith(userId, 'test', 'all');
     });
 
@@ -130,7 +132,8 @@ describe('ChatToolExecutor', () => {
         query: 'nonexistent',
       });
 
-      expect(result).toBe('No relevant content found.');
+      expect(result.text).toBe('No relevant content found.');
+      expect(result.todoIds).toBeUndefined();
     });
 
     it('should respect type filter', async () => {
@@ -148,12 +151,14 @@ describe('ChatToolExecutor', () => {
         ],
       });
 
-      await executor.executeTool(userId, 'search_user_content', {
+      const result = await executor.executeTool(userId, 'search_user_content', {
         query: 'test',
         type: 'todos',
       });
 
       expect(mockSearchService.search).toHaveBeenCalledWith(userId, 'test', 'todos');
+      expect(result.todoIds).toHaveLength(1);
+      expect(result.todoIds?.[0]).toBe('todo-1');
     });
 
     it('should respect limit parameter', async () => {
@@ -176,7 +181,7 @@ describe('ChatToolExecutor', () => {
       });
 
       // Should only show 3 captures
-      const captureMatches = result.match(/Capture \d+/g);
+      const captureMatches = result.text.match(/Capture \d+/g);
       expect(captureMatches?.length).toBe(3);
     });
   });
@@ -202,11 +207,13 @@ describe('ChatToolExecutor', () => {
 
       const result = await executor.executeTool(userId, 'get_todays_todos', {});
 
-      expect(result).toContain("Today's Todos:");
-      expect(result).toContain('Important task');
-      expect(result).toContain('Pending');
-      expect(result).toContain('Another task');
-      expect(result).toContain('Completed');
+      expect(result.text).toContain("Today's Todos:");
+      expect(result.text).toContain('Important task');
+      expect(result.text).toContain('Pending');
+      expect(result.text).toContain('Another task');
+      expect(result.text).toContain('Completed');
+      expect(result.todoIds).toHaveLength(2);
+      expect(result.todoIds).toEqual(['todo-1', 'todo-2']);
       expect(mockRepos.todos.findDueToday).toHaveBeenCalledWith(userId, false);
     });
 
@@ -215,13 +222,14 @@ describe('ChatToolExecutor', () => {
 
       const result = await executor.executeTool(userId, 'get_todays_todos', {});
 
-      expect(result).toBe('No todos due today.');
+      expect(result.text).toBe('No todos due today.');
+      expect(result.todoIds).toBeUndefined();
     });
 
     it('should include completed todos when requested', async () => {
       mockRepos.todos.findDueToday.mockResolvedValue([]);
 
-      await executor.executeTool(userId, 'get_todays_todos', {
+      const result = await executor.executeTool(userId, 'get_todays_todos', {
         include_completed: true,
       });
 
@@ -246,9 +254,9 @@ describe('ChatToolExecutor', () => {
 
       const result = await executor.executeTool(userId, 'get_recent_captures', {});
 
-      expect(result).toContain('Recent Captures:');
-      expect(result).toContain('First capture');
-      expect(result).toContain('Second capture');
+      expect(result.text).toContain('Recent Captures:');
+      expect(result.text).toContain('First capture');
+      expect(result.text).toContain('Second capture');
       expect(mockRepos.captures.findUnorganized).toHaveBeenCalledWith(userId, undefined);
     });
 
@@ -257,7 +265,7 @@ describe('ChatToolExecutor', () => {
 
       const result = await executor.executeTool(userId, 'get_recent_captures', {});
 
-      expect(result).toBe('No recent captures found.');
+      expect(result.text).toBe('No recent captures found.');
     });
 
     it('should respect limit parameter', async () => {
@@ -271,7 +279,7 @@ describe('ChatToolExecutor', () => {
       const result = await executor.executeTool(userId, 'get_recent_captures', { limit: 5 });
 
       // Should only show 5 captures
-      const captureMatches = result.match(/Capture \d+/g);
+      const captureMatches = result.text.match(/Capture \d+/g);
       expect(captureMatches?.length).toBe(5);
     });
   });

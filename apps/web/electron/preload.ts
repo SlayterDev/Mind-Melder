@@ -14,6 +14,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   openSystemPreferences: (pane: string) => ipcRenderer.invoke('open-system-preferences', pane),
   openRecordingWindow: () => ipcRenderer.invoke('open-recording-window'),
   closeRecordingWindow: () => ipcRenderer.invoke('close-recording-window'),
-  resizeRecordingWindow: (height: number) =>
-    ipcRenderer.invoke('resize-recording-window', height),
+  resizeRecordingWindow: (height: number) => ipcRenderer.invoke('resize-recording-window', height),
 });

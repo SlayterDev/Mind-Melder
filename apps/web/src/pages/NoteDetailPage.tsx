@@ -20,10 +20,10 @@ export default function NoteDetailPage() {
 
   const loadNote = async () => {
     if (!id) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const note = await notesAPI.get(id);
       setNote(note);
@@ -37,7 +37,7 @@ export default function NoteDetailPage() {
 
   const handleUpdate = async (data: { title: string; content: string; tags?: string[] }) => {
     if (!id) return;
-    
+
     await notesAPI.update(id, data);
     setNote({ ...note, ...data });
     setIsEditing(false);
@@ -63,10 +63,7 @@ export default function NoteDetailPage() {
     return (
       <div className="text-center py-12">
         <p className="text-red-400 mb-4">{error || 'Note not found'}</p>
-        <button
-          onClick={() => navigate('/notes')}
-          className="btn-accent px-6 py-3"
-        >
+        <button onClick={() => navigate('/notes')} className="btn-accent px-6 py-3">
           Back to Notes
         </button>
       </div>
@@ -131,19 +128,14 @@ export default function NoteDetailPage() {
         {note.tags && note.tags.length > 0 && (
           <div className="flex items-center gap-2 mb-4 flex-wrap">
             {note.tags.map((tag: string) => (
-              <span
-                key={tag}
-                className="badge-accent px-3 py-1 shadow-inner text-xs"
-              >
+              <span key={tag} className="badge-accent px-3 py-1 shadow-inner text-xs">
                 {tag}
               </span>
             ))}
           </div>
         )}
 
-        <h1 className="text-4xl font-bold text-gray-100 mb-4">
-          {note.title || 'Untitled'}
-        </h1>
+        <h1 className="text-4xl font-bold text-gray-100 mb-4">{note.title || 'Untitled'}</h1>
 
         <p className="text-gray-500 text-sm mb-8">
           {new Date(note.date).toLocaleDateString('en-US', {
@@ -154,9 +146,7 @@ export default function NoteDetailPage() {
         </p>
 
         <div className="prose prose-invert prose-lg max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {note.content}
-          </ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{note.content}</ReactMarkdown>
         </div>
       </div>
     </div>

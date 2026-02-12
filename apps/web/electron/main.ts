@@ -198,10 +198,9 @@ ipcMain.handle('request-microphone-permission', async () => {
   return true;
 });
 
-
 ipcMain.handle('save-recording', async (_event, data: { buffer: Uint8Array; filename: string }) => {
   const recordingsDir = path.join(app.getPath('userData'), 'recordings');
-  
+
   // Ensure recordings directory exists (async)
   try {
     await fs.access(recordingsDir);
@@ -230,10 +229,10 @@ ipcMain.handle('save-recording', async (_event, data: { buffer: Uint8Array; file
   }
 
   const filePath = path.join(recordingsDir, safeFileName);
-  
+
   // Write buffer directly without creating a copy (Buffer can accept Uint8Array)
   await fs.writeFile(filePath, data.buffer);
-  
+
   return { path: filePath, size: data.buffer.length };
 });
 
@@ -264,10 +263,10 @@ ipcMain.handle('close-recording-window', () => {
 
 ipcMain.handle('resize-recording-window', (_event, height: number) => {
   if (!recordingWindow) return;
-  
+
   // Clamp height to reasonable bounds (min 220px, max 800px)
   const clampedHeight = Math.max(220, Math.min(800, Math.round(height)));
-  
+
   const [width] = recordingWindow.getSize();
   recordingWindow.setSize(width, clampedHeight);
 });

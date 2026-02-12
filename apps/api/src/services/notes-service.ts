@@ -1,8 +1,8 @@
-import { Database, OrganizedNotesRepository } from "database";
+import { Database, OrganizedNotesRepository } from 'database';
 
 export class NotesService {
-  private notesRepo: OrganizedNotesRepository
-  
+  private notesRepo: OrganizedNotesRepository;
+
   constructor(db: Database) {
     this.notesRepo = new OrganizedNotesRepository(db);
   }

@@ -158,23 +158,19 @@ export function createConversationsRouter(
       const dbMessages = await conversationsRepo.getMessages(id);
 
       // Extract first user message and first assistant message with content
-      const firstUser = dbMessages.find(m => m.role === 'user');
-      const firstAssistant = dbMessages.find(m => m.role === 'assistant' && m.content?.trim());
+      const firstUser = dbMessages.find((m) => m.role === 'user');
+      const firstAssistant = dbMessages.find((m) => m.role === 'assistant' && m.content?.trim());
       if (!firstUser || !firstAssistant) {
         throw new ApiError(400, 'Need at least one user and one assistant message');
       }
 
       // Validate that both messages have non-empty content
-      const userContent =
-        typeof firstUser.content === 'string' ? firstUser.content.trim() : '';
+      const userContent = typeof firstUser.content === 'string' ? firstUser.content.trim() : '';
       const assistantContent =
         typeof firstAssistant.content === 'string' ? firstAssistant.content.trim() : '';
 
       if (!userContent || !assistantContent) {
-        throw new ApiError(
-          400,
-          'Cannot generate title: conversation messages are missing content'
-        );
+        throw new ApiError(400, 'Cannot generate title: conversation messages are missing content');
       }
 
       const settings = await settingsRepo.getOrCreate(userId);
@@ -189,9 +185,7 @@ export function createConversationsRouter(
 
       // If the LLM output is unusable after normalization, fall back to a safe default
       const safeTitle =
-        normalizedTitle ||
-        normalizeGeneratedTitle(conversation.title) ||
-        'Untitled conversation';
+        normalizedTitle || normalizeGeneratedTitle(conversation.title) || 'Untitled conversation';
 
       await conversationsRepo.update(id, { title: safeTitle });
 
@@ -272,7 +266,7 @@ export function createConversationsRouter(
       const handleDisconnect = () => {
         clientDisconnected = true;
       };
-      
+
       req.on('close', handleDisconnect);
       res.on('close', handleDisconnect);
 
@@ -309,11 +303,7 @@ export function createConversationsRouter(
 
         iterations++;
         const messages = await buildMessages();
-        const { toolCalls, content: turnContent } = await runLLMTurn(
-          llmProvider,
-          messages,
-          res
-        );
+        const { toolCalls, content: turnContent } = await runLLMTurn(llmProvider, messages, res);
 
         if (toolCalls.length === 0) {
           // No tool calls - save final message and end
@@ -322,7 +312,9 @@ export function createConversationsRouter(
             role: 'assistant',
             content: turnContent,
           });
-          res.write(`data: ${JSON.stringify({ type: 'done', messageId: assistantMessage.id })}\n\n`);
+          res.write(
+            `data: ${JSON.stringify({ type: 'done', messageId: assistantMessage.id })}\n\n`
+          );
           res.end();
           return;
         }
@@ -343,8 +335,16 @@ export function createConversationsRouter(
           }
 
           try {
-            const { text, todoIds } = await toolExecutor.executeTool(userId, toolCall.name, toolCall.arguments);
-            const toolResultEvent: Record<string, unknown> = { type: 'tool_result', name: toolCall.name, result: text };
+            const { text, todoIds } = await toolExecutor.executeTool(
+              userId,
+              toolCall.name,
+              toolCall.arguments
+            );
+            const toolResultEvent: Record<string, unknown> = {
+              type: 'tool_result',
+              name: toolCall.name,
+              result: text,
+            };
             if (todoIds && todoIds.length > 0) {
               toolResultEvent.todo_ids = todoIds;
             }
@@ -360,7 +360,9 @@ export function createConversationsRouter(
             });
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Tool execution failed';
-            res.write(`data: ${JSON.stringify({ type: 'tool_error', name: toolCall.name, error: errorMessage })}\n\n`);
+            res.write(
+              `data: ${JSON.stringify({ type: 'tool_error', name: toolCall.name, error: errorMessage })}\n\n`
+            );
 
             // Save error as tool result
             await conversationsRepo.addMessage({
@@ -376,7 +378,9 @@ export function createConversationsRouter(
       }
 
       // Max iterations reached
-      res.write(`data: ${JSON.stringify({ type: 'error', message: 'Max tool iterations reached' })}\n\n`);
+      res.write(
+        `data: ${JSON.stringify({ type: 'error', message: 'Max tool iterations reached' })}\n\n`
+      );
       res.end();
     })
   );

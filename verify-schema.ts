@@ -8,7 +8,8 @@ import { sql } from 'drizzle-orm';
 async function verifySchema() {
   console.log('🔍 Verifying Phase 1 Schema Changes\n');
 
-  const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/capture';
+  const connectionString =
+    process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/capture';
   const client = postgres(connectionString);
   const db = drizzle(client);
 
@@ -32,7 +33,7 @@ async function verifySchema() {
         WHERE table_name = 'today_sheets'
         ORDER BY ordinal_position;
       `);
-      console.log('  Columns:', (todaySheetsColumns as any[]).map(r => r.column_name).join(', '));
+      console.log('  Columns:', (todaySheetsColumns as any[]).map((r) => r.column_name).join(', '));
     }
 
     // Check if description column exists on todos
@@ -43,7 +44,10 @@ async function verifySchema() {
         AND column_name = 'description'
       );
     `);
-    console.log('\n✓ todos.description column:', (descriptionExists as any)[0]?.exists ? 'EXISTS' : 'MISSING');
+    console.log(
+      '\n✓ todos.description column:',
+      (descriptionExists as any)[0]?.exists ? 'EXISTS' : 'MISSING'
+    );
 
     // Check if today_sheet_id column exists on todos
     const todaySheetIdExists = await db.execute(sql`
@@ -53,7 +57,10 @@ async function verifySchema() {
         AND column_name = 'today_sheet_id'
       );
     `);
-    console.log('✓ todos.today_sheet_id column:', (todaySheetIdExists as any)[0]?.exists ? 'EXISTS' : 'MISSING');
+    console.log(
+      '✓ todos.today_sheet_id column:',
+      (todaySheetIdExists as any)[0]?.exists ? 'EXISTS' : 'MISSING'
+    );
 
     // Check FK constraint
     const fkExists = await db.execute(sql`
@@ -64,7 +71,10 @@ async function verifySchema() {
         AND constraint_name = 'todos_today_sheet_id_today_sheets_id_fk'
       );
     `);
-    console.log('✓ FK constraint (todos → today_sheets):', (fkExists as any)[0]?.exists ? 'EXISTS' : 'MISSING');
+    console.log(
+      '✓ FK constraint (todos → today_sheets):',
+      (fkExists as any)[0]?.exists ? 'EXISTS' : 'MISSING'
+    );
 
     // Check indexes on today_sheets
     const indexesExist = await db.execute(sql`
@@ -72,7 +82,10 @@ async function verifySchema() {
       FROM pg_indexes
       WHERE tablename = 'today_sheets';
     `);
-    console.log('\n✓ today_sheets indexes:', (indexesExist as any[]).map(r => r.indexname).join(', '));
+    console.log(
+      '\n✓ today_sheets indexes:',
+      (indexesExist as any[]).map((r) => r.indexname).join(', ')
+    );
 
     console.log('\n✅ Phase 1 Schema Verification Complete!');
   } catch (error) {

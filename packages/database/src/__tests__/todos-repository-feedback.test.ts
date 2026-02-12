@@ -198,7 +198,7 @@ describe('TodosRepository - Feedback Methods', () => {
       const result = await repository.findWithFeedback('user-1');
 
       expect(result).toEqual(mockTodos);
-      expect(result.every(t => t.feedbackVote !== 'none')).toBe(true);
+      expect(result.every((t) => t.feedbackVote !== 'none')).toBe(true);
     });
 
     it('should return empty array when no todos have feedback', async () => {
@@ -237,7 +237,7 @@ describe('TodosRepository - Feedback Methods', () => {
 
       expect(result).toEqual(mockTodos);
       expect(result).toHaveLength(2);
-      expect(result.every(t => t.feedbackVote === 'none')).toBe(true);
+      expect(result.every((t) => t.feedbackVote === 'none')).toBe(true);
     });
 
     it('should return empty array when all todos have feedback', async () => {

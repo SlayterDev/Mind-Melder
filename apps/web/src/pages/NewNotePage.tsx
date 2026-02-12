@@ -23,10 +23,7 @@ export default function NewNotePage() {
 
       <h2 className="text-3xl font-bold mb-8">New Note</h2>
 
-      <NoteForm
-        onSubmit={handleSubmit}
-        onCancel={() => navigate('/notes')}
-      />
+      <NoteForm onSubmit={handleSubmit} onCancel={() => navigate('/notes')} />
     </div>
   );
 }

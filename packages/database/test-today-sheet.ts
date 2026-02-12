@@ -2,7 +2,8 @@ import { createDatabaseClient } from './src/client';
 import { TodosRepository } from './src/repositories/todos-repository';
 
 async function testTodaySheetFields() {
-  const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/capture';
+  const connectionString =
+    process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/capture';
   const db = createDatabaseClient(connectionString);
   const todosRepo = new TodosRepository(db);
 
@@ -81,9 +82,11 @@ async function testTodaySheetFields() {
     // Test 6: Verify they're set to 'none'
     console.log('6️⃣ Verifying todos are set to section "none"...');
     const allTodos = await todosRepo.findByUserId('test-user-1');
-    const testTodos = allTodos.filter(t => t.id === todo.id || t.id === todo2.id);
-    testTodos.forEach(t => {
-      console.log(`   - ${t.content}: section="${t.todaySheetSection}", order=${t.todaySheetOrder}`);
+    const testTodos = allTodos.filter((t) => t.id === todo.id || t.id === todo2.id);
+    testTodos.forEach((t) => {
+      console.log(
+        `   - ${t.content}: section="${t.todaySheetSection}", order=${t.todaySheetOrder}`
+      );
     });
     console.log();
 
@@ -105,7 +108,7 @@ testTodaySheetFields()
     console.log('\n✨ Test completed successfully');
     process.exit(0);
   })
-  .catch(error => {
+  .catch((error) => {
     console.error('\n❌ Test error:', error);
     process.exit(1);
   });

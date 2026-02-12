@@ -25,7 +25,9 @@ export default function QuickCapturePage() {
     <QueryClientProvider client={queryClient}>
       <div
         className="min-h-screen flex items-center"
-        style={{ background: 'linear-gradient(to bottom right, rgb(17 24 39), rgb(17 24 39 / 0.95))' }}
+        style={{
+          background: 'linear-gradient(to bottom right, rgb(17 24 39), rgb(17 24 39 / 0.95))',
+        }}
       >
         {/* Draggable region for moving the window */}
         <div

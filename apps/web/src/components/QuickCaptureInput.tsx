@@ -43,7 +43,7 @@ export default function QuickCaptureInput({
   const removeChip = () => {
     setChip(null);
     queueMicrotask(() => inputRef.current?.focus());
-  }
+  };
 
   useEffect(() => {
     if (autoFocus && inputRef.current) {
@@ -63,7 +63,10 @@ export default function QuickCaptureInput({
       return;
     }
 
-    const args = chip.label.split(':').slice(1).filter((s) => s !== '');
+    const args = chip.label
+      .split(':')
+      .slice(1)
+      .filter((s) => s !== '');
     let title = args.length ? args[0].trim().replace(/-+/g, ' ') : null;
 
     if (!title) {
@@ -73,7 +76,7 @@ export default function QuickCaptureInput({
     }
 
     await notesAPI.append({ title, contentToAppend: data.content });
-  }
+  };
 
   const queryClient = useQueryClient();
   const createCapture = useMutation({
@@ -113,70 +116,76 @@ export default function QuickCaptureInput({
     }
   };
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    if (variant === 'textarea' && (e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-      handleSubmit(e);
-      return;
-    }
-
-    if (!chip) {
-      return;
-    }
-
-    if (e.key === 'Backspace') {
-      const el = e.currentTarget;
-      const caret = el.selectionStart || 0;
-      const hasSelection = (el.selectionStart ?? 0) !== (el.selectionEnd ?? 0);
-
-      if (caret === 0 && !hasSelection) {
-        e.preventDefault();
-
-        const remainingText = chip.label.split(':').slice(0, -2).join(':');
-        if (remainingText) {
-          setChip({ kind: 'trigger', label: remainingText + ':' });
-        } else {
-          setChip(null);
-        }
-
-        queueMicrotask(() => {
-          const input = inputRef.current;
-          if (!input) return;
-          input.focus();
-          input.setSelectionRange(0, 0);
-        });
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      if (variant === 'textarea' && (e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        handleSubmit(e);
+        return;
       }
-    }
-  }, [chip, content, variant, handleSubmit, inputRef]);
 
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
-    const raw = e.target.value;
+      if (!chip) {
+        return;
+      }
 
-    if (!chip && triggerPattern.test(raw)) {
-      // New trigger detected
-      const match = raw.match(triggerPattern);
-      const consumed = match?.[0]?.length || 0;
+      if (e.key === 'Backspace') {
+        const el = e.currentTarget;
+        const caret = el.selectionStart || 0;
+        const hasSelection = (el.selectionStart ?? 0) !== (el.selectionEnd ?? 0);
 
-      const nextChip: Chip = { kind: 'trigger', label: trigger.trim() };
-      const nextText = raw.slice(consumed);
+        if (caret === 0 && !hasSelection) {
+          e.preventDefault();
 
-      setChip(nextChip);
-      setContent(nextText);
-      return;
-    } else if (chip && argumentPattern.test(raw)) {
-      // Argument detected
-      const match = raw.match(argumentPattern);
-      const consumed = match?.[0]?.length || 0;
+          const remainingText = chip.label.split(':').slice(0, -2).join(':');
+          if (remainingText) {
+            setChip({ kind: 'trigger', label: remainingText + ':' });
+          } else {
+            setChip(null);
+          }
 
-      const updatedChip: Chip = { kind: 'trigger', label: chip.label + match?.[0].trim() };
-      const nextText = raw.slice(consumed);
+          queueMicrotask(() => {
+            const input = inputRef.current;
+            if (!input) return;
+            input.focus();
+            input.setSelectionRange(0, 0);
+          });
+        }
+      }
+    },
+    [chip, content, variant, handleSubmit, inputRef]
+  );
 
-      setChip(updatedChip);
-      setContent(nextText);
-      return;
-    }
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+      const raw = e.target.value;
 
-    setContent(raw);
-  }, [chip, trigger, triggerPattern, argumentPattern]);
+      if (!chip && triggerPattern.test(raw)) {
+        // New trigger detected
+        const match = raw.match(triggerPattern);
+        const consumed = match?.[0]?.length || 0;
+
+        const nextChip: Chip = { kind: 'trigger', label: trigger.trim() };
+        const nextText = raw.slice(consumed);
+
+        setChip(nextChip);
+        setContent(nextText);
+        return;
+      } else if (chip && argumentPattern.test(raw)) {
+        // Argument detected
+        const match = raw.match(argumentPattern);
+        const consumed = match?.[0]?.length || 0;
+
+        const updatedChip: Chip = { kind: 'trigger', label: chip.label + match?.[0].trim() };
+        const nextText = raw.slice(consumed);
+
+        setChip(updatedChip);
+        setContent(nextText);
+        return;
+      }
+
+      setContent(raw);
+    },
+    [chip, trigger, triggerPattern, argumentPattern]
+  );
 
   if (variant === 'textarea') {
     return (
@@ -248,9 +257,7 @@ export default function QuickCaptureInput({
           }}
         >
           {chip && (
-            <span
-              className="inline-flex items-center gap-2 px-3 py-1 mr-2 rounded-full bg-accent text-gray-100 text-sm font-mono"
-            >
+            <span className="inline-flex items-center gap-2 px-3 py-1 mr-2 rounded-full bg-accent text-gray-100 text-sm font-mono">
               <span>{chip.label}</span>
               <button
                 type="button"
