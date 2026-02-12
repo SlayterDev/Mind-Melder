@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Check, X, ChevronDown, ChevronRight, Pencil, Save, Calendar, Zap, Clock, Hourglass } from 'lucide-react';
+import { Check, X, ChevronDown, ChevronRight, Pencil, Save, Calendar, Zap, Clock, Hourglass, Flame, Target, Lightbulb, Package, Trash2 } from 'lucide-react';
 import type { TimeEstimate } from '../api/client';
+
+type TodaySheetSection = 'must_do_today' | 'likely_today' | 'opportunistic' | 'overflow' | 'none';
 
 interface TodoCardProps {
   todo: {
@@ -11,12 +13,14 @@ interface TodoCardProps {
     dueDate?: string;
     completedAt?: string;
     timeEstimate?: TimeEstimate;
+    todaySheetSection?: TodaySheetSection;
   };
   onToggleComplete: (id: string, status: string) => void;
   onUpdateContent: (id: string, content: string) => void;
   onUpdateDescription: (id: string, description: string) => void;
   onUpdateDueDate: (id: string, dueDate: string | null) => void;
   onUpdateTimeEstimate: (id: string, timeEstimate: TimeEstimate) => void;
+  onUpdateTodaySheetSection?: (id: string, section: TodaySheetSection) => void;
   onDelete: (id: string) => void;
 }
 
@@ -27,6 +31,13 @@ const TIME_ESTIMATE_OPTIONS: { value: TimeEstimate; label: string; icon: typeof 
   { value: 'none', label: 'No estimate', icon: Clock },
 ];
 
+const TODAY_SHEET_OPTIONS: { value: TodaySheetSection; label: string; icon: typeof Flame }[] = [
+  { value: 'must_do_today', label: 'Must do today', icon: Flame },
+  { value: 'likely_today', label: 'Likely today', icon: Target },
+  { value: 'opportunistic', label: 'Opportunistic', icon: Lightbulb },
+  { value: 'overflow', label: 'Overflow', icon: Package },
+];
+
 export default function TodoCard({
   todo,
   onToggleComplete,
@@ -34,6 +45,7 @@ export default function TodoCard({
   onUpdateDescription,
   onUpdateDueDate,
   onUpdateTimeEstimate,
+  onUpdateTodaySheetSection,
   onDelete,
 }: TodoCardProps) {
   const [expandedDescription, setExpandedDescription] = useState(false);
@@ -44,6 +56,7 @@ export default function TodoCard({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showTodaySheetDropdown, setShowTodaySheetDropdown] = useState(false);
 
   const getTimeEstimateDisplay = (estimate: TimeEstimate) => {
     const displays: Record<string, { icon: typeof Zap; label: string }> = {
@@ -88,6 +101,21 @@ export default function TodoCard({
     todo.dueDate &&
     getDateOnly(todo.dueDate) < getDateOnly(new Date().toISOString()) &&
     todo.status === 'pending';
+
+  const getTodaySheetDisplay = (section?: TodaySheetSection) => {
+    if (!section || section === 'none') return null;
+    const option = TODAY_SHEET_OPTIONS.find((opt) => opt.value === section);
+    return option;
+  };
+
+  const handleTodaySheetChange = (section: TodaySheetSection) => {
+    if (onUpdateTodaySheetSection) {
+      onUpdateTodaySheetSection(todo.id, section);
+      setShowTodaySheetDropdown(false);
+    }
+  };
+
+  const currentSection = getTodaySheetDisplay(todo.todaySheetSection);
 
   return (
     <div
@@ -323,14 +351,75 @@ export default function TodoCard({
           </div>
         </div>
 
-        <button
-          onClick={() => onDelete(todo.id)}
-          className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400
-                   transition-all text-sm px-3 py-1 rounded hover:bg-gray-800"
-          title="Delete"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Today Sheet Dropdown */}
+          <div className={`relative ${currentSection ? '' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+            <button
+              onClick={() => setShowTodaySheetDropdown(!showTodaySheetDropdown)}
+              className="text-gray-400 hover:text-accent-highlight text-sm px-3 py-1 rounded hover:bg-gray-800 transition-all flex items-center gap-2"
+              title="Add to today sheet"
+            >
+              {currentSection ? (
+                <>
+                  {(() => {
+                    const Icon = currentSection.icon;
+                    return <Icon className="w-4 h-4" />;
+                  })()}
+                  <span>{currentSection.label}</span>
+                </>
+              ) : (
+                <>
+                  <Calendar className="w-4 h-4" />
+                  <span>Add to today sheet</span>
+                </>
+              )}
+            </button>
+            
+            {showTodaySheetDropdown && (
+              <div className="absolute right-0 mt-1 w-48 bg-gray-800 border border-gray-700 rounded-md shadow-lg z-10">
+                {TODAY_SHEET_OPTIONS.map((option) => {
+                  const Icon = option.icon;
+                  const isSelected = todo.todaySheetSection === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => handleTodaySheetChange(option.value)}
+                      className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 transition-colors ${
+                        isSelected
+                          ? 'bg-accent text-white'
+                          : 'text-gray-300 hover:bg-gray-700'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      {option.label}
+                    </button>
+                  );
+                })}
+                {currentSection && (
+                  <>
+                    <div className="border-t border-gray-700 my-1" />
+                    <button
+                      onClick={() => handleTodaySheetChange('none')}
+                      className="w-full text-left px-3 py-2 text-sm flex items-center gap-2 text-red-400 hover:bg-gray-700 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Remove
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => onDelete(todo.id)}
+            className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400
+                     transition-all text-sm px-3 py-1 rounded hover:bg-gray-800"
+            title="Delete"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );
