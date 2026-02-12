@@ -1,17 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { capturesAPI, organizeAPI } from '../api/client';
-import { Zap, MailOpen, X, Pencil, Save } from 'lucide-react';
+import { Zap, MailOpen, X, Pencil, Save, Loader2 } from 'lucide-react';
 import TemplateSelector from '../components/TemplateSelector';
 
+// Define Capture type for better type safety
+interface Capture {
+  id: string;
+  content: string;
+  timestamp: string;
+  metadata?: Record<string, unknown>;
+}
+
 export default function InboxPage() {
-  const [captures, setCaptures] = useState<any[]>([]);
+  const [captures, setCaptures] = useState<Capture[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [message, setMessage] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const queryClient = useQueryClient();
 
   const loadCaptures = async () => {
@@ -65,7 +74,7 @@ export default function InboxPage() {
     }
   };
 
-  const handleStartEdit = (capture: any) => {
+  const handleStartEdit = (capture: Capture) => {
     setEditingId(capture.id);
     setEditedContent(capture.content);
   };
@@ -76,20 +85,24 @@ export default function InboxPage() {
   };
 
   const handleSaveEdit = async (id: string) => {
-    // Optimistic update - update UI immediately
+    setIsSaving(true);
     const previousCaptures = captures;
-    setCaptures((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, content: editedContent } : c))
-    );
-    setEditingId(null);
-
+    
     try {
-      await capturesAPI.update(id, { content: editedContent });
+      const updatedCapture = await capturesAPI.update(id, { content: editedContent });
+      // Update local state after successful API call with server-provided timestamp
+      setCaptures((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, ...(updatedCapture as Record<string, unknown>) } : c))
+      );
+      setEditingId(null);
+      setEditedContent('');
     } catch (error) {
       console.error('Failed to update capture:', error);
       // Revert on error
       setCaptures(previousCaptures);
       setEditingId(id);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -162,14 +175,20 @@ export default function InboxPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleSaveEdit(capture.id)}
-                          className="flex items-center gap-1 px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
+                          disabled={isSaving}
+                          className="flex items-center gap-1 px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:opacity-50 text-white text-xs rounded transition-colors"
                         >
-                          <Save className="w-3 h-3" />
-                          Save
+                          {isSaving ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <Save className="w-3 h-3" />
+                          )}
+                          {isSaving ? 'Saving...' : 'Save'}
                         </button>
                         <button
                           onClick={handleCancelEdit}
-                          className="flex items-center gap-1 px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs rounded transition-colors"
+                          disabled={isSaving}
+                          className="flex items-center gap-1 px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:opacity-50 text-gray-200 text-xs rounded transition-colors"
                         >
                           <X className="w-3 h-3" />
                           Cancel
@@ -188,6 +207,7 @@ export default function InboxPage() {
                         onClick={() => handleStartEdit(capture)}
                         className="absolute top-0 right-8 opacity-0 group-hover/content:opacity-100 transition-opacity p-1 hover:bg-gray-700 rounded"
                         title="Edit capture"
+                        aria-label="Edit capture"
                       >
                         <Pencil className="w-3 h-3 text-gray-400" />
                       </button>
@@ -204,6 +224,7 @@ export default function InboxPage() {
                     className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400
                              transition-all text-sm px-3 py-1 rounded hover:bg-gray-800"
                     title="Delete"
+                    aria-label="Delete capture"
                   >
                     <X className="w-4 h-4" />
                   </button>

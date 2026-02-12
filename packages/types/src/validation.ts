@@ -7,8 +7,10 @@ export const createCaptureSchema = z.object({
 });
 
 export const updateCaptureSchema = z.object({
-  content: z.string().min(1, 'Content is required').max(10000, 'Content too long').optional(),
+  content: z.string().min(1, 'Content cannot be empty').max(10000, 'Content too long').optional(),
   metadata: z.record(z.unknown()).optional(),
+}).refine((data) => data.content !== undefined || data.metadata !== undefined, {
+  message: 'At least one field (content or metadata) must be provided',
 });
 
 export type CreateCaptureInput = z.infer<typeof createCaptureSchema>;
