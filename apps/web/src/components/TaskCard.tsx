@@ -32,6 +32,7 @@ interface TaskCardProps {
     feedbackVote?: FeedbackVote;
     feedbackText?: string;
   };
+  showDragHandle?: boolean;
   onToggleComplete: (id: string, status: string) => void;
   onUpdateDueDate?: (id: string, dueDate: string | null) => void;
   onUpdateDescription?: (id: string, description: string) => void;
@@ -40,7 +41,7 @@ interface TaskCardProps {
   onSubmitFeedback?: (id: string, vote: FeedbackVote, feedbackText?: string) => void;
 }
 
-export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUpdateDescription, onUpdateContent, onUpdateTimeEstimate, onSubmitFeedback }: TaskCardProps) {
+export default function TaskCard({ todo, showDragHandle = true, onToggleComplete, onUpdateDueDate, onUpdateDescription, onUpdateContent, onUpdateTimeEstimate, onSubmitFeedback }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -140,14 +141,16 @@ export default function TaskCard({ todo, onToggleComplete, onUpdateDueDate, onUp
     >
       <div className="flex items-start gap-3">
         {/* Drag Handle */}
-        <button
-          {...attributes}
-          {...listeners}
-          className="drag-handle"
-          title="Drag to reorder"
-        >
-          <GripVertical className="w-4 h-4" />
-        </button>
+        {showDragHandle && (
+          <button
+            {...attributes}
+            {...listeners}
+            className="drag-handle"
+            title="Drag to reorder"
+          >
+            <GripVertical className="w-4 h-4" />
+          </button>
+        )}
 
         {/* Checkbox */}
         <button

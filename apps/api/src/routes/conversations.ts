@@ -157,9 +157,9 @@ export function createConversationsRouter(
 
       const dbMessages = await conversationsRepo.getMessages(id);
 
-      // Extract first user + assistant messages
+      // Extract first user message and first assistant message with content
       const firstUser = dbMessages.find(m => m.role === 'user');
-      const firstAssistant = dbMessages.find(m => m.role === 'assistant');
+      const firstAssistant = dbMessages.find(m => m.role === 'assistant' && m.content?.trim());
       if (!firstUser || !firstAssistant) {
         throw new ApiError(400, 'Need at least one user and one assistant message');
       }
@@ -343,15 +343,20 @@ export function createConversationsRouter(
           }
 
           try {
-            const result = await toolExecutor.executeTool(userId, toolCall.name, toolCall.arguments);
-            res.write(`data: ${JSON.stringify({ type: 'tool_result', name: toolCall.name, result })}\n\n`);
+            const { text, todoIds } = await toolExecutor.executeTool(userId, toolCall.name, toolCall.arguments);
+            const toolResultEvent: Record<string, unknown> = { type: 'tool_result', name: toolCall.name, result: text };
+            if (todoIds && todoIds.length > 0) {
+              toolResultEvent.todo_ids = todoIds;
+            }
+            res.write(`data: ${JSON.stringify(toolResultEvent)}\n\n`);
 
-            // Save tool result message
+            // Save tool result message (text only for LLM context)
             await conversationsRepo.addMessage({
               conversationId: id,
               role: 'tool',
-              content: result,
+              content: text,
               toolCallId: toolCall.id,
+              metadata: todoIds && todoIds.length > 0 ? { todoIds } : undefined,
             });
           } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Tool execution failed';

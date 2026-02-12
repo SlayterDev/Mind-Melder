@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, MessageSquare, Trash2, PanelLeftClose, PanelLeft, Pencil } from 'lucide-react';
 import { conversationsAPI, type Conversation } from '../api/client';
+import { MAX_CHAT_TODOS } from 'types';
 import { getApiUrl } from '../api/config';
 import { ChatMessage } from '../components/chat/ChatMessage';
 import { ChatInput } from '../components/chat/ChatInput';
@@ -12,6 +13,7 @@ interface DisplayMessage {
   content: string;
   toolCalls?: Array<{ id: string; name: string; arguments: Record<string, unknown> }>;
   toolResults?: Array<{ name: string; result: string }>;
+  todoIds?: string[];
   isStreaming?: boolean;
 }
 
@@ -100,14 +102,19 @@ export default function ChatPage() {
       // Convert API messages to display format, pairing tool results with assistant messages
       const displayMessages: DisplayMessage[] = [];
       const toolResultsMap = new Map<string, string>();
-      
-      // First pass: collect all tool results by toolCallId
+      const toolTodoIdsMap = new Map<string, string[]>();
+
+      // First pass: collect all tool results and todoIds by toolCallId
       for (const msg of data.messages) {
         if (msg.role === 'tool' && msg.toolCallId && msg.content) {
           toolResultsMap.set(msg.toolCallId, msg.content);
+          const meta = msg.metadata as { todoIds?: string[] } | null;
+          if (meta?.todoIds) {
+            toolTodoIdsMap.set(msg.toolCallId, meta.todoIds);
+          }
         }
       }
-      
+
       // Second pass: build display messages with tool results attached
       for (const msg of data.messages) {
         if (msg.role === 'user') {
@@ -118,7 +125,8 @@ export default function ChatPage() {
           });
         } else if (msg.role === 'assistant') {
           const toolResults: Array<{ name: string; result: string }> = [];
-          
+          const todoIds: string[] = [];
+
           // Match tool results to this assistant message's tool calls
           if (msg.toolCalls) {
             for (const tc of msg.toolCalls) {
@@ -126,19 +134,47 @@ export default function ChatPage() {
               if (result) {
                 toolResults.push({ name: tc.name, result });
               }
+              const ids = toolTodoIdsMap.get(tc.id);
+              if (ids) {
+                for (const tid of ids) {
+                  if (!todoIds.includes(tid)) todoIds.push(tid);
+                }
+              }
             }
           }
-          
+
           displayMessages.push({
             id: msg.id,
             role: 'assistant',
             content: msg.content ?? '',
             toolCalls: msg.toolCalls ?? undefined,
             toolResults: toolResults.length > 0 ? toolResults : undefined,
+            todoIds: todoIds.length > 0 ? todoIds.slice(0, MAX_CHAT_TODOS) : undefined,
           });
         }
         // Skip system and tool messages for display (tool results are attached to assistant messages)
       }
+
+      // Move todoIds to the last assistant message in each turn so cards
+      // render below the response content, matching the streaming layout.
+      for (let i = 0; i < displayMessages.length; i++) {
+        const msg = displayMessages[i];
+        if (msg.todoIds && msg.toolCalls) {
+          // Find the last consecutive assistant message in this turn
+          let lastAssistantIdx = i;
+          for (let j = i + 1; j < displayMessages.length && displayMessages[j].role === 'assistant'; j++) {
+            lastAssistantIdx = j;
+          }
+          if (lastAssistantIdx !== i) {
+            displayMessages[lastAssistantIdx] = {
+              ...displayMessages[lastAssistantIdx],
+              todoIds: msg.todoIds,
+            };
+            displayMessages[i] = { ...msg, todoIds: undefined };
+          }
+        }
+      }
+
       setMessages(displayMessages);
     } catch (error) {
       console.error('Failed to load messages:', error);
@@ -228,6 +264,7 @@ export default function ChatPage() {
     const toolCalls: Array<{ id: string; name: string; arguments: Record<string, unknown> }> = [];
     const toolResults: Array<{ name: string; result: string }> = [];
     const toolErrors: Array<{ name: string; error: string }> = [];
+    const collectedTodoIds: string[] = [];
 
     // Create abort controller for this request
     const abortController = new AbortController();
@@ -315,6 +352,14 @@ export default function ChatPage() {
                 });
               } else if (data.type === 'tool_result') {
                 toolResults.push({ name: data.name, result: data.result });
+                if (data.todo_ids) {
+                  for (const tid of data.todo_ids) {
+                    if (!collectedTodoIds.includes(tid)) {
+                      collectedTodoIds.push(tid);
+                    }
+                  }
+                }
+                const todoIds = collectedTodoIds.slice(0, MAX_CHAT_TODOS);
                 setMessages((prev) => {
                   if (conversationIdRef.current !== currentConversationId) {
                     return prev;
@@ -326,6 +371,7 @@ export default function ChatPage() {
                     updated[lastIndex] = {
                       ...last,
                       toolResults: [...toolResults],
+                      todoIds: todoIds.length > 0 ? todoIds : undefined,
                     };
                   }
                   return updated;
@@ -574,6 +620,7 @@ export default function ChatPage() {
                     content={msg.content}
                     toolCalls={msg.toolCalls}
                     toolResults={msg.toolResults}
+                    todoIds={msg.todoIds}
                     isStreaming={msg.isStreaming}
                   />
                 ))

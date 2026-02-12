@@ -46,6 +46,7 @@ export type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
 export const todosAPI = {
   list: (status?: 'pending' | 'completed') =>
     fetchAPI<any[]>(`/todos${status ? `?status=${status}` : ''}`),
+  get: (id: string) => fetchAPI<any>(`/todos/${id}`),
   create: (data: { content: string; dueDate?: string }) =>
     fetchAPI('/todos', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: string, data: { content?: string; status?: string; dueDate?: string | null; description?: string; timeEstimate?: TimeEstimate; todaySheetSection?: string }) =>
@@ -163,6 +164,7 @@ export interface ChatMessage {
   content: string | null;
   toolCalls: Array<{ id: string; name: string; arguments: Record<string, unknown> }> | null;
   toolCallId: string | null;
+  metadata: Record<string, unknown> | null;
   createdAt: string;
 }
 
