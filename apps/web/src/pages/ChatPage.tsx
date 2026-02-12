@@ -187,7 +187,6 @@ export default function ChatPage() {
     try {
       const conversation = await conversationsAPI.create({
         title: 'New Chat',
-        systemPrompt: 'You are a helpful assistant with access to the user\'s notes, captures, and todos. Use the available tools to search and retrieve information when the user asks about their data.',
       });
       setConversations((prev) => [conversation, ...prev]);
       navigate(`/chat/${conversation.id}`);

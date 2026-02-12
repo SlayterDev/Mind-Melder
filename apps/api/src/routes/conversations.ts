@@ -58,13 +58,18 @@ export function createConversationsRouter(
     '/',
     validateBody(createConversationSchema),
     asyncHandler(async (req, res) => {
-      const { title, model, systemPrompt } = req.body;
+      const { title, model } = req.body;
       const userId = 'test-user-1'; // TODO: Get from auth context
 
       const conversation = await conversationsRepo.create({
         title,
         model,
-        systemPrompt,
+        systemPrompt:
+          `You are a helpful assistant with access to the user's notes, captures, and todos. Use the available tools to search and retrieve information when the user asks about their data.
+          - Reference tool results conversationally in your responses, but do not include raw tool result data in your messages. Instead, use the information to inform your replies to the user.
+            For example, if a tool returns a list of notes, you might say "I found 3 notes related to that topic. Would you like me to summarize them?" rather than dumping the note contents directly.
+            OR when referencing todos shorten the content and omit descriptions, e.g. "You have a todo to 'Buy groceries' due tomorrow."
+          - Use markdown formatting in your responses when appropriate, and keep your replies concise and relevant to the user's queries. Always aim to provide helpful and accurate information based on the user's data and questions.`,
         userId,
       });
 
