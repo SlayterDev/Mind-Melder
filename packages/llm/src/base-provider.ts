@@ -190,10 +190,13 @@ YOUR TASK:
 9. Defer to user template instructions below for any additional formatting or organization rules
 10. Look for critical info like people, deadlines, project names to include in titles/descriptions
 
-PREVIOUS USER FEEDBACK:
-${input.feedbackTodos.length > 0 ? input.feedbackTodos.map((t, i) =>
+${input.feedbackTodos.length > 0 
+  ? `PREVIOUS USER FEEDBACK:
+Use to improve task extraction and prioritization. Don't consider these as input captures unless they are also in the captures or existing todos list above. 
+${input.feedbackTodos.map((t, i) =>
   `${i + 1}. ID: ${t.id} | ${t.content} | ${t.dueDate ? new Date(t.dueDate).toLocaleDateString() : 'No due date'} | Tags: [${t.tags?.join(', ')}] | Feedback: ${t.feedbackVote === 'thumbs_up' ? 'Helpful' : 'Not Helpful'}${t.feedbackText ? ` | Comments: ${t.feedbackText}` : ''}`
-).join('\n') : 'No feedback provided.'}
+).join('\n')}` 
+  : ''}
 
 ${tagsInstruction}
 

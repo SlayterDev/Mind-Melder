@@ -129,6 +129,26 @@ export class TodosRepository {
   }
 
   /**
+   * Remove completed todos from today sheet (set section to 'none')
+   */
+  async removeCompletedFromTodaySheet(userId: string): Promise<void> {
+    await this.db
+      .update(todos)
+      .set({
+        todaySheetSection: 'none' as any,
+        todaySheetOrder: null,
+        updatedAt: new Date()
+      })
+      .where(
+        and(
+          eq(todos.userId, userId),
+          eq(todos.status, 'completed'),
+          ne(todos.todaySheetSection, 'none')
+        )
+      );
+  }
+
+  /**
    * Submit feedback for a todo (thumbs up/down with optional text)
    */
   async submitFeedback(
