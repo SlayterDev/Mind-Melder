@@ -33,6 +33,8 @@ export const createTodoSchema = z.object({
 
 export const timeEstimateSchema = z.enum(['quick', 'medium', 'long', 'none']);
 
+export const todaySheetSectionSchema = z.enum(['must_do_today', 'likely_today', 'opportunistic', 'overflow', 'none']);
+
 export const feedbackVoteSchema = z.enum(['thumbs_up', 'thumbs_down', 'none']);
 
 export const submitFeedbackSchema = z.object({
@@ -46,9 +48,11 @@ export const updateTodoSchema = z.object({
   status: z.enum(['pending', 'completed']).optional(),
   dueDate: z.string().datetime().nullable().optional(),
   timeEstimate: timeEstimateSchema.optional(),
+  todaySheetSection: todaySheetSectionSchema.optional(),
 });
 
 export type TimeEstimate = z.infer<typeof timeEstimateSchema>;
+export type TodaySheetSection = z.infer<typeof todaySheetSectionSchema>;
 
 export type FeedbackVote = z.infer<typeof feedbackVoteSchema>;
 export type SubmitFeedbackInput = z.infer<typeof submitFeedbackSchema>;

@@ -105,6 +105,18 @@ export default function TodosPage() {
     }
   };
 
+  const handleUpdateTodaySheetSection = async (id: string, section: string) => {
+    // Optimistic update
+    setTodos(todos.map((t) => (t.id === id ? { ...t, todaySheetSection: section } : t)));
+
+    try {
+      await todosAPI.update(id, { todaySheetSection: section });
+    } catch (error) {
+      console.error('Failed to update today sheet section:', error);
+      loadTodos(statusFilter === 'all' ? undefined : statusFilter);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this todo?')) return;
 
@@ -181,6 +193,7 @@ export default function TodosPage() {
               onUpdateDescription={handleUpdateDescription}
               onUpdateDueDate={handleUpdateDueDate}
               onUpdateTimeEstimate={handleUpdateTimeEstimate}
+              onUpdateTodaySheetSection={handleUpdateTodaySheetSection}
               onDelete={handleDelete}
             />
           ))}
