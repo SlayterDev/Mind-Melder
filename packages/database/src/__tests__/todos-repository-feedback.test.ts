@@ -208,6 +208,26 @@ describe('TodosRepository - Feedback Methods', () => {
 
       expect(result).toEqual([]);
     });
+
+    it('should exclude completed todos even if they have feedback', async () => {
+      const mockTodos = [
+        {
+          id: 'todo-1',
+          userId: 'user-1',
+          feedbackVote: 'thumbs_up',
+          status: 'pending',
+          feedbackTimestamp: new Date('2026-02-03T12:00:00Z'),
+        },
+      ];
+
+      (mockDb.select as any)().from().where().orderBy.mockResolvedValue(mockTodos);
+
+      const result = await repository.findWithFeedback('user-1');
+
+      expect(result).toEqual(mockTodos);
+      expect(result).toHaveLength(1);
+      expect(result.every(t => t.status === 'pending')).toBe(true);
+    });
   });
 
   describe('findWithoutFeedback', () => {

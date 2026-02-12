@@ -172,7 +172,13 @@ export class TodosRepository {
     return this.db
       .select()
       .from(todos)
-      .where(and(eq(todos.userId, userId), ne(todos.feedbackVote, 'none')))
+      .where(
+        and(
+          eq(todos.userId, userId),
+          ne(todos.feedbackVote, 'none'),
+          eq(todos.status, 'pending')
+        )
+      )
       .orderBy(desc(todos.feedbackTimestamp));
   }
 
