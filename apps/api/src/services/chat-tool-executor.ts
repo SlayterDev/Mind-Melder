@@ -1,4 +1,5 @@
 import { Database, TodosRepository, CapturesRepository } from "database";
+import { MAX_CHAT_TODOS } from "types";
 import { SearchService } from "./search-service.js";
 
 interface SearchToolInput {
@@ -31,14 +32,14 @@ export class ChatToolExecutor {
         userId: string,
         toolName: string,
         toolInput: Record<string, any>
-    ): Promise<string> {
+    ): Promise<{ text: string; todoIds?: string[] }> {
         switch (toolName) {
             case 'search_user_content':
                 return await this.handleSearchContent(userId, toolInput as SearchToolInput);
             case 'get_todays_todos':
                 return await this.handleGetTodaysTodos(userId, toolInput as GetTodaysTodosInput);
             case 'get_recent_captures':
-                return await this.handleGetRecentCaptures(userId, toolInput as GetRecentCapturesInput);
+                return { text: await this.handleGetRecentCaptures(userId, toolInput as GetRecentCapturesInput) };
             default:
                 throw new Error(`Unknown tool: ${toolName}`);
         }
@@ -47,15 +48,16 @@ export class ChatToolExecutor {
     private async handleSearchContent(
         userId: string,
         input: { query: string; type?: 'captures' | 'todos' | 'notes' | 'all', limit?: number }
-    ): Promise<string> {
+    ): Promise<{ text: string; todoIds?: string[] }> {
         const results = await this.searchService.search(userId, input.query, input.type || 'all');
 
         if (results.captures?.length === 0 && results.todos?.length === 0 && results.notes?.length === 0) {
-            return 'No relevant content found.';
+            return { text: 'No relevant content found.' };
         }
 
         // Format results
         let output = 'Search Results:\n';
+        const todoIds: string[] = [];
 
         if (results.captures) {
             output += `\nCaptures:\n`;
@@ -68,6 +70,7 @@ export class ChatToolExecutor {
             output += `\nTodos:\n`;
             results.todos.slice(0, input.limit || 8).forEach((todo, index) => {
                 output += `${index + 1}. (${todo.dueDate ? "Due: " + todo.dueDate?.toISOString() : 'No due date'}) ${todo.content} - ${todo.status === 'completed' ? 'Completed' : 'Pending'}${todo.description ? ' - ' + todo.description : ''}\n`;
+                todoIds.push(todo.id);
             });
         }
 
@@ -78,25 +81,33 @@ export class ChatToolExecutor {
             });
         }
 
-        return output;
+        return {
+            text: output,
+            todoIds: todoIds.length > 0 ? todoIds.slice(0, MAX_CHAT_TODOS) : undefined,
+        };
     }
 
     private async handleGetTodaysTodos(
         userId: string,
         input: GetTodaysTodosInput
-    ): Promise<string> {
+    ): Promise<{ text: string; todoIds?: string[] }> {
         const todos = await this.todoRepository.findDueToday(userId, input.include_completed || false);
         if (todos.length === 0) {
-            return 'No todos due today.';
+            return { text: 'No todos due today.' };
         }
 
         let output = 'Today\'s Todos:\n';
+        const todoIds: string[] = [];
         todos.forEach((todo, index) => {
             const dueDate = todo.dueDate ? (todo.dueDate instanceof Date ? todo.dueDate : new Date(todo.dueDate as string)) : null;
-            output += `${index + 1}. (${dueDate ? "Due: " + dueDate.toISOString() : 'No due date'}) ${todo.content} - ${todo.status === 'completed' ? 'Completed' : 'Pending'} - ${todo.description}\n`;
+            output += `${index + 1}. (${dueDate ? "Due: " + dueDate.toISOString() : 'No due date'}) ${todo.content} - ${todo.status === 'completed' ? 'Completed' : 'Pending'}${todo.description ? ' - ' + todo.description : ''}\n`;
+            todoIds.push(todo.id);
         });
 
-        return output;
+        return {
+            text: output,
+            todoIds: todoIds.slice(0, MAX_CHAT_TODOS),
+        };
     }
 
     private async handleGetRecentCaptures(

@@ -1,6 +1,7 @@
 import Markdown from 'react-markdown';
 import { Wrench, ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
+import { ChatTaskCards } from './ChatTaskCards';
 
 interface ToolCall {
   id: string;
@@ -13,10 +14,11 @@ interface ChatMessageProps {
   content: string | null;
   toolCalls?: ToolCall[] | null;
   toolResults?: Array<{ name: string; result: string }>;
+  todoIds?: string[];
   isStreaming?: boolean;
 }
 
-export function ChatMessage({ role, content, toolCalls, toolResults, isStreaming }: ChatMessageProps) {
+export function ChatMessage({ role, content, toolCalls, toolResults, todoIds, isStreaming }: ChatMessageProps) {
   const [toolsExpanded, setToolsExpanded] = useState(false);
 
   if (role === 'user') {
@@ -75,6 +77,11 @@ export function ChatMessage({ role, content, toolCalls, toolResults, isStreaming
               <span className="inline-block w-2 h-4 bg-accent/70 animate-pulse ml-0.5" />
             )}
           </div>
+        )}
+
+        {/* Todo task cards */}
+        {todoIds && todoIds.length > 0 && !isStreaming && (
+          <ChatTaskCards todoIds={todoIds} />
         )}
       </div>
     );

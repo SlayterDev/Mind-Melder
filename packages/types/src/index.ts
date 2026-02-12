@@ -12,6 +12,10 @@ export type { Conversation, NewConversation, ChatMessage, NewChatMessage, ToolCa
 // Export validation schemas and types
 export * from './validation.js';
 
+// Chat constants
+/** Maximum number of todos to display as TaskCards per chat message */
+export const MAX_CHAT_TODOS = 2;
+
 // API Response types
 export interface OrganizationResult {
   todosCount: number;
