@@ -35,6 +35,8 @@ export const capturesAPI = {
   get: (id: string) => fetchAPI<any>(`/captures/${id}`),
   create: (data: { content: string; metadata?: Record<string, unknown> }) =>
     fetchAPI('/captures', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: string, data: { content?: string; metadata?: Record<string, unknown> }) =>
+    fetchAPI(`/captures/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => fetchAPI(`/captures/${id}`, { method: 'DELETE' }),
 };
 
