@@ -1,6 +1,6 @@
 import { Router, type Router as ExpressRouter } from 'express';
 import { CapturesRepository } from 'database';
-import { createCaptureSchema } from 'types';
+import { createCaptureSchema, updateCaptureSchema } from 'types';
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, ApiError } from '../middleware/index.js';
 
@@ -54,6 +54,23 @@ export function createCapturesRouter(capturesRepo: CapturesRepository): ExpressR
       const { id } = req.params;
 
       const capture = await capturesRepo.findById(id);
+      if (!capture) {
+        throw new ApiError(404, 'Capture not found');
+      }
+
+      res.json(capture);
+    })
+  );
+
+  // PATCH /api/v1/captures/:id - Update capture
+  router.patch(
+    '/:id',
+    validateBody(updateCaptureSchema),
+    asyncHandler(async (req, res) => {
+      const { id } = req.params;
+      const { content, metadata } = req.body;
+
+      const capture = await capturesRepo.update(id, { content, metadata });
       if (!capture) {
         throw new ApiError(404, 'Capture not found');
       }

@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { capturesAPI, organizeAPI } from '../api/client';
-import { Zap, MailOpen, X } from 'lucide-react';
+import { Zap, MailOpen } from 'lucide-react';
 import TemplateSelector from '../components/TemplateSelector';
+import CaptureCard from '../components/CaptureCard';
+
+// Define Capture type for better type safety
+interface Capture {
+  id: string;
+  content: string;
+  timestamp: string;
+  metadata?: Record<string, unknown>;
+}
 
 export default function InboxPage() {
-  const [captures, setCaptures] = useState<any[]>([]);
+  const [captures, setCaptures] = useState<Capture[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [message, setMessage] = useState('');
@@ -44,6 +53,23 @@ export default function InboxPage() {
       setMessage(`Error: ${error instanceof Error ? error.message : 'Organization failed'}`);
     } finally {
       setIsOrganizing(false);
+    }
+  };
+
+  const handleEdit = async (id: string, content: string) => {
+    const previousCaptures = captures;
+    
+    try {
+      const updatedCapture = await capturesAPI.update(id, { content });
+      // Update local state after successful API call with server-provided timestamp
+      setCaptures((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, ...(updatedCapture as Record<string, unknown>) } : c))
+      );
+    } catch (error) {
+      console.error('Failed to update capture:', error);
+      // Revert on error
+      setCaptures(previousCaptures);
+      throw error; // Re-throw to let CaptureCard handle the UI state
     }
   };
 
@@ -108,30 +134,12 @@ export default function InboxPage() {
       ) : (
         <div className="space-y-3">
           {captures.map((capture) => (
-            <div
+            <CaptureCard
               key={capture.id}
-              className="task-card task-card-active group"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <p className="text-gray-100 font-mono text-sm leading-relaxed">
-                    {capture.content}
-                  </p>
-                  <p className="text-gray-500 text-xs mt-2">
-                    {new Date(capture.timestamp).toLocaleString()}
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => handleDelete(capture.id)}
-                  className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400
-                           transition-all text-sm px-3 py-1 rounded hover:bg-gray-800"
-                  title="Delete"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+              capture={capture}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           ))}
         </div>
       )}

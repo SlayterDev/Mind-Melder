@@ -5,7 +5,7 @@
   "private": true,
   "packageManager": "pnpm@10.28.2",
   "scripts": {
-    "dev": "pnpm --filter api dev & pnpm --filter web dev",
+    "dev": "pnpm --filter \"./apps/api\" dev & pnpm --filter \"./apps/web\" dev",
     "build": "pnpm --filter \"./packages/*\" build && pnpm --filter \"./apps/*\" build",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
@@ -23,11 +23,11 @@
     "docker:logs": "docker compose logs -f",
     "docker:restart": "docker compose restart",
     "docker:clean": "docker compose down -v",
-    "desktop:dev": "pnpm --filter api dev & pnpm --filter web electron:dev",
-    "desktop:build": "pnpm --filter web electron:build",
-    "desktop:build:mac": "pnpm --filter web electron:build:mac",
-    "desktop:build:win": "pnpm --filter web electron:build:win",
-    "desktop:build:linux": "pnpm --filter web electron:build:linux"
+    "desktop:dev": "pnpm --filter \"./apps/api\" dev & pnpm --filter \"./apps/web\" electron:dev",
+    "desktop:build": "pnpm --filter \"./apps/web\" electron:build",
+    "desktop:build:mac": "pnpm --filter \"./apps/web\" electron:build:mac",
+    "desktop:build:win": "pnpm --filter \"./apps/web\" electron:build:win",
+    "desktop:build:linux": "pnpm --filter \"./apps/web\" electron:build:linux"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",
