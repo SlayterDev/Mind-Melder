@@ -19,8 +19,20 @@ export function ChatTaskCards({ todoIds }: ChatTaskCardsProps) {
     setLoading(true);
     setError(null);
     try {
-      const fetched = await Promise.all(todoIds.map(id => todosAPI.get(id)));
-      setTodos(fetched.filter(Boolean));
+      const results = await Promise.allSettled(todoIds.map(id => todosAPI.get(id)));
+      const successfulTodos = results
+        .filter(
+          (result): result is PromiseFulfilledResult<any> =>
+            result.status === 'fulfilled' && Boolean(result.value),
+        )
+        .map(result => result.value);
+
+      setTodos(successfulTodos);
+
+      const hadFailures = results.some(result => result.status === 'rejected');
+      if (hadFailures) {
+        setError('Some todos could not be loaded');
+      }
     } catch {
       setError('Failed to load todos');
     } finally {
