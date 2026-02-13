@@ -231,6 +231,28 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
     }
   }
 
+  async refineNote(title: string, content: string, prompt: string): Promise<{ title: string; content: string }> {
+    const systemPrompt = this.buildRefineNoteSystemPrompt();
+    const userPrompt = this.buildRefineNotePrompt(title, content, prompt);
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature: Math.min(this.temperature, 0.5),
+      response_format: { type: 'json_object' },
+    });
+
+    const responseContent = response.choices[0]?.message?.content;
+    if (!responseContent) {
+      throw new Error('Empty response from OpenAI');
+    }
+
+    return this.parseResponse<{ title: string; content: string }>(responseContent);
+  }
+
   async transcribe(audioBuffer: Buffer, options?: TranscribeOptions): Promise<TranscriptionResult> {
     const mimeType = options?.mimeType || 'audio/webm';
     const filename = getAudioFilename(mimeType, options?.filename);

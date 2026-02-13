@@ -110,6 +110,15 @@ export interface LLMProvider {
   generateTitle(messages: ChatMessage[]): Promise<string>;
 
   /**
+   * Refine a note's content using a user-provided prompt
+   * @param title - Current note title
+   * @param content - Current note content (markdown)
+   * @param prompt - User instruction for how to refine the note
+   * @returns Refined title and content
+   */
+  refineNote(title: string, content: string, prompt: string): Promise<{ title: string; content: string }>;
+
+  /**
    * Transcribe audio to text
    * @param audioBuffer - Raw audio data
    * @param options - Optional language hint and prompt

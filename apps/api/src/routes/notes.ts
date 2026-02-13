@@ -1,7 +1,8 @@
 import { Router, type Router as ExpressRouter } from 'express';
 import { z } from 'zod';
-import { Database, OrganizedNotesRepository } from 'database';
+import { Database, OrganizedNotesRepository, SettingsRepository } from 'database';
 import { createOrganizedNoteSchema, updateOrganizedNoteSchema } from 'types';
+import { ProviderFactory } from 'llm';
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, ApiError } from '../middleware/index.js';
 import { NotesService } from '../services/notes-service.js';
@@ -12,7 +13,11 @@ const appendNoteSchema = z.object({
   contentToAppend: z.string().min(1, 'Content to append is required').max(50000, 'Content too long'),
 });
 
-export function createNotesRouter(db: Database, notesRepo: OrganizedNotesRepository): ExpressRouter {
+const refineNoteSchema = z.object({
+  prompt: z.string().min(1, 'Prompt is required').max(2000, 'Prompt too long'),
+});
+
+export function createNotesRouter(db: Database, notesRepo: OrganizedNotesRepository, settingsRepo: SettingsRepository): ExpressRouter {
   const router = Router();
 
   // GET /api/v1/notes - List notes (optional: filter by tag)
@@ -90,6 +95,29 @@ export function createNotesRouter(db: Database, notesRepo: OrganizedNotesReposit
       }
 
       res.json(note);
+    })
+  );
+
+  // POST /api/v1/notes/:id/refine - Preview refined note content via LLM
+  router.post(
+    '/:id/refine',
+    validateBody(refineNoteSchema),
+    asyncHandler(async (req, res) => {
+      const userId = 'test-user-1'; // TODO: Get from auth context
+      const { id } = req.params;
+      const { prompt } = req.body;
+
+      const note = await notesRepo.findById(id);
+      if (!note) {
+        throw new ApiError(404, 'Note not found');
+      }
+
+      const settings = await settingsRepo.getOrCreate(userId);
+      const llmProvider = ProviderFactory.createFromSettings(settings);
+
+      const refined = await llmProvider.refineNote(note.title, note.content, prompt);
+
+      res.json(refined);
     })
   );
 

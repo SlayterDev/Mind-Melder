@@ -218,6 +218,28 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     callbacks.onComplete(fullTextResponse);
   }
 
+  async refineNote(title: string, content: string, prompt: string): Promise<{ title: string; content: string }> {
+    const systemPrompt = this.buildRefineNoteSystemPrompt();
+    const userPrompt = this.buildRefineNotePrompt(title, content, prompt);
+
+    const response = await this.client.messages.create({
+      model: this.model,
+      max_tokens: 4096,
+      temperature: Math.min(this.temperature, 0.5),
+      system: systemPrompt,
+      messages: [
+        { role: 'user', content: userPrompt },
+      ],
+    });
+
+    const responseContent = response.content[0];
+    if (responseContent.type !== 'text') {
+      throw new Error('Unexpected response type from Anthropic');
+    }
+
+    return this.parseResponse<{ title: string; content: string }>(responseContent.text);
+  }
+
   async transcribe(_audioBuffer: Buffer, _options?: TranscribeOptions): Promise<TranscriptionResult> {
     throw new Error('Transcription is not supported by the Anthropic provider.');
   }

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { notesAPI } from '../api/client';
-import { ArrowLeft, Edit2, X } from 'lucide-react';
+import { ArrowLeft, Edit2, X, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import NoteForm from '../components/NoteForm';
+import RefineNoteModal from '../components/RefineNoteModal';
 
 export default function NoteDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +14,7 @@ export default function NoteDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showRefineModal, setShowRefineModal] = useState(false);
 
   useEffect(() => {
     loadNote();
@@ -41,6 +43,20 @@ export default function NoteDetailPage() {
     await notesAPI.update(id, data);
     setNote({ ...note, ...data });
     setIsEditing(false);
+  };
+
+  const handleRefineAccept = async (data: { title: string; content: string }) => {
+    if (!id) return;
+
+    try {
+      await notesAPI.update(id, data);
+      setNote({ ...note, ...data });
+      setShowRefineModal(false);
+    } catch (err) {
+      console.error('Failed to update note:', err);
+      setShowRefineModal(false);
+      setError('Failed to apply refined content');
+    }
   };
 
   const handleDelete = async () => {
@@ -111,6 +127,13 @@ export default function NoteDetailPage() {
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setShowRefineModal(true)}
+            className="btn-accent px-4 py-2 flex items-center gap-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            Refine
+          </button>
+          <button
             onClick={() => setIsEditing(true)}
             className="btn-accent px-4 py-2 flex items-center gap-2"
           >
@@ -159,6 +182,14 @@ export default function NoteDetailPage() {
           </ReactMarkdown>
         </div>
       </div>
+
+      {showRefineModal && (
+        <RefineNoteModal
+          note={note}
+          onClose={() => setShowRefineModal(false)}
+          onAccept={handleRefineAccept}
+        />
+      )}
     </div>
   );
 }

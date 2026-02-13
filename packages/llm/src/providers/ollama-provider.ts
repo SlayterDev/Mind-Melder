@@ -264,6 +264,35 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     callbacks.onComplete(fullMessage);
   }
 
+  async refineNote(title: string, content: string, prompt: string): Promise<{ title: string; content: string }> {
+    const systemPrompt = this.buildRefineNoteSystemPrompt();
+    const userPrompt = this.buildRefineNotePrompt(title, content, prompt);
+
+    const refineNoteJsonSchema = {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        content: { type: 'string' },
+      },
+      required: ['title', 'content'],
+    };
+
+    const response = await this.client.chat({
+      model: this.model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      stream: false,
+      format: refineNoteJsonSchema,
+      options: {
+        temperature: Math.min(this.temperature, 0.5),
+      },
+    });
+
+    return this.parseResponse<{ title: string; content: string }>(response.message.content);
+  }
+
   async transcribe(_audioBuffer: Buffer, _options?: TranscribeOptions): Promise<TranscriptionResult> {
     throw new Error('Transcription is not supported by the Ollama provider. Enable local whisper in settings.');
   }

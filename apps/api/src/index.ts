@@ -69,7 +69,7 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/v1/captures', createCapturesRouter(capturesRepo));
 app.use('/api/v1/todos', createTodosRouter(todosRepo));
-app.use('/api/v1/notes', createNotesRouter(db, notesRepo));
+app.use('/api/v1/notes', createNotesRouter(db, notesRepo, settingsRepo));
 app.use('/api/v1/templates', createTemplatesRouter(templatesRepo));
 app.use('/api/v1/settings', createSettingsRouter(settingsRepo, scheduler));
 app.use('/api/v1/tags', createTagsRouter(tagsRepo));

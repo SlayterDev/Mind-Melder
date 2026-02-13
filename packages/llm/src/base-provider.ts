@@ -123,6 +123,43 @@ Return valid JSON only.`;
   }
 
   /**
+   * Build the system prompt for note refinement
+   */
+  protected buildRefineNoteSystemPrompt(): string {
+    return `You are a note editor assistant. The user will provide a note (title + content in markdown) along with instructions for how to refine it. Apply the user's instructions and return the refined note.
+
+Rules:
+- Return valid JSON with "title" and "content" fields
+- The content should be valid markdown
+- Preserve any information from the original note unless the user's instructions say otherwise
+- If the user asks to "clean up" or "organize", improve structure, fix formatting, remove redundancy, and improve readability
+- Sections marked with "---- APPENDED ----" are quick captures that were appended — integrate them naturally into the note structure
+- Keep the same general tone and voice of the original note`;
+  }
+
+  /**
+   * Build the user prompt for note refinement
+   */
+  protected buildRefineNotePrompt(title: string, content: string, prompt: string): string {
+    return `CURRENT NOTE TITLE:
+${title}
+
+CURRENT NOTE CONTENT:
+${content}
+
+YOUR INSTRUCTIONS:
+${prompt}
+
+OUTPUT FORMAT (valid JSON only):
+{
+  "title": "Refined title here",
+  "content": "Refined markdown content here"
+}
+
+Return valid JSON only.`;
+  }
+
+  /**
    * Build the task extraction prompt
    */
   protected buildTaskExtractionPrompt(text: string): string {
