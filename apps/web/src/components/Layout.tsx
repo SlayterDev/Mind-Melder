@@ -22,7 +22,6 @@ export default function Layout({ children }: LayoutProps) {
     const unsubscribe = window.electronAPI.onCaptureCreated(() => {
       // Invalidate inbox count when a capture is created
       queryClient.invalidateQueries({ queryKey: ['inboxCount'] });
-      queryClient.invalidateQueries({ queryKey: ['captures'] });
     });
 
     return unsubscribe;
