@@ -134,7 +134,8 @@ Rules:
 - Preserve any information from the original note unless the user's instructions say otherwise
 - If the user asks to "clean up" or "organize", improve structure, fix formatting, remove redundancy, and improve readability
 - Sections marked with "---- APPENDED ----" are quick captures that were appended — integrate them naturally into the note structure
-- Keep the same general tone and voice of the original note`;
+- Keep the same general tone and voice of the original note
+- If a summary is requested, add it at the top of the content field under a "Summary" third-level heading (e.g. "### Summary") unless the user's instructions specify otherwise`;
   }
 
   /**

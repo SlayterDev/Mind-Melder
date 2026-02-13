@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { notesAPI } from '../api/client';
 
 interface RefineNoteModalProps {
-  note: { id: string; title: string; content: string };
+  note: { id: string; title: string; content: string, tags: string[] };
   onClose: () => void;
   onAccept: (data: { title: string; content: string }) => void;
 }
@@ -14,7 +14,13 @@ type Phase = 'prompt' | 'loading' | 'preview';
 
 export default function RefineNoteModal({ note, onClose, onAccept }: RefineNoteModalProps) {
   const [phase, setPhase] = useState<Phase>('prompt');
-  const [prompt, setPrompt] = useState('Clean up and organize the content of this note');
+  const [prompt, setPrompt] = useState(() => {
+    if (note.tags.includes('transcription')) {
+      return 'Clean up this audio transcription, fix any errors, and format it for better readability while preserving its content. Add a summary at the top if possible.';
+    }
+
+    return 'Clean up and organize the content of this note';
+  });
   const [refined, setRefined] = useState<{ title: string; content: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
