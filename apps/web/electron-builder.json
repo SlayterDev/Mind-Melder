@@ -29,7 +29,8 @@
     "extendInfo": {
       "NSMicrophoneUsageDescription": "Mind Melder needs microphone access to record audio notes.",
       "NSScreenCaptureUsageDescription": "Mind Melder needs screen recording access to capture system audio."
-    }
+    },
+    "notarize": true
   },
   "dmg": {
     "contents": [
