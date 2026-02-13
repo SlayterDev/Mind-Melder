@@ -175,6 +175,13 @@ ipcMain.handle('close-quick-capture', () => {
   }, 200);
 });
 
+ipcMain.handle('notify-capture-created', () => {
+  // Notify main window that a capture was created
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('capture-created');
+  }
+});
+
 ipcMain.handle('get-platform', () => {
   return process.platform;
 });

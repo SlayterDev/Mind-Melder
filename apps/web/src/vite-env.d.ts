@@ -23,6 +23,10 @@ interface ElectronAPI {
   getPlatform: () => Promise<string>;
   isElectron: boolean;
 
+  // Capture notifications
+  notifyCaptureCreated: () => Promise<void>;
+  onCaptureCreated: (callback: () => void) => () => void;
+
   // Recording
   checkAudioPermissions: () => Promise<AudioPermissionStatus>;
   requestMicrophonePermission: () => Promise<boolean>;

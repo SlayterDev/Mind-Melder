@@ -5,6 +5,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getPlatform: () => ipcRenderer.invoke('get-platform'),
   isElectron: true,
 
+  // Capture notifications
+  notifyCaptureCreated: () => ipcRenderer.invoke('notify-capture-created'),
+  onCaptureCreated: (callback: () => void) => {
+    const subscription = (_event: any) => callback();
+    ipcRenderer.on('capture-created', subscription);
+    return () => ipcRenderer.removeListener('capture-created', subscription);
+  },
+
   // Recording
   checkAudioPermissions: () => ipcRenderer.invoke('check-audio-permissions'),
   requestMicrophonePermission: () => ipcRenderer.invoke('request-microphone-permission'),
