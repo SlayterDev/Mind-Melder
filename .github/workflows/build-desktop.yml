@@ -78,6 +78,10 @@ jobs:
           ELECTRON: 'true'
 
       - name: Build Electron app
+        env:
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: pnpm --filter "./apps/web" exec electron-builder ${{ matrix.build_args }} --publish never
 
       - name: Upload artifacts (macOS)
