@@ -90,7 +90,7 @@ jobs:
         with:
           name: Mind-Melder-macOS
           path: |
-            apps/web/release/*.zip
+            apps/web/release/*.dmg
           if-no-files-found: error
 
       - name: Upload artifacts (Windows)
