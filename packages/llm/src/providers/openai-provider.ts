@@ -25,9 +25,9 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
     this.temperature = config.temperature ?? 0.7;
   }
 
-  async organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean): Promise<OrganizedOutput> {
+  async organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean, contentLockEnabled?: boolean): Promise<OrganizedOutput> {
     const systemPrompt = this.buildSystemPrompt();
-    const userPrompt = this.buildOrganizePrompt(captures, template, tags, includeDescriptions ?? false);
+    const userPrompt = this.buildOrganizePrompt(captures, template, tags, includeDescriptions ?? false, contentLockEnabled ?? false);
 
     const response = await this.client.chat.completions.create({
       model: this.model,

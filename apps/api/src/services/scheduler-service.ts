@@ -74,7 +74,7 @@ export class SchedulerService {
         const llmProvider = ProviderFactory.createFromSettings(settings);
         const todaySheetService = new TodaySheetService(this.db, llmProvider);
         
-        const sheet = await todaySheetService.generateSheet(this.userId);
+        const sheet = await todaySheetService.generateSheet(this.userId, undefined, settings.contentLockEnabled);
         console.log(`[Scheduler] Today sheet generated successfully. Processed ${sheet.capturesProcessed} captures.`);
       } catch (error) {
         console.error('[Scheduler] Today sheet generation failed:', error);

@@ -27,7 +27,7 @@ Your job is to:
   /**
    * Build the user prompt with captures and template
    */
-  protected buildOrganizePrompt(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions: boolean = false): string {
+  protected buildOrganizePrompt(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions: boolean = false, contentLockEnabled: boolean = false): string {
     const captureList = captures
       .map((c, i) => `${i + 1}. ID: ${c.id} | [${new Date(c.timestamp).toLocaleString()}] ${c.content}`)
       .join('\n');
@@ -53,11 +53,13 @@ ${captureList}
 
 YOUR TASK:
 1. Extract actionable tasks from captures.
-2. Transform each capture into a clear, actionable task with:
+${contentLockEnabled
+  ? `2. Use the EXACT original capture text as the task title verbatim. Do NOT rewrite, expand abbreviations, or modify it. You MAY generate a description to add context.`
+  : `2. Transform each capture into a clear, actionable task with:
    - Title: Concise action-oriented summary (5-10 words) that makes the task immediately clear
    - Description: Additional context, reasoning, or implementation details from the original capture
    - Expand abbreviations, add clarity, make titles scannable
-   - Example: "auth middleware jwt" → Title: "Refactor authentication middleware for JWT support" / Description: "Update existing middleware to handle JWT tokens properly"
+   - Example: "auth middleware jwt" → Title: "Refactor authentication middleware for JWT support" / Description: "Update existing middleware to handle JWT tokens properly"`}
 3. Assign time estimates based on task complexity:
    - quick: < 15 minutes (simple edits, quick reviews, small fixes)
    - medium: 30-60 minutes (moderate coding, research, planning)
@@ -77,12 +79,17 @@ YOUR TASK:
    - Convert relative dates to actual dates based on capture timestamp
    - Leave dueDate null if not clearly indicated
 
-TITLE GUIDELINES:
+${contentLockEnabled
+  ? `CONTENT LOCK (ENABLED - STRICT):
+- Use the EXACT original capture text as the task title verbatim
+- Do NOT rewrite, expand abbreviations, or modify titles in any way
+- You MAY generate a description to add context`
+  : `TITLE GUIDELINES:
 - Be specific and action-oriented (start with verbs: "Review", "Update", "Fix", "Implement", "Research", "Plan")
 - Include key details in the title itself, not just in description
 - Expand abbreviations and incomplete thoughts
 - Make titles independently understandable without reading the description
-- Description should add context and details, not be the primary information
+- Description should add context and details, not be the primary information`}
 
 ${tagsInstruction}
 
@@ -172,11 +179,14 @@ ${input.existingTodos.map((t, i) =>
 
 YOUR TASK:
 1. Extract actionable tasks from captures (skip pure notes/info)
-2. Transform captures into clear, actionable task titles:
+${input.contentLockEnabled
+  ? `2. Use the EXACT original capture text as the task title verbatim for captures. Do NOT rewrite, expand abbreviations, or modify it. You MAY generate a description to add context.
+  - For existing todos: Use the EXACT existing todo content as the title. Do NOT change the title or description.`
+  : `2. Transform captures into clear, actionable task titles:
   - Title: Concise action-oriented summary (5-10 words) that makes the task immediately clear
   - Description: Additional context, reasoning, or implementation details from the original capture
   - Expand abbreviations, add clarity, make titles scannable
-  - Example: "auth middleware jwt" → Title: "Refactor authentication middleware for JWT support" / Description: "Update existing middleware to handle JWT tokens properly"
+  - Example: "auth middleware jwt" → Title: "Refactor authentication middleware for JWT support" / Description: "Update existing middleware to handle JWT tokens properly"`}
 3. Include relevant existing todos
 4. Prioritize by: due dates (today/overdue highest), importance, effort, available time
 5. Assign to sections, balancing workload:
@@ -200,12 +210,16 @@ ${input.feedbackTodos.map((t, i) =>
 
 ${tagsInstruction}
 
-TITLE GUIDELINES:
+${input.contentLockEnabled
+  ? `CONTENT LOCK (ENABLED - STRICT):
+- For captures (sourceType="capture"): Use the EXACT original capture text as the title verbatim. Do NOT rewrite, expand abbreviations, or modify it. You MAY generate a description.
+- For existing todos (sourceType="todo"): Use the EXACT existing todo content as the title. Do NOT change the title or description.`
+  : `TITLE GUIDELINES:
   - Be specific and action-oriented (start with verbs: "Review", "Update", "Fix", "Implement")
   - Include key details in the title itself, not just in description
   - Expand abbreviations and incomplete thoughts
   - Make titles independently understandable without reading the description
-  - Description should add context, not be the primary information
+  - Description should add context, not be the primary information`}
 
 USER TEMPLATE:
 ${input.template.prompt}

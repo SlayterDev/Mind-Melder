@@ -197,6 +197,9 @@ export interface Settings {
   whisperEnabled: boolean;
   whisperUrl: string;
 
+  // Content Lock
+  contentLockEnabled: boolean;
+
   // Legacy CRON-based scheduling (deprecated but kept for compatibility)
   organizationSchedule: string;
   scheduleEnabled: boolean;

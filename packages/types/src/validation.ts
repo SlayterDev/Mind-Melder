@@ -101,6 +101,9 @@ export const updateSettingsSchema = z.object({
   whisperEnabled: z.boolean().optional(),
   whisperUrl: z.string().url().max(500).optional(),
 
+  // Content Lock
+  contentLockEnabled: z.boolean().optional(),
+
   // Legacy CRON-based scheduling (kept for backwards compatibility)
   organizationSchedule: z.string().max(100).optional(),
   scheduleEnabled: z.boolean().optional(),
