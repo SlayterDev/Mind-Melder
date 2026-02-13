@@ -32,6 +32,7 @@ interface SectionProps {
   onUpdateContent?: (id: string, content: string) => void;
   onUpdateTimeEstimate?: (id: string, timeEstimate: TimeEstimate) => void;
   onSubmitFeedback?: (id: string, vote: FeedbackVote, feedbackText?: string) => void;
+  onUpdateTags?: (id: string, tags: string[]) => void;
 }
 
 export default function TodaySheetSection({
@@ -45,6 +46,7 @@ export default function TodaySheetSection({
   onUpdateContent,
   onUpdateTimeEstimate,
   onSubmitFeedback,
+  onUpdateTags,
 }: SectionProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { setNodeRef } = useDroppable({ id });
@@ -85,6 +87,7 @@ export default function TodaySheetSection({
                   onUpdateContent={onUpdateContent}
                   onUpdateTimeEstimate={onUpdateTimeEstimate}
                   onSubmitFeedback={onSubmitFeedback}
+                  onUpdateTags={onUpdateTags}
                 />
               ))}
             </SortableContext>

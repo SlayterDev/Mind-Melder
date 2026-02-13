@@ -64,7 +64,7 @@ export function createTodosRouter(todosRepo: TodosRepository): ExpressRouter {
     validateBody(updateTodoSchema),
     asyncHandler(async (req, res) => {
       const { id } = req.params;
-      const { content, description, status, dueDate, timeEstimate, todaySheetSection } = req.body;
+      const { content, description, status, dueDate, timeEstimate, todaySheetSection, tags } = req.body;
 
       const todo = await todosRepo.update(id, {
         content,
@@ -73,6 +73,7 @@ export function createTodosRouter(todosRepo: TodosRepository): ExpressRouter {
         dueDate: dueDate !== undefined ? (dueDate ? new Date(dueDate) : null) : undefined,
         timeEstimate,
         todaySheetSection,
+        tags,
       });
 
       if (!todo) {

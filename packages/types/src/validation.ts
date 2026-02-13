@@ -57,6 +57,7 @@ export const updateTodoSchema = z.object({
   dueDate: z.string().datetime().nullable().optional(),
   timeEstimate: timeEstimateSchema.optional(),
   todaySheetSection: todaySheetSectionSchema.optional(),
+  tags: z.array(z.string().max(50)).max(10).optional(),
 });
 
 export type TimeEstimate = z.infer<typeof timeEstimateSchema>;

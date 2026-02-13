@@ -181,7 +181,7 @@ export default function TemplatesPage() {
         </div>
 
         <p className="text-gray-500 text-sm mb-4">
-          Tags help the AI categorize your notes during organization.
+          Tags help the AI categorize your todos and notes during organization.
         </p>
 
         {/* Tag create/edit form */}

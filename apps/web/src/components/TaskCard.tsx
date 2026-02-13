@@ -3,9 +3,10 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
   Zap, Clock, Hourglass, GripVertical, Check, ChevronDown, ChevronRight, FileText, Pencil, Save, X,
-  Calendar, ThumbsUp, ThumbsDown
+  Calendar, ThumbsUp, ThumbsDown, Tag
  } from 'lucide-react';
 import { capturesAPI } from '../api/client';
+import TagEditor from './TagEditor';
 
 type TimeEstimate = 'quick' | 'medium' | 'long' | 'none';
 
@@ -39,9 +40,10 @@ interface TaskCardProps {
   onUpdateContent?: (id: string, content: string) => void;
   onUpdateTimeEstimate?: (id: string, timeEstimate: TimeEstimate) => void;
   onSubmitFeedback?: (id: string, vote: FeedbackVote, feedbackText?: string) => void;
+  onUpdateTags?: (id: string, tags: string[]) => void;
 }
 
-export default function TaskCard({ todo, showDragHandle = true, onToggleComplete, onUpdateDueDate, onUpdateDescription, onUpdateContent, onUpdateTimeEstimate, onSubmitFeedback }: TaskCardProps) {
+export default function TaskCard({ todo, showDragHandle = true, onToggleComplete, onUpdateDueDate, onUpdateDescription, onUpdateContent, onUpdateTimeEstimate, onSubmitFeedback, onUpdateTags }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -70,6 +72,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showFeedbackInput, setShowFeedbackInput] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
+  const [showTagEditor, setShowTagEditor] = useState(false);
 
   const fetchOriginalCapture = async () => {
     if (!todo.captureId || originalCapture) return;
@@ -526,17 +529,55 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
             )}
 
             {/* Tags */}
-            {todo.tags &&
-              todo.tags.length > 0 &&
-              todo.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2 py-0.5 bg-blue-900/20 border border-blue-700/40 rounded text-xs text-blue-300/90"
+            {!showTagEditor && (!todo.tags || todo.tags.length === 0) && (
+              <button
+                onClick={() => setShowTagEditor(true)}
+                className="px-2 py-0.5 badge-chip cursor-pointer hover:opacity-80 transition-opacity"
+                title="Add tags"
+              >
+                <Tag className="w-3 h-3" />
+              </button>
+            )}
+            {!showTagEditor && todo.tags && todo.tags.length > 0 && (
+              <>
+                {todo.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-2 py-0.5 bg-blue-900/20 border border-blue-700/40 rounded text-xs text-blue-300/90"
+                  >
+                    {tag}
+                  </span>
+                ))}
+                <button
+                  onClick={() => setShowTagEditor(true)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity px-1 py-0.5 hover:bg-gray-700 rounded"
+                  title="Edit tags"
                 >
-                  {tag}
-                </span>
-              ))}
+                  <Pencil className="w-3 h-3 text-gray-400" />
+                </button>
+              </>
+            )}
           </div>
+
+          {/* Tag Editor */}
+          {showTagEditor && (
+            <div className="flex items-center gap-2 mt-2">
+              <TagEditor
+                tags={todo.tags || []}
+                onChange={(newTags) => onUpdateTags?.(todo.id, newTags)}
+                onClose={() => setShowTagEditor(false)}
+                size="sm"
+                autoFocus
+                className="flex-1"
+              />
+              <button
+                onClick={() => setShowTagEditor(false)}
+                className="px-2 py-1 bg-gray-700 text-gray-400 rounded text-xs hover:bg-gray-600 flex-shrink-0"
+              >
+                <Check className="w-3 h-3" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
