@@ -69,6 +69,11 @@ export const notesAPI = {
   update: (id: string, data: { title?: string; content?: string; tags?: string[] }) =>
     fetchAPI(`/notes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => fetchAPI(`/notes/${id}`, { method: 'DELETE' }),
+  refine: (id: string, prompt: string) =>
+    fetchAPI<{ title: string; content: string }>(`/notes/${id}/refine`, {
+      method: 'POST',
+      body: JSON.stringify({ prompt }),
+    }),
 };
 
 // Templates
