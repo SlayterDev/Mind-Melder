@@ -54,6 +54,7 @@ export default function NoteDetailPage() {
       setShowRefineModal(false);
     } catch (err) {
       console.error('Failed to update note:', err);
+      setShowRefineModal(false);
       setError('Failed to apply refined content');
     }
   };
