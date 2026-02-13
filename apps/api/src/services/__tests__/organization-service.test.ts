@@ -155,7 +155,7 @@ describe('OrganizationService', () => {
       await service.organizeCaptures(userId, 'custom-template');
 
       expect(mockRepos.templates.findById).toHaveBeenCalledWith('custom-template');
-      expect(mockLLMProvider.organize).toHaveBeenCalledWith(captures, template, []);
+      expect(mockLLMProvider.organize).toHaveBeenCalledWith(captures, template, [], false, false);
     });
 
     it('should throw error when provided template not found', async () => {
@@ -195,7 +195,7 @@ describe('OrganizationService', () => {
       await service.organizeCaptures(userId);
 
       expect(mockRepos.templates.findActiveTemplate).toHaveBeenCalledWith(userId);
-      expect(mockLLMProvider.organize).toHaveBeenCalledWith(captures, activeTemplate, []);
+      expect(mockLLMProvider.organize).toHaveBeenCalledWith(captures, activeTemplate, [], false, false);
     });
 
     it('should fall back to default template when no active template exists', async () => {
@@ -216,7 +216,9 @@ describe('OrganizationService', () => {
           id: 'default',
           name: 'Default Template',
         }),
-        []
+        [],
+        false,
+        false
       );
     });
 
@@ -235,7 +237,7 @@ describe('OrganizationService', () => {
       await service.organizeCaptures(userId);
 
       expect(mockRepos.tags.findByUserId).toHaveBeenCalledWith(userId);
-      expect(mockLLMProvider.organize).toHaveBeenCalledWith(captures, template, tags);
+      expect(mockLLMProvider.organize).toHaveBeenCalledWith(captures, template, tags, false, false);
     });
 
     it('should create todos from LLM response', async () => {
