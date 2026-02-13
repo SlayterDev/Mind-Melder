@@ -47,7 +47,8 @@ export class TodaySheetService {
    */
   async generateSheet(
     userId: string,
-    templateId?: string
+    templateId?: string,
+    contentLockEnabled: boolean = false
   ): Promise<TodaySheet> {
     // 1. Gather inputs
     const captures = await this.capturesRepo.findUnorganized(userId);
@@ -79,14 +80,13 @@ export class TodaySheetService {
         feedbackTodos,
         template,
         tags: userTags,
+        contentLockEnabled,
         context: {
           currentTimeOfDay: new Date().getHours(),
           workingHoursMinutes: 480, // 8 hours default
           currentDate: new Date().toISOString().split('T')[0],
         },
       });
-      console.log('LLM Today Sheet result:', aiResult);
-      console.log('Do today: ', JSON.stringify(aiResult.sections.must_do_today, null, 2));
     } catch (error) {
       if (error instanceof Error && error.message.includes('validation failed')) {
         throw new Error('AI returned invalid response format. Please try again.');
@@ -155,9 +155,7 @@ export class TodaySheetService {
           todo = await this.todosRepo.findById(item.sourceId);
           if (todo) {
             // Update existing todo with today sheet metadata
-            todo = await this.todosRepo.update(item.sourceId, {
-              content: item.title,
-              description: item.description,
+            const updateData: Record<string, any> = {
               todaySheetSection: section as any,
               todaySheetOrder: i,
               todaySheetId: todaySheet.id,
@@ -168,15 +166,36 @@ export class TodaySheetService {
               feedbackVote: 'none',
               feedbackText: null,
               feedbackTimestamp: null
-            });
+            };
+
+            if (contentLockEnabled) {
+              // Content lock: preserve title; only set description if todo has none
+              if (!todo.description && item.description) {
+                updateData.description = item.description;
+              }
+            } else {
+              updateData.content = item.title;
+              updateData.description = item.description;
+            }
+
+            todo = await this.todosRepo.update(item.sourceId, updateData);
           }
         }
 
         // Create new todo if not found
         if (!todo) {
+          // When content lock is on, use original capture text as title
+          let title = item.title;
+          if (contentLockEnabled && item.sourceType === 'capture') {
+            const originalCapture = captures.find(c => c.id === item.sourceId);
+            if (originalCapture) {
+              title = originalCapture.content;
+            }
+          }
+
           todo = await this.todosRepo.create({
             userId,
-            content: item.title,
+            content: title,
             description: item.description,
             todaySheetSection: section as any,
             todaySheetOrder: i,

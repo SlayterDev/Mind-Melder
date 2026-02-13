@@ -431,6 +431,34 @@ export default function SettingsPage() {
           )}
         </div>
 
+        {/* AI Behavior */}
+        <div className="sheet-card p-6">
+          <h3 className="text-lg font-semibold mb-4">AI Behavior</h3>
+          <div className="flex items-center justify-between">
+            <div>
+              <label className="block text-sm font-medium text-gray-300">
+                Content Lock
+              </label>
+              <p className="text-xs text-gray-500 mt-1">
+                Preserve original capture and todo text. AI will not rewrite titles or existing descriptions.
+              </p>
+            </div>
+            <button
+              onClick={() => handleUpdate({ contentLockEnabled: !settings.contentLockEnabled })}
+              disabled={isSaving}
+              className={`relative w-12 h-6 rounded-full transition-colors ${
+                settings.contentLockEnabled ? 'bg-accent' : 'bg-gray-600'
+              }`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                  settings.contentLockEnabled ? 'translate-x-7' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
         {/* Schedule Settings */}
         <div className="sheet-card p-6">
           <h3 className="text-lg font-semibold mb-6">Scheduled Generation</h3>

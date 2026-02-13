@@ -8,6 +8,7 @@ export interface TodaySheetInput {
   template: Template;
   tags?: Tag[]; // Optional user-defined tags for categorization
   includeDescriptions?: boolean; // Whether to include tag descriptions in prompts (default: false)
+  contentLockEnabled?: boolean; // When true, preserve original capture/todo content
   context: {
     currentTimeOfDay: number; // 0-23
     workingHoursMinutes: number;
@@ -83,7 +84,7 @@ export interface LLMProvider {
    * @param includeDescriptions - Whether to include tag descriptions in prompts (default: false)
    * @returns Extracted todos
    */
-  organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean): Promise<OrganizedOutput>;
+  organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean, contentLockEnabled?: boolean): Promise<OrganizedOutput>;
 
   /**
    * Extract actionable tasks from text

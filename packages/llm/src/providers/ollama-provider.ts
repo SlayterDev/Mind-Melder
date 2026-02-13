@@ -48,9 +48,9 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     };
   }
 
-  async organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean): Promise<OrganizedOutput> {
+  async organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean, contentLockEnabled?: boolean): Promise<OrganizedOutput> {
     const systemPrompt = this.buildSystemPrompt();
-    const userPrompt = this.buildOrganizePrompt(captures, template, tags, includeDescriptions ?? false);
+    const userPrompt = this.buildOrganizePrompt(captures, template, tags, includeDescriptions ?? false, contentLockEnabled ?? false);
 
     const response = await this.client.chat({
       model: this.model,

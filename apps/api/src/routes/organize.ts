@@ -32,7 +32,7 @@ export function createOrganizeRouter(db: Database, settingsRepo: SettingsReposit
         const llmProvider = ProviderFactory.createFromSettings(settings);
         const organizationService = new OrganizationService(db, llmProvider);
 
-        const result = await organizationService.organizeCaptures(userId, templateId);
+        const result = await organizationService.organizeCaptures(userId, templateId, settings.contentLockEnabled);
 
         res.json({
           success: true,

@@ -47,7 +47,7 @@ export function createTodaySheetRouter(db: Database, settingsRepo: SettingsRepos
         const settings = await settingsRepo.getOrCreate(userId);
         const llmProvider = ProviderFactory.createFromSettings(settings);
         const todaySheetService = new TodaySheetService(db, llmProvider);
-        const sheet = await todaySheetService.generateSheet(userId, templateId);
+        const sheet = await todaySheetService.generateSheet(userId, templateId, settings.contentLockEnabled);
 
         res.status(200).json({
           success: true,

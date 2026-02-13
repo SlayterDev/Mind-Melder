@@ -1,0 +1,1 @@
+ALTER TABLE "settings" ADD COLUMN "content_lock_enabled" boolean DEFAULT false NOT NULL;
