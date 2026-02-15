@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, MessageSquare, Trash2, PanelLeftClose, PanelLeft, Pencil } from 'lucide-react';
+import { Plus, MessageSquare, Trash2, PanelLeftClose, PanelLeft, Pencil, ChevronDown } from 'lucide-react';
 import { conversationsAPI, type Conversation } from '../api/client';
 import { MAX_CHAT_TODOS } from 'types';
 import { getApiUrl } from '../api/config';
@@ -34,6 +34,7 @@ export default function ChatPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   // Keep ref in sync with conversations state
   useEffect(() => {
@@ -489,10 +490,86 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-full">
-      {/* Sidebar */}
+    <div className="flex flex-col md:flex-row h-full">
+      {/* Mobile Conversations Drawer */}
+      <div className="md:hidden">
+        {/* Mobile header bar */}
+        <div className="flex items-center gap-2 p-2 border-b border-accent/20 bg-gray-900/50">
+          <button
+            onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
+            className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800/50 transition-colors text-left"
+          >
+            <MessageSquare size={16} className="text-gray-500 flex-shrink-0" />
+            <span className="text-sm truncate flex-1">
+              {id ? (conversations.find(c => c.id === id)?.title || 'Chat') : 'Select a conversation'}
+            </span>
+            <ChevronDown size={16} className={`text-gray-500 transition-transform ${mobileDrawerOpen ? 'rotate-180' : ''}`} />
+          </button>
+          <button
+            onClick={createConversation}
+            className="p-2 rounded-lg text-accent hover:bg-accent/20 transition-colors flex-shrink-0"
+            title="New chat"
+          >
+            <Plus size={18} />
+          </button>
+        </div>
+
+        {/* Mobile drawer content */}
+        {mobileDrawerOpen && (
+          <>
+            <div
+              className="fixed inset-0 bg-black/30 z-10"
+              style={{ top: 'auto' }}
+              onClick={() => setMobileDrawerOpen(false)}
+            />
+            <div className="relative z-20 max-h-64 overflow-y-auto bg-gray-900 border-b border-accent/20">
+              {conversations.map((conv) => (
+                <div
+                  key={conv.id}
+                  className={`group flex items-center gap-2 px-4 py-3 w-full text-left hover:bg-gray-800/50 transition-colors cursor-pointer
+                             ${id === conv.id ? 'bg-gray-800/70 border-l-2 border-accent' : ''}`}
+                  onClick={() => {
+                    navigate(`/chat/${conv.id}`);
+                    setMobileDrawerOpen(false);
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      navigate(`/chat/${conv.id}`);
+                      setMobileDrawerOpen(false);
+                    }
+                  }}
+                  aria-label={`Open conversation: ${conv.title || 'Untitled'}`}
+                >
+                  <MessageSquare size={16} className="text-gray-500 flex-shrink-0" aria-hidden="true" />
+                  <span className="flex-1 text-sm text-gray-300 truncate">
+                    {conv.title || 'Untitled'}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteConversation(conv.id);
+                    }}
+                    className="p-1 text-gray-500 hover:text-red-400 transition-all"
+                    aria-label={`Delete conversation: ${conv.title || 'Untitled'}`}
+                  >
+                    <Trash2 size={14} aria-hidden="true" />
+                  </button>
+                </div>
+              ))}
+              {conversations.length === 0 && (
+                <div className="px-4 py-3 text-sm text-gray-500">No conversations yet</div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Desktop Sidebar */}
       <div
-        className={`border-r border-accent/20 bg-gray-900/30 flex flex-col transition-all duration-300 ${
+        className={`hidden md:flex border-r border-accent/20 bg-gray-900/30 flex-col transition-all duration-300 ${
           sidebarCollapsed ? 'w-0 overflow-hidden' : 'w-64'
         }`}
       >
@@ -578,10 +655,10 @@ export default function ChatPage() {
       </div>
 
       {/* Main chat area */}
-      <div className="flex-1 flex flex-col">
-        {/* Header with expand button */}
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Header with expand button - desktop only */}
         {sidebarCollapsed && (
-          <div className="flex items-center gap-2 p-2 border-b border-accent/20">
+          <div className="hidden md:flex items-center gap-2 p-2 border-b border-accent/20">
             <button
               onClick={() => setSidebarCollapsed(false)}
               className="p-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-gray-800/50 transition-colors"

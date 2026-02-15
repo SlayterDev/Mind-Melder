@@ -493,7 +493,7 @@ export default function TodaySheetPage() {
                 </label>
               </div>
             </div>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-col items-stretch md:items-end gap-2 w-full md:w-auto">
               <button
                 onClick={() => handleGenerate.mutateAsync()}
                 disabled={isGenerating}

@@ -48,7 +48,7 @@ export default function Layout({ children }: LayoutProps) {
   const closeDrawer = () => setIsDrawerOpen(false);
 
   return (
-    <div className="flex h-screen bg-gray-950 text-gray-100 overflow-hidden">
+    <div className="flex h-screen bg-gray-950 text-gray-100 overflow-hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {/* Sidebar - Desktop */}
       <aside className="hidden md:block w-64 bg-gray-900 border-r border-gray-800 shadow-2xl flex-shrink-0">
         {/* Draggable title bar region for Electron */}
