@@ -519,7 +519,6 @@ export default function ChatPage() {
           <>
             <div
               className="fixed inset-0 bg-black/30 z-10"
-              style={{ top: 'auto' }}
               onClick={() => setMobileDrawerOpen(false)}
             />
             <div className="relative z-20 max-h-64 overflow-y-auto bg-gray-900 border-b border-accent/20">
