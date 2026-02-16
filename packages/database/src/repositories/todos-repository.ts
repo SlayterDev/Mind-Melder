@@ -215,17 +215,19 @@ export class TodosRepository {
       return [];
     }
 
+    const prefixQuery = query.trim().split(/\s+/).map(t => t.replace(/[^a-zA-Z0-9]/g, '')).filter(Boolean).map(t => t + ':*').join(' & ');
+
     return this.db
       .select()
       .from(todos)
       .where(
         and(
           eq(todos.userId, userId),
-          sql`${todos}.search_vector @@ plainto_tsquery('english', ${query})`
+          sql`${todos}.search_vector @@ to_tsquery('english', ${prefixQuery})`
         )
       )
       .orderBy(
-        sql`ts_rank(${todos}.search_vector, plainto_tsquery('english', ${query})) DESC`
+        sql`ts_rank(${todos}.search_vector, to_tsquery('english', ${prefixQuery})) DESC`
       );
   }
 }

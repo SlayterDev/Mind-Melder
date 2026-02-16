@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { notesAPI } from '../api/client';
-import { FileText, X, Plus } from 'lucide-react';
+import { notesAPI, searchAPI } from '../api/client';
+import { FileText, X, Plus, Search } from 'lucide-react';
 
 export default function NotesPage() {
   const [notes, setNotes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTag, setSelectedTag] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const loadNotes = async (tag?: string) => {
     setIsLoading(true);
@@ -20,9 +22,30 @@ export default function NotesPage() {
     }
   };
 
+  const searchNotes = async (query: string) => {
+    try {
+      const results = await searchAPI.search(query, 'notes');
+      setNotes(results.notes || []);
+    } catch (error) {
+      console.error('Failed to search notes:', error);
+    }
+  };
+
   useEffect(() => {
-    loadNotes(selectedTag || undefined);
-  }, [selectedTag]);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+
+    if (searchQuery.trim()) {
+      searchDebounceRef.current = setTimeout(() => {
+        searchNotes(searchQuery.trim());
+      }, 300);
+    } else {
+      loadNotes(selectedTag || undefined);
+    }
+
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, [searchQuery, selectedTag]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this note?')) return;
@@ -37,7 +60,7 @@ export default function NotesPage() {
 
   const allTags = Array.from(new Set(notes.flatMap((n) => n.tags || []))).sort();
 
-  if (isLoading) {
+  if (isLoading && !notes.length) {
     return <div className="text-gray-400 text-center py-12">Loading...</div>;
   }
 
@@ -46,11 +69,32 @@ export default function NotesPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-3xl font-bold mb-2">Notes</h2>
-          <p className="text-gray-400">{notes.length} notes</p>
+          <p className="text-gray-400">
+            {searchQuery ? `${notes.length} result${notes.length !== 1 ? 's' : ''}` : `${notes.length} notes`}
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
-          {allTags.length > 0 && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search notes..."
+              className="input-accent pl-9 pr-8 py-2 w-48"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {!searchQuery && allTags.length > 0 && (
             <select
               value={selectedTag}
               onChange={(e) => setSelectedTag(e.target.value)}
@@ -78,14 +122,18 @@ export default function NotesPage() {
       {notes.length === 0 ? (
         <div className="sheet-card-inner p-12 text-center">
           <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-          <h3 className="text-xl font-semibold text-gray-300 mb-2">No notes yet</h3>
+          <h3 className="text-xl font-semibold text-gray-300 mb-2">
+            {searchQuery ? 'No matching notes' : 'No notes yet'}
+          </h3>
           <p className="text-gray-500 mb-6">
-            Create your first note to get started
+            {searchQuery ? 'Try a different search term' : 'Create your first note to get started'}
           </p>
-          <Link to="/notes/new" className="btn-accent px-6 py-3 inline-flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            New Note
-          </Link>
+          {!searchQuery && (
+            <Link to="/notes/new" className="btn-accent px-6 py-3 inline-flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              New Note
+            </Link>
+          )}
         </div>
       ) : (
         <div className="space-y-4">

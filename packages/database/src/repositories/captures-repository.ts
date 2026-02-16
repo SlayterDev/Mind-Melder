@@ -69,17 +69,19 @@ export class CapturesRepository {
       return [];
     }
 
+    const prefixQuery = query.trim().split(/\s+/).map(t => t.replace(/[^a-zA-Z0-9]/g, '')).filter(Boolean).map(t => t + ':*').join(' & ');
+
     return this.db
       .select()
       .from(captures)
       .where(
         and(
           eq(captures.userId, userId),
-          sql`${captures}.search_vector @@ plainto_tsquery('english', ${query})`
+          sql`${captures}.search_vector @@ to_tsquery('english', ${prefixQuery})`
         )
       )
       .orderBy(
-        sql`ts_rank(${captures}.search_vector, plainto_tsquery('english', ${query})) DESC`
+        sql`ts_rank(${captures}.search_vector, to_tsquery('english', ${prefixQuery})) DESC`
       );
   }
 }

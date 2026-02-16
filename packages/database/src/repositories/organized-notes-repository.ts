@@ -82,17 +82,19 @@ export class OrganizedNotesRepository {
       return [];
     }
 
+    const prefixQuery = query.trim().split(/\s+/).map(t => t.replace(/[^a-zA-Z0-9]/g, '')).filter(Boolean).map(t => t + ':*').join(' & ');
+
     return this.db
       .select()
       .from(organizedNotes)
       .where(
         and(
           eq(organizedNotes.userId, userId),
-          sql`${organizedNotes}.search_vector @@ plainto_tsquery('english', ${query})`
+          sql`${organizedNotes}.search_vector @@ to_tsquery('english', ${prefixQuery})`
         )
       )
       .orderBy(
-        sql`ts_rank(${organizedNotes}.search_vector, plainto_tsquery('english', ${query})) DESC`
+        sql`ts_rank(${organizedNotes}.search_vector, to_tsquery('english', ${prefixQuery})) DESC`
       );
   }
 }
