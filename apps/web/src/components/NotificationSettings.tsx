@@ -1,25 +1,15 @@
 import { useState, useEffect } from 'react';
-import { getSettings, setSetting } from '../api/settings';
-
-interface NotificationSettings {
-  enabled: boolean;
-  checkInterval: number;
-  reminderMinutes: number;
-  showOverdue: boolean;
-  showUpcoming: boolean;
-  quietHoursStart: string;
-  quietHoursEnd: string;
-}
+import { settingsAPI, type Settings } from '../api/client';
 
 export default function NotificationSettings() {
-  const [settings, setSettings] = useState<NotificationSettings>({
-    enabled: true,
-    checkInterval: 10,
-    reminderMinutes: 60,
-    showOverdue: true,
-    showUpcoming: true,
-    quietHoursStart: '',
-    quietHoursEnd: '',
+  const [settings, setSettings] = useState<Partial<Settings>>({
+    notificationsEnabled: true,
+    notificationsCheckInterval: 10,
+    notificationsReminderMinutes: 60,
+    notificationsShowOverdue: true,
+    notificationsShowUpcoming: true,
+    notificationsQuietHoursStart: null,
+    notificationsQuietHoursEnd: null,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -41,20 +31,18 @@ export default function NotificationSettings() {
       setLoading(true);
       setError(null);
 
-      const allSettings = await getSettings();
+      const allSettings = await settingsAPI.get();
       
-      // Parse settings with defaults
-      const newSettings: NotificationSettings = {
-        enabled: getSetting(allSettings, 'notifications.enabled', true),
-        checkInterval: getSetting(allSettings, 'notifications.checkInterval', 10),
-        reminderMinutes: getSetting(allSettings, 'notifications.reminderMinutes', 60),
-        showOverdue: getSetting(allSettings, 'notifications.showOverdue', true),
-        showUpcoming: getSetting(allSettings, 'notifications.showUpcoming', true),
-        quietHoursStart: getSetting(allSettings, 'notifications.quietHoursStart', ''),
-        quietHoursEnd: getSetting(allSettings, 'notifications.quietHoursEnd', ''),
-      };
-
-      setSettings(newSettings);
+      // Extract notification settings
+      setSettings({
+        notificationsEnabled: allSettings.notificationsEnabled ?? true,
+        notificationsCheckInterval: allSettings.notificationsCheckInterval ?? 10,
+        notificationsReminderMinutes: allSettings.notificationsReminderMinutes ?? 60,
+        notificationsShowOverdue: allSettings.notificationsShowOverdue ?? true,
+        notificationsShowUpcoming: allSettings.notificationsShowUpcoming ?? true,
+        notificationsQuietHoursStart: allSettings.notificationsQuietHoursStart ?? null,
+        notificationsQuietHoursEnd: allSettings.notificationsQuietHoursEnd ?? null,
+      });
     } catch (err) {
       console.error('Failed to load notification settings:', err);
       setError('Failed to load settings');
@@ -63,27 +51,22 @@ export default function NotificationSettings() {
     }
   };
 
-  const getSetting = <T,>(settings: any[], key: string, defaultValue: T): T => {
-    const setting = settings.find((s: any) => s.key === key);
-    return setting?.value !== undefined ? setting.value : defaultValue;
-  };
-
   const handleSave = async () => {
     try {
       setSaving(true);
       setError(null);
       setSuccess(false);
 
-      // Save all settings
-      await Promise.all([
-        setSetting('notifications.enabled', settings.enabled),
-        setSetting('notifications.checkInterval', settings.checkInterval),
-        setSetting('notifications.reminderMinutes', settings.reminderMinutes),
-        setSetting('notifications.showOverdue', settings.showOverdue),
-        setSetting('notifications.showUpcoming', settings.showUpcoming),
-        setSetting('notifications.quietHoursStart', settings.quietHoursStart || null),
-        setSetting('notifications.quietHoursEnd', settings.quietHoursEnd || null),
-      ]);
+      // Save settings via the settings API
+      await settingsAPI.update({
+        notificationsEnabled: settings.notificationsEnabled,
+        notificationsCheckInterval: settings.notificationsCheckInterval,
+        notificationsReminderMinutes: settings.notificationsReminderMinutes,
+        notificationsShowOverdue: settings.notificationsShowOverdue,
+        notificationsShowUpcoming: settings.notificationsShowUpcoming,
+        notificationsQuietHoursStart: settings.notificationsQuietHoursStart || null,
+        notificationsQuietHoursEnd: settings.notificationsQuietHoursEnd || null,
+      });
 
       // Restart notification service if in Electron
       if (isElectron && window.electronAPI?.restartNotificationService) {
@@ -179,8 +162,8 @@ export default function NotificationSettings() {
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
-            checked={settings.enabled}
-            onChange={(e) => setSettings({ ...settings, enabled: e.target.checked })}
+            checked={settings.notificationsEnabled}
+            onChange={(e) => setSettings({ ...settings, notificationsEnabled: e.target.checked })}
             className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
           />
           <span className="text-gray-900 dark:text-gray-100 font-medium">
@@ -189,7 +172,7 @@ export default function NotificationSettings() {
         </label>
 
         {/* Settings only shown when enabled */}
-        {settings.enabled && (
+        {settings.notificationsEnabled && (
           <div className="ml-7 space-y-4 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
             {/* Check interval */}
             <div>
@@ -197,9 +180,9 @@ export default function NotificationSettings() {
                 Check for due todos every:
               </label>
               <select
-                value={settings.checkInterval}
+                value={settings.notificationsCheckInterval}
                 onChange={(e) =>
-                  setSettings({ ...settings, checkInterval: Number(e.target.value) })
+                  setSettings({ ...settings, notificationsCheckInterval: Number(e.target.value) })
                 }
                 className="block w-full max-w-xs rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
@@ -217,9 +200,9 @@ export default function NotificationSettings() {
                 Remind me before due date:
               </label>
               <select
-                value={settings.reminderMinutes}
+                value={settings.notificationsReminderMinutes}
                 onChange={(e) =>
-                  setSettings({ ...settings, reminderMinutes: Number(e.target.value) })
+                  setSettings({ ...settings, notificationsReminderMinutes: Number(e.target.value) })
                 }
                 className="block w-full max-w-xs rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
               >
@@ -236,8 +219,8 @@ export default function NotificationSettings() {
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={settings.showOverdue}
-                onChange={(e) => setSettings({ ...settings, showOverdue: e.target.checked })}
+                checked={settings.notificationsShowOverdue}
+                onChange={(e) => setSettings({ ...settings, notificationsShowOverdue: e.target.checked })}
                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -249,8 +232,8 @@ export default function NotificationSettings() {
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={settings.showUpcoming}
-                onChange={(e) => setSettings({ ...settings, showUpcoming: e.target.checked })}
+                checked={settings.notificationsShowUpcoming}
+                onChange={(e) => setSettings({ ...settings, notificationsShowUpcoming: e.target.checked })}
                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -270,9 +253,9 @@ export default function NotificationSettings() {
                   </label>
                   <input
                     type="time"
-                    value={settings.quietHoursStart}
+                    value={settings.notificationsQuietHoursStart || ''}
                     onChange={(e) =>
-                      setSettings({ ...settings, quietHoursStart: e.target.value })
+                      setSettings({ ...settings, notificationsQuietHoursStart: e.target.value || null })
                     }
                     className="block w-32 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                   />
@@ -284,9 +267,9 @@ export default function NotificationSettings() {
                   </label>
                   <input
                     type="time"
-                    value={settings.quietHoursEnd}
+                    value={settings.notificationsQuietHoursEnd || ''}
                     onChange={(e) =>
-                      setSettings({ ...settings, quietHoursEnd: e.target.value })
+                      setSettings({ ...settings, notificationsQuietHoursEnd: e.target.value || null })
                     }
                     className="block w-32 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                   />
@@ -310,7 +293,7 @@ export default function NotificationSettings() {
           {saving ? 'Saving...' : 'Save Settings'}
         </button>
 
-        {settings.enabled && (
+        {settings.notificationsEnabled && (
           <button
             onClick={handleCheckNow}
             className="px-4 py-2 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-md font-medium transition-colors"

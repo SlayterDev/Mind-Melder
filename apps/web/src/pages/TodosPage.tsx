@@ -39,6 +39,11 @@ export default function TodosPage() {
     try {
       if (newStatus === 'completed') {
         await todosAPI.markComplete(id);
+        
+        // Clear notification state for this todo if in Electron
+        if (window.electronAPI?.clearNotificationState) {
+          await window.electronAPI.clearNotificationState(id);
+        }
       } else {
         await todosAPI.update(id, { status: 'pending' });
       }

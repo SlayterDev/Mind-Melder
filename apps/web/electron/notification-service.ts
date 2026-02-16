@@ -80,27 +80,22 @@ export class NotificationService {
         return this.getDefaultSettings();
       }
 
-      const allSettings = await response.json();
+      const settings = await response.json();
       
-      // Extract and parse notification settings with defaults
+      // Extract notification settings from the settings object
       return {
-        enabled: this.getSetting(allSettings, 'notifications.enabled', true),
-        checkInterval: this.getSetting(allSettings, 'notifications.checkInterval', 10),
-        reminderMinutes: this.getSetting(allSettings, 'notifications.reminderMinutes', 60),
-        showOverdue: this.getSetting(allSettings, 'notifications.showOverdue', true),
-        showUpcoming: this.getSetting(allSettings, 'notifications.showUpcoming', true),
-        quietHoursStart: this.getSetting(allSettings, 'notifications.quietHoursStart', null),
-        quietHoursEnd: this.getSetting(allSettings, 'notifications.quietHoursEnd', null),
+        enabled: settings.notificationsEnabled ?? true,
+        checkInterval: settings.notificationsCheckInterval ?? 10,
+        reminderMinutes: settings.notificationsReminderMinutes ?? 60,
+        showOverdue: settings.notificationsShowOverdue ?? true,
+        showUpcoming: settings.notificationsShowUpcoming ?? true,
+        quietHoursStart: settings.notificationsQuietHoursStart ?? null,
+        quietHoursEnd: settings.notificationsQuietHoursEnd ?? null,
       };
     } catch (error) {
       console.error('[Notifications] Error fetching settings:', error);
       return this.getDefaultSettings();
     }
-  }
-
-  private getSetting<T>(settings: any[], key: string, defaultValue: T): T {
-    const setting = settings.find((s: any) => s.key === key);
-    return setting?.value !== undefined ? setting.value : defaultValue;
   }
 
   private getDefaultSettings(): NotificationSettings {
