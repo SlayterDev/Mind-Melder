@@ -23,11 +23,14 @@ export default function NotesPage() {
   };
 
   const searchNotes = async (query: string) => {
+    setIsLoading(true);
     try {
       const results = await searchAPI.search(query, 'notes');
       setNotes(results.notes || []);
     } catch (error) {
       console.error('Failed to search notes:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -82,12 +85,14 @@ export default function NotesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search notes..."
+              aria-label="Search notes"
               className="input-accent pl-9 pr-8 py-2 w-48"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                aria-label="Clear search"
               >
                 <X className="w-4 h-4" />
               </button>

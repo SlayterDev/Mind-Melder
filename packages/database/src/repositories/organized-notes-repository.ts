@@ -5,6 +5,7 @@ import {
   type NewOrganizedNote,
 } from '../schema/organized-notes.js';
 import type { Database } from '../client.js';
+import { buildPrefixSearchQuery } from '../utils/search.js';
 
 export class OrganizedNotesRepository {
   constructor(private db: Database) {}
@@ -82,7 +83,11 @@ export class OrganizedNotesRepository {
       return [];
     }
 
-    const prefixQuery = query.trim().split(/\s+/).map(t => t.replace(/[^a-zA-Z0-9]/g, '')).filter(Boolean).map(t => t + ':*').join(' & ');
+    const prefixQuery = buildPrefixSearchQuery(query);
+    if (!prefixQuery) {
+      // All terms were filtered out (e.g., input contained only special characters)
+      return [];
+    }
 
     return this.db
       .select()

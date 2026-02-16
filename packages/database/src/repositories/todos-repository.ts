@@ -1,6 +1,7 @@
 import { eq, and, desc, ne, asc, inArray, sql, lt } from 'drizzle-orm';
 import { todos, type Todo, type NewTodo } from '../schema/todos.js';
 import type { Database } from '../client.js';
+import { buildPrefixSearchQuery } from '../utils/search.js';
 
 export class TodosRepository {
   constructor(private db: Database) {}
@@ -215,7 +216,11 @@ export class TodosRepository {
       return [];
     }
 
-    const prefixQuery = query.trim().split(/\s+/).map(t => t.replace(/[^a-zA-Z0-9]/g, '')).filter(Boolean).map(t => t + ':*').join(' & ');
+    const prefixQuery = buildPrefixSearchQuery(query);
+    if (!prefixQuery) {
+      // All terms were filtered out (e.g., input contained only special characters)
+      return [];
+    }
 
     return this.db
       .select()
