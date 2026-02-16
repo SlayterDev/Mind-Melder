@@ -1,8 +1,8 @@
 import { Ollama } from 'ollama';
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
-import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, ToolCall, ToolDefinition, TodaySheetInput, TodaySheetOutput, TranscribeOptions, TranscriptionResult } from '../types.js';
-import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
+import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, ToolCall, ToolDefinition, TodaySheetInput, TodaySheetOutput, TranscribeOptions, TranscriptionResult, WeeklyReviewInput, WeeklyReviewOutput } from '../types.js';
+import { organizedOutputSchema, todaySheetOutputSchema, weeklyReviewOutputSchema } from '../validation.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
@@ -14,6 +14,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
   // Cache converted JSON schemas to avoid repeated conversions
   private organizedOutputJsonSchema: ReturnType<typeof zodToJsonSchema>;
   private todaySheetOutputJsonSchema: ReturnType<typeof zodToJsonSchema>;
+  private weeklyReviewOutputJsonSchema: ReturnType<typeof zodToJsonSchema>;
   private taskExtractionJsonSchema: object;
 
   constructor(config: ProviderConfig) {
@@ -27,6 +28,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     // Pre-convert schemas once during construction
     this.organizedOutputJsonSchema = zodToJsonSchema(organizedOutputSchema, 'organizedOutput');
     this.todaySheetOutputJsonSchema = zodToJsonSchema(todaySheetOutputSchema, 'todaySheetOutput');
+    this.weeklyReviewOutputJsonSchema = zodToJsonSchema(weeklyReviewOutputSchema, 'weeklyReviewOutput');
     
     // Define task extraction schema
     this.taskExtractionJsonSchema = {
@@ -295,5 +297,24 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
 
   async transcribe(_audioBuffer: Buffer, _options?: TranscribeOptions): Promise<TranscriptionResult> {
     throw new Error('Transcription is not supported by the Ollama provider. Enable local whisper in settings.');
+  }
+
+  async generateWeeklyReview(input: WeeklyReviewInput): Promise<WeeklyReviewOutput> {
+    const userPrompt = this.buildWeeklyReviewPrompt(input);
+
+    const response = await this.client.chat({
+      model: this.model,
+      messages: [
+        { role: 'system', content: 'You are a productivity coach helping users reflect on their week.' },
+        { role: 'user', content: userPrompt },
+      ],
+      stream: false,
+      format: this.weeklyReviewOutputJsonSchema,
+      options: {
+        temperature: Math.min(this.temperature, 0.7),
+      },
+    });
+
+    return this.parseResponse<WeeklyReviewOutput>(response.message.content, weeklyReviewOutputSchema);
   }
 }

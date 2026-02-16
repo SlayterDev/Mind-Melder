@@ -301,6 +301,100 @@ Total should not exceed ${input.context.workingHoursMinutes} minutes.`;
   }
 
   /**
+   * Build prompt for Weekly Review generation
+   */
+  protected buildWeeklyReviewPrompt(input: import('./types.js').WeeklyReviewInput): string {
+    const completedList = input.completedTodos
+      .map((t, i) => `${i + 1}. ${t.content}${t.tags ? ` [Tags: ${t.tags.join(', ')}]` : ''}`)
+      .join('\n');
+
+    const pendingList = input.pendingTodos
+      .map((t, i) => `${i + 1}. ID: ${t.id} | ${t.content}${t.dueDate ? ` (Due: ${new Date(t.dueDate).toLocaleDateString()})` : ''}${t.tags ? ` [Tags: ${t.tags.join(', ')}]` : ''}`)
+      .join('\n');
+
+    const capturesList = input.captures
+      .map((c, i) => `${i + 1}. [${new Date(c.timestamp).toLocaleString()}] ${c.content}`)
+      .join('\n');
+
+    const notesList = input.notes
+      .map((n, i) => `${i + 1}. ${n.title}`)
+      .join('\n');
+
+    return `You are generating a Weekly Review - a reflective analysis of a user's productivity patterns and accomplishments.
+
+WEEK PERIOD:
+- Start: ${input.weekStartDate} (Monday)
+- End: ${input.weekEndDate} (Sunday)
+
+COMPLETED TODOS (${input.completedTodos.length}):
+${completedList || 'No completed todos this week'}
+
+PENDING/INCOMPLETE TODOS (${input.pendingTodos.length}):
+${pendingList || 'No pending todos'}
+
+CAPTURES (${input.captures.length}):
+${capturesList || 'No captures this week'}
+
+NOTES CREATED (${input.notes.length}):
+${notesList || 'No notes created'}
+
+YOUR TASK:
+1. Write a 2-3 sentence summary of the week's overall focus and accomplishments
+2. Identify 3-5 key accomplishments from completed todos (be specific and celebratory)
+3. Analyze patterns:
+   - Calculate completion rate (completed / total todos attempted)
+   - Identify the most active categories from tags
+   - Generate 2-3 observations about what got done vs. what didn't
+   - Notice patterns in timing, types of tasks, blockers
+4. For pending todos that should carry forward:
+   - Select 3-5 most important incomplete tasks
+   - Explain why each wasn't completed (lack of time, blocked, needs clarity, etc.)
+5. Provide 3-5 actionable recommendations for next week:
+   - Focus areas based on patterns
+   - Process improvements
+   - Time management suggestions
+   - Be specific and encouraging
+
+TONE:
+- Positive and encouraging
+- Honest about challenges without being critical
+- Action-oriented and constructive
+- Focus on progress and learning, not perfection
+
+OUTPUT FORMAT (valid JSON only):
+{
+  "summary": "High-level 2-3 sentence week summary",
+  "insights": {
+    "accomplishments": [
+      "Specific accomplishment 1",
+      "Specific accomplishment 2"
+    ],
+    "patterns": {
+      "completionRate": 75,
+      "topCategories": ["work", "personal"],
+      "observations": [
+        "Observation about what worked well",
+        "Observation about challenges or patterns"
+      ]
+    },
+    "carryForward": [
+      {
+        "todoId": "uuid-from-pending-list",
+        "content": "Todo content",
+        "reason": "Why it wasn't completed"
+      }
+    ],
+    "recommendations": [
+      "Specific actionable recommendation 1",
+      "Specific actionable recommendation 2"
+    ]
+  }
+}
+
+Return valid JSON only.`;
+  }
+
+  /**
    * Parse and validate LLM JSON response
    */
   protected parseResponse<T>(response: string, schema?: z.ZodSchema<T>): T {

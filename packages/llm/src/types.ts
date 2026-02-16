@@ -1,4 +1,33 @@
-import type { Capture, Template, Todo, Tag } from 'types';
+import type { Capture, Template, Todo, Tag, OrganizedNote } from 'types';
+
+// Weekly Review types
+export interface WeeklyReviewInput {
+  weekStartDate: string; // ISO date (YYYY-MM-DD) - Monday
+  weekEndDate: string; // ISO date (YYYY-MM-DD) - Sunday
+  completedTodos: Todo[];
+  pendingTodos: Todo[];
+  captures: Capture[];
+  notes: OrganizedNote[];
+  todaySheets: any[]; // Using any[] to avoid circular dependency with database
+}
+
+export interface WeeklyReviewOutput {
+  summary: string; // 2-3 sentence high-level week summary
+  insights: {
+    accomplishments: string[]; // Key completed tasks and achievements
+    patterns: {
+      completionRate: number; // 0-100 percentage
+      topCategories: string[]; // Most active tag categories
+      observations: string[]; // AI-generated behavioral observations
+    };
+    carryForward: Array<{
+      todoId: string;
+      content: string;
+      reason: string; // Why it wasn't completed
+    }>;
+    recommendations: string[]; // Actionable suggestions for next week
+  };
+}
 
 // Today Sheet types
 export interface TodaySheetInput {
@@ -125,6 +154,13 @@ export interface LLMProvider {
    * @returns Transcribed text
    */
   transcribe(audioBuffer: Buffer, options?: TranscribeOptions): Promise<TranscriptionResult>;
+
+  /**
+   * Generate a weekly review analyzing a week's worth of activity
+   * @param input - Week's captures, todos, notes, and context
+   * @returns Structured insights, accomplishments, and recommendations
+   */
+  generateWeeklyReview(input: WeeklyReviewInput): Promise<WeeklyReviewOutput>;
 }
 
 // Transcription types

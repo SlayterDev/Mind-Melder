@@ -29,6 +29,26 @@ export const todaySheetOutputSchema = z.object({
   totalEstimatedMinutes: z.number(),
 });
 
+// Validation schema for WeeklyReviewOutput
+export const weeklyReviewOutputSchema = z.object({
+  summary: z.string(),
+  insights: z.object({
+    accomplishments: z.array(z.string()),
+    patterns: z.object({
+      completionRate: z.number().min(0).max(100),
+      topCategories: z.array(z.string()),
+      observations: z.array(z.string()),
+    }),
+    carryForward: z.array(z.object({
+      todoId: z.string().uuid(),
+      content: z.string(),
+      reason: z.string(),
+    })),
+    recommendations: z.array(z.string()),
+  }),
+});
+
 // Export inferred types
 export type OrganizedOutputSchema = z.infer<typeof organizedOutputSchema>;
 export type TodaySheetOutputSchema = z.infer<typeof todaySheetOutputSchema>;
+export type WeeklyReviewOutputSchema = z.infer<typeof weeklyReviewOutputSchema>;
