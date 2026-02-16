@@ -117,6 +117,18 @@ export default function TodosPage() {
     }
   };
 
+  const handleUpdateTags = async (id: string, tags: string[]) => {
+    // Optimistic update
+    setTodos(todos.map((t) => (t.id === id ? { ...t, tags } : t)));
+
+    try {
+      await todosAPI.update(id, { tags });
+    } catch (error) {
+      console.error('Failed to update tags:', error);
+      loadTodos(statusFilter === 'all' ? undefined : statusFilter);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this todo?')) return;
 
@@ -194,6 +206,7 @@ export default function TodosPage() {
               onUpdateDueDate={handleUpdateDueDate}
               onUpdateTimeEstimate={handleUpdateTimeEstimate}
               onUpdateTodaySheetSection={handleUpdateTodaySheetSection}
+              onUpdateTags={handleUpdateTags}
               onDelete={handleDelete}
             />
           ))}

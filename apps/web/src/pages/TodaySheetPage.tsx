@@ -311,6 +311,28 @@ export default function TodaySheetPage() {
     }
   };
 
+  const handleUpdateTags = async (id: string, tags: string[]) => {
+    // Optimistic update
+    if (sheet) {
+      const updatedSheet = { ...sheet };
+      Object.keys(updatedSheet.sections).forEach((sectionKey) => {
+        const section = sectionKey as keyof typeof updatedSheet.sections;
+        updatedSheet.sections[section] = updatedSheet.sections[section].map((t) =>
+          t.id === id ? { ...t, tags } : t
+        );
+      });
+      setSheet(updatedSheet);
+    }
+
+    // API call
+    try {
+      await todaySheetAPI.updateTodo(id, { tags });
+    } catch (error) {
+      console.error('Failed to update tags:', error);
+      loadSheet();
+    }
+  };
+
   const handleSubmitFeedback = async (id: string, vote: FeedbackVote, feedbackText?: string) => {
     // Optimistic update
     if (sheet) {
@@ -609,6 +631,7 @@ export default function TodaySheetPage() {
                     onUpdateContent={handleUpdateContent}
                     onUpdateTimeEstimate={handleUpdateTimeEstimate}
                     onSubmitFeedback={handleSubmitFeedback}
+                    onUpdateTags={handleUpdateTags}
                   />
                 </div>
                 <div className="animate-fade-in" style={{ animationDelay: '150ms' }}>
@@ -623,6 +646,7 @@ export default function TodaySheetPage() {
                     onUpdateContent={handleUpdateContent}
                     onUpdateTimeEstimate={handleUpdateTimeEstimate}
                     onSubmitFeedback={handleSubmitFeedback}
+                    onUpdateTags={handleUpdateTags}
                   />
                 </div>
                 <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
@@ -637,6 +661,7 @@ export default function TodaySheetPage() {
                     onUpdateContent={handleUpdateContent}
                     onUpdateTimeEstimate={handleUpdateTimeEstimate}
                     onSubmitFeedback={handleSubmitFeedback}
+                    onUpdateTags={handleUpdateTags}
                   />
                 </div>
                 <div className="animate-fade-in" style={{ animationDelay: '450ms' }}>
@@ -651,6 +676,7 @@ export default function TodaySheetPage() {
                     onUpdateContent={handleUpdateContent}
                     onUpdateTimeEstimate={handleUpdateTimeEstimate}
                     onSubmitFeedback={handleSubmitFeedback}
+                    onUpdateTags={handleUpdateTags}
                   />
                 </div>
               </div>

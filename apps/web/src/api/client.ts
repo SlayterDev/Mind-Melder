@@ -49,7 +49,7 @@ export const todosAPI = {
   get: (id: string) => fetchAPI<any>(`/todos/${id}`),
   create: (data: { content: string; dueDate?: string }) =>
     fetchAPI('/todos', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: { content?: string; status?: string; dueDate?: string | null; description?: string; timeEstimate?: TimeEstimate; todaySheetSection?: string }) =>
+  update: (id: string, data: { content?: string; status?: string; dueDate?: string | null; description?: string; timeEstimate?: TimeEstimate; todaySheetSection?: string; tags?: string[] }) =>
     fetchAPI(`/todos/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   markComplete: (id: string) => fetchAPI(`/todos/${id}/complete`, { method: 'PATCH' }),
   submitFeedback: (id: string, data: { vote: 'thumbs_up' | 'thumbs_down' | 'none'; feedbackText?: string }) =>
@@ -123,7 +123,7 @@ export const todaySheetAPI = {
       { method: 'POST', body: JSON.stringify(templateId ? { templateId } : {}) }
     ),
   get: () => fetchAPI<any>('/today-sheet'),
-  updateTodo: (id: string, updates: { content?: string; description?: string; status?: string; dueDate?: string | null; timeEstimate?: TimeEstimate }) =>
+  updateTodo: (id: string, updates: { content?: string; description?: string; status?: string; dueDate?: string | null; timeEstimate?: TimeEstimate; tags?: string[] }) =>
     fetchAPI<any>(`/today-sheet/todos/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
