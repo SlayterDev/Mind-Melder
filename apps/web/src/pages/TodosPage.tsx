@@ -23,6 +23,7 @@ export default function TodosPage() {
   };
 
   const searchTodos = async (query: string) => {
+    setIsLoading(true);
     try {
       const results = await searchAPI.search(query, 'todos');
       let filtered = results.todos || [];
@@ -32,6 +33,8 @@ export default function TodosPage() {
       setTodos(filtered);
     } catch (error) {
       console.error('Failed to search todos:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -200,12 +203,14 @@ export default function TodosPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search todos..."
+              aria-label="Search todos"
               className="input-accent pl-9 pr-8 py-2 w-48"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                aria-label="Clear search"
               >
                 <X className="w-4 h-4" />
               </button>
