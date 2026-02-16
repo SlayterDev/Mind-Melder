@@ -4,10 +4,11 @@ import { settingsAPI, type Settings } from '../api/client';
 export default function NotificationSettings() {
   const [settings, setSettings] = useState<Partial<Settings>>({
     notificationsEnabled: true,
-    notificationsCheckInterval: 10,
-    notificationsReminderMinutes: 60,
+    notificationsMorningReminderEnabled: true,
+    notificationsMorningReminderTime: '09:00',
+    notificationsAfternoonReminderEnabled: false,
+    notificationsAfternoonReminderTime: '15:00',
     notificationsShowOverdue: true,
-    notificationsShowUpcoming: true,
     notificationsQuietHoursStart: null,
     notificationsQuietHoursEnd: null,
   });
@@ -36,10 +37,11 @@ export default function NotificationSettings() {
       // Extract notification settings
       setSettings({
         notificationsEnabled: allSettings.notificationsEnabled ?? true,
-        notificationsCheckInterval: allSettings.notificationsCheckInterval ?? 10,
-        notificationsReminderMinutes: allSettings.notificationsReminderMinutes ?? 60,
+        notificationsMorningReminderEnabled: allSettings.notificationsMorningReminderEnabled ?? true,
+        notificationsMorningReminderTime: allSettings.notificationsMorningReminderTime ?? '09:00',
+        notificationsAfternoonReminderEnabled: allSettings.notificationsAfternoonReminderEnabled ?? false,
+        notificationsAfternoonReminderTime: allSettings.notificationsAfternoonReminderTime ?? '15:00',
         notificationsShowOverdue: allSettings.notificationsShowOverdue ?? true,
-        notificationsShowUpcoming: allSettings.notificationsShowUpcoming ?? true,
         notificationsQuietHoursStart: allSettings.notificationsQuietHoursStart ?? null,
         notificationsQuietHoursEnd: allSettings.notificationsQuietHoursEnd ?? null,
       });
@@ -60,10 +62,11 @@ export default function NotificationSettings() {
       // Save settings via the settings API
       await settingsAPI.update({
         notificationsEnabled: settings.notificationsEnabled,
-        notificationsCheckInterval: settings.notificationsCheckInterval,
-        notificationsReminderMinutes: settings.notificationsReminderMinutes,
+        notificationsMorningReminderEnabled: settings.notificationsMorningReminderEnabled,
+        notificationsMorningReminderTime: settings.notificationsMorningReminderTime,
+        notificationsAfternoonReminderEnabled: settings.notificationsAfternoonReminderEnabled,
+        notificationsAfternoonReminderTime: settings.notificationsAfternoonReminderTime,
         notificationsShowOverdue: settings.notificationsShowOverdue,
-        notificationsShowUpcoming: settings.notificationsShowUpcoming,
         notificationsQuietHoursStart: settings.notificationsQuietHoursStart || null,
         notificationsQuietHoursEnd: settings.notificationsQuietHoursEnd || null,
       });
@@ -87,7 +90,7 @@ export default function NotificationSettings() {
     if (isElectron && window.electronAPI?.checkNotifications) {
       try {
         await window.electronAPI.checkNotifications();
-        alert('Notification check triggered. If any todos are due soon, you should see a notification.');
+        alert('Notification check triggered manually.');
       } catch (err) {
         console.error('Failed to check notifications:', err);
         alert('Failed to trigger notification check');
@@ -141,7 +144,7 @@ export default function NotificationSettings() {
           Desktop Notifications
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Get notified about upcoming and overdue todos right on your desktop.
+          Receive daily summaries of your todos with due dates at scheduled times.
         </p>
       </div>
 
@@ -173,46 +176,75 @@ export default function NotificationSettings() {
 
         {/* Settings only shown when enabled */}
         {settings.notificationsEnabled && (
-          <div className="ml-7 space-y-4 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
-            {/* Check interval */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Check for due todos every:
+          <div className="ml-7 space-y-6 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
+            {/* Morning reminder */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.notificationsMorningReminderEnabled}
+                  onChange={(e) =>
+                    setSettings({ ...settings, notificationsMorningReminderEnabled: e.target.checked })
+                  }
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-gray-900 dark:text-gray-100 font-medium">
+                  Morning reminder
+                </span>
               </label>
-              <select
-                value={settings.notificationsCheckInterval}
-                onChange={(e) =>
-                  setSettings({ ...settings, notificationsCheckInterval: Number(e.target.value) })
-                }
-                className="block w-full max-w-xs rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="5">5 minutes</option>
-                <option value="10">10 minutes</option>
-                <option value="15">15 minutes</option>
-                <option value="30">30 minutes</option>
-                <option value="60">1 hour</option>
-              </select>
+              {settings.notificationsMorningReminderEnabled && (
+                <div className="ml-7">
+                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
+                    Time
+                  </label>
+                  <input
+                    type="time"
+                    value={settings.notificationsMorningReminderTime}
+                    onChange={(e) =>
+                      setSettings({ ...settings, notificationsMorningReminderTime: e.target.value })
+                    }
+                    className="block w-32 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Receive a summary of todos due today and overdue tasks
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Reminder timing */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Remind me before due date:
+            {/* Afternoon reminder */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.notificationsAfternoonReminderEnabled}
+                  onChange={(e) =>
+                    setSettings({ ...settings, notificationsAfternoonReminderEnabled: e.target.checked })
+                  }
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-gray-900 dark:text-gray-100 font-medium">
+                  Afternoon reminder
+                </span>
               </label>
-              <select
-                value={settings.notificationsReminderMinutes}
-                onChange={(e) =>
-                  setSettings({ ...settings, notificationsReminderMinutes: Number(e.target.value) })
-                }
-                className="block w-full max-w-xs rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="15">15 minutes</option>
-                <option value="30">30 minutes</option>
-                <option value="60">1 hour</option>
-                <option value="120">2 hours</option>
-                <option value="240">4 hours</option>
-                <option value="1440">1 day</option>
-              </select>
+              {settings.notificationsAfternoonReminderEnabled && (
+                <div className="ml-7">
+                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
+                    Time
+                  </label>
+                  <input
+                    type="time"
+                    value={settings.notificationsAfternoonReminderTime}
+                    onChange={(e) =>
+                      setSettings({ ...settings, notificationsAfternoonReminderTime: e.target.value })
+                    }
+                    className="block w-32 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    Receive a preview of todos due tomorrow
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Show overdue */}
@@ -224,20 +256,7 @@ export default function NotificationSettings() {
                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">
-                Show notifications for overdue tasks
-              </span>
-            </label>
-
-            {/* Show upcoming */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.notificationsShowUpcoming}
-                onChange={(e) => setSettings({ ...settings, notificationsShowUpcoming: e.target.checked })}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                Show notifications for upcoming tasks
+                Include overdue tasks in morning reminder
               </span>
             </label>
 

@@ -39,14 +39,13 @@ interface ElectronAPI {
 
   // Desktop Notifications
   checkNotifications: () => Promise<void>;
-  clearNotificationState: (todoId: string) => Promise<void>;
   restartNotificationService: () => Promise<void>;
   getNotificationState: () => Promise<{
-    notifiedTodos: string[];
-    lastCheck: string;
+    lastMorningCheck: string | null;
+    lastAfternoonCheck: string | null;
     isRunning: boolean;
   } | null>;
-  onNavigateToTodo: (callback: (todoId: string) => void) => () => void;
+  onNavigateToTodos: (callback: () => void) => () => void;
 }
 
 interface Window {

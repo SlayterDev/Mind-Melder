@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, real, boolean, index, pgEnum, integer } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, real, boolean, index, pgEnum } from 'drizzle-orm/pg-core';
 
 export const llmProviderEnum = pgEnum('llm_provider', ['openai', 'anthropic', 'ollama']);
 export const scheduleFrequencyEnum = pgEnum('schedule_frequency', ['daily', 'weekly']);
@@ -36,10 +36,11 @@ export const settings = pgTable(
     
     // Desktop Notifications
     notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
-    notificationsCheckInterval: integer('notifications_check_interval').notNull().default(10), // minutes
-    notificationsReminderMinutes: integer('notifications_reminder_minutes').notNull().default(60), // notify X minutes before due
+    notificationsMorningReminderEnabled: boolean('notifications_morning_reminder_enabled').notNull().default(true),
+    notificationsMorningReminderTime: text('notifications_morning_reminder_time').notNull().default('09:00'), // HH:MM format
+    notificationsAfternoonReminderEnabled: boolean('notifications_afternoon_reminder_enabled').notNull().default(false),
+    notificationsAfternoonReminderTime: text('notifications_afternoon_reminder_time').notNull().default('15:00'), // HH:MM format
     notificationsShowOverdue: boolean('notifications_show_overdue').notNull().default(true),
-    notificationsShowUpcoming: boolean('notifications_show_upcoming').notNull().default(true),
     notificationsQuietHoursStart: text('notifications_quiet_hours_start'), // HH:MM format or null
     notificationsQuietHoursEnd: text('notifications_quiet_hours_end'), // HH:MM format or null
     

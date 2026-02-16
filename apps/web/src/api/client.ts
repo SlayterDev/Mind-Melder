@@ -219,10 +219,11 @@ export interface Settings {
   
   // Desktop Notifications
   notificationsEnabled: boolean;
-  notificationsCheckInterval: number;
-  notificationsReminderMinutes: number;
+  notificationsMorningReminderEnabled: boolean;
+  notificationsMorningReminderTime: string; // HH:MM format
+  notificationsAfternoonReminderEnabled: boolean;
+  notificationsAfternoonReminderTime: string; // HH:MM format
   notificationsShowOverdue: boolean;
-  notificationsShowUpcoming: boolean;
   notificationsQuietHoursStart: string | null;
   notificationsQuietHoursEnd: string | null;
   

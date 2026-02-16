@@ -2,10 +2,11 @@ import { Notification, BrowserWindow } from 'electron';
 
 interface NotificationSettings {
   enabled: boolean;
-  checkInterval: number;
-  reminderMinutes: number;
+  morningReminderEnabled: boolean;
+  morningReminderTime: string; // HH:MM format
+  afternoonReminderEnabled: boolean;
+  afternoonReminderTime: string; // HH:MM format
   showOverdue: boolean;
-  showUpcoming: boolean;
   quietHoursStart: string | null;
   quietHoursEnd: string | null;
 }
@@ -19,17 +20,18 @@ interface Todo {
 
 interface Settings {
   notificationsEnabled?: boolean;
-  notificationsCheckInterval?: number;
-  notificationsReminderMinutes?: number;
+  notificationsMorningReminderEnabled?: boolean;
+  notificationsMorningReminderTime?: string;
+  notificationsAfternoonReminderEnabled?: boolean;
+  notificationsAfternoonReminderTime?: string;
   notificationsShowOverdue?: boolean;
-  notificationsShowUpcoming?: boolean;
   notificationsQuietHoursStart?: string | null;
   notificationsQuietHoursEnd?: string | null;
 }
 
 export class NotificationService {
-  private notifiedTodos = new Set<string>();
-  private lastCheck: Date = new Date(0);
+  private lastMorningCheck: string | null = null; // Date string YYYY-MM-DD
+  private lastAfternoonCheck: string | null = null; // Date string YYYY-MM-DD
   private timer: NodeJS.Timeout | null = null;
   private apiBaseUrl: string;
   private mainWindow: BrowserWindow | null;
@@ -71,13 +73,13 @@ export class NotificationService {
       // Initial check after a short delay to let app initialize
       setTimeout(() => this.checkAndNotify(), 5000);
 
-      // Set up periodic checks
+      // Check every minute for scheduled reminders
       this.timer = setInterval(
         () => this.checkAndNotify(),
-        settings.checkInterval * 60 * 1000
+        60 * 1000 // Check every minute
       );
       
-      console.log(`[Notifications] Scheduled checks every ${settings.checkInterval} minutes`);
+      console.log('[Notifications] Scheduled checks every minute for daily reminders');
     } catch (error) {
       console.error('[Notifications] Failed to start service:', error);
     }
@@ -104,10 +106,11 @@ export class NotificationService {
       // Extract notification settings from the settings object
       return {
         enabled: settings.notificationsEnabled ?? true,
-        checkInterval: settings.notificationsCheckInterval ?? 10,
-        reminderMinutes: settings.notificationsReminderMinutes ?? 60,
+        morningReminderEnabled: settings.notificationsMorningReminderEnabled ?? true,
+        morningReminderTime: settings.notificationsMorningReminderTime ?? '09:00',
+        afternoonReminderEnabled: settings.notificationsAfternoonReminderEnabled ?? false,
+        afternoonReminderTime: settings.notificationsAfternoonReminderTime ?? '15:00',
         showOverdue: settings.notificationsShowOverdue ?? true,
-        showUpcoming: settings.notificationsShowUpcoming ?? true,
         quietHoursStart: settings.notificationsQuietHoursStart ?? null,
         quietHoursEnd: settings.notificationsQuietHoursEnd ?? null,
       };
@@ -120,10 +123,11 @@ export class NotificationService {
   private getDefaultSettings(): NotificationSettings {
     return {
       enabled: true,
-      checkInterval: 10,
-      reminderMinutes: 60,
+      morningReminderEnabled: true,
+      morningReminderTime: '09:00',
+      afternoonReminderEnabled: false,
+      afternoonReminderTime: '15:00',
       showOverdue: true,
-      showUpcoming: true,
       quietHoursStart: null,
       quietHoursEnd: null,
     };
@@ -173,139 +177,187 @@ export class NotificationService {
       }
 
       if (this.isQuietHours(settings)) {
-        console.log('[Notifications] In quiet hours, skipping notification check');
-        return;
+        return; // Skip during quiet hours
       }
-
-      console.log('[Notifications] Checking for due todos...');
-
-      // Fetch pending todos with due dates using API helper
-      const todos = await this.fetchAPI<Todo[]>('/todos?status=pending');
-      const todosWithDates = todos.filter(t => t.dueDate);
-
-      console.log(`[Notifications] Found ${todosWithDates.length} todos with due dates`);
 
       const now = new Date();
-      const reminderThreshold = new Date(now.getTime() + settings.reminderMinutes * 60 * 1000);
+      const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+      const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
 
-      let notificationsSent = 0;
-
-      for (const todo of todosWithDates) {
-        if (!todo.dueDate) continue;
-        
-        const dueDate = new Date(todo.dueDate);
-        const todoId = todo.id;
-
-        // Skip if already notified
-        if (this.notifiedTodos.has(todoId)) continue;
-
-        // Check for overdue
-        if (settings.showOverdue && dueDate < now) {
-          const hoursOverdue = Math.floor((now.getTime() - dueDate.getTime()) / (60 * 60 * 1000));
-          const timeStr = hoursOverdue < 24 
-            ? `${hoursOverdue} hour${hoursOverdue !== 1 ? 's' : ''}` 
-            : `${Math.floor(hoursOverdue / 24)} day${Math.floor(hoursOverdue / 24) !== 1 ? 's' : ''}`;
-          
-          this.sendNotification(
-            '⚠️ Overdue Task',
-            `${todo.content} (overdue by ${timeStr})`,
-            todoId,
-            true
-          );
-          this.notifiedTodos.add(todoId);
-          notificationsSent++;
-          continue;
-        }
-
-        // Check for upcoming
-        if (settings.showUpcoming && dueDate <= reminderThreshold && dueDate > now) {
-          const minutesUntil = Math.floor((dueDate.getTime() - now.getTime()) / 60000);
-          let timeStr: string;
-          
-          if (minutesUntil < 60) {
-            timeStr = `${minutesUntil} minute${minutesUntil !== 1 ? 's' : ''}`;
-          } else if (minutesUntil < 1440) {
-            const hours = Math.floor(minutesUntil / 60);
-            timeStr = `${hours} hour${hours !== 1 ? 's' : ''}`;
-          } else {
-            const days = Math.floor(minutesUntil / 1440);
-            timeStr = `${days} day${days !== 1 ? 's' : ''}`;
-          }
-          
-          this.sendNotification(
-            '⏰ Task Due Soon',
-            `${todo.content} (due in ${timeStr})`,
-            todoId,
-            false
-          );
-          this.notifiedTodos.add(todoId);
-          notificationsSent++;
-        }
+      // Check if it's time for morning reminder
+      if (settings.morningReminderEnabled && 
+          this.lastMorningCheck !== currentDate &&
+          this.isReminderTime(currentTime, settings.morningReminderTime)) {
+        await this.sendDailyReminder('morning', settings, currentDate);
+        this.lastMorningCheck = currentDate;
       }
 
-      if (notificationsSent > 0) {
-        console.log(`[Notifications] Sent ${notificationsSent} notification(s)`);
-      } else {
-        console.log('[Notifications] No notifications needed');
+      // Check if it's time for afternoon reminder (for tomorrow's items)
+      if (settings.afternoonReminderEnabled &&
+          this.lastAfternoonCheck !== currentDate &&
+          this.isReminderTime(currentTime, settings.afternoonReminderTime)) {
+        await this.sendDailyReminder('afternoon', settings, currentDate);
+        this.lastAfternoonCheck = currentDate;
       }
-
-      this.lastCheck = now;
     } catch (error) {
       console.error('[Notifications] Error during notification check:', error);
     }
   }
 
-  private sendNotification(title: string, body: string, todoId: string, isOverdue: boolean = false) {
+  // Check if current time matches reminder time (within 1 minute)
+  private isReminderTime(currentTime: string, reminderTime: string): boolean {
+    const [currentH, currentM] = currentTime.split(':').map(Number);
+    const [reminderH, reminderM] = reminderTime.split(':').map(Number);
+    
+    // Check if we're within 1 minute of the reminder time
+    return currentH === reminderH && Math.abs(currentM - reminderM) <= 1;
+  }
+
+  // Get date part only from ISO string (YYYY-MM-DD)
+  private getDateOnly(isoString: string): string {
+    return isoString.split('T')[0];
+  }
+
+  private async sendDailyReminder(type: 'morning' | 'afternoon', settings: NotificationSettings, currentDate: string) {
+    try {
+      // Fetch pending todos with due dates
+      const todos = await this.fetchAPI<Todo[]>('/todos?status=pending');
+      const todosWithDates = todos.filter(t => t.dueDate);
+
+      const today = currentDate;
+      const tomorrow = new Date(currentDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+      let todayTodos: Todo[] = [];
+      let tomorrowTodos: Todo[] = [];
+      let overdueTodos: Todo[] = [];
+
+      // Categorize todos by date
+      for (const todo of todosWithDates) {
+        if (!todo.dueDate) continue;
+        const dueDate = this.getDateOnly(todo.dueDate);
+        
+        if (dueDate < today) {
+          overdueTodos.push(todo);
+        } else if (dueDate === today) {
+          todayTodos.push(todo);
+        } else if (dueDate === tomorrowStr) {
+          tomorrowTodos.push(todo);
+        }
+      }
+
+      if (type === 'morning') {
+        this.sendMorningReminder(todayTodos, overdueTodos, settings);
+      } else {
+        this.sendAfternoonReminder(tomorrowTodos);
+      }
+    } catch (error) {
+      console.error(`[Notifications] Error sending ${type} reminder:`, error);
+    }
+  }
+
+  private sendMorningReminder(todayTodos: Todo[], overdueTodos: Todo[], settings: NotificationSettings) {
+    const totalToday = todayTodos.length;
+    const totalOverdue = settings.showOverdue ? overdueTodos.length : 0;
+    
+    if (totalToday === 0 && totalOverdue === 0) {
+      console.log('[Notifications] No todos for today, skipping morning reminder');
+      return;
+    }
+
+    let title = '☀️ Good Morning';
+    let body = '';
+
+    if (totalToday > 0 && totalOverdue > 0) {
+      body = `You have ${totalToday} task${totalToday !== 1 ? 's' : ''} due today and ${totalOverdue} overdue task${totalOverdue !== 1 ? 's' : ''}.`;
+    } else if (totalToday > 0) {
+      body = `You have ${totalToday} task${totalToday !== 1 ? 's' : ''} due today.`;
+    } else if (totalOverdue > 0) {
+      body = `You have ${totalOverdue} overdue task${totalOverdue !== 1 ? 's' : ''}.`;
+    }
+
+    // Add preview of first few tasks
+    const previewTodos = [...todayTodos, ...overdueTodos].slice(0, 3);
+    if (previewTodos.length > 0) {
+      body += '\n\n';
+      body += previewTodos.map(t => `• ${t.content}`).join('\n');
+      if (totalToday + totalOverdue > 3) {
+        body += `\n... and ${totalToday + totalOverdue - 3} more`;
+      }
+    }
+
+    this.sendSummaryNotification(title, body);
+    console.log(`[Notifications] Sent morning reminder: ${totalToday} today, ${totalOverdue} overdue`);
+  }
+
+  private sendAfternoonReminder(tomorrowTodos: Todo[]) {
+    const totalTomorrow = tomorrowTodos.length;
+    
+    if (totalTomorrow === 0) {
+      console.log('[Notifications] No todos for tomorrow, skipping afternoon reminder');
+      return;
+    }
+
+    const title = '📅 Tomorrow\'s Tasks';
+    let body = `You have ${totalTomorrow} task${totalTomorrow !== 1 ? 's' : ''} due tomorrow.`;
+
+    // Add preview of first few tasks
+    const previewTodos = tomorrowTodos.slice(0, 3);
+    if (previewTodos.length > 0) {
+      body += '\n\n';
+      body += previewTodos.map(t => `• ${t.content}`).join('\n');
+      if (totalTomorrow > 3) {
+        body += `\n... and ${totalTomorrow - 3} more`;
+      }
+    }
+
+    this.sendSummaryNotification(title, body);
+    console.log(`[Notifications] Sent afternoon reminder: ${totalTomorrow} tomorrow`);
+  }
+
+  private sendSummaryNotification(title: string, body: string) {
     try {
       const notification = new Notification({
         title,
         body,
         silent: false,
-        urgency: isOverdue ? 'critical' : 'normal',
+        urgency: 'normal',
       });
 
       notification.on('click', () => {
-        console.log('[Notifications] Notification clicked for todo:', todoId);
+        console.log('[Notifications] Summary notification clicked');
         
-        // Focus main window if it exists
+        // Focus main window and navigate to todos
         if (this.mainWindow && !this.mainWindow.isDestroyed()) {
           if (this.mainWindow.isMinimized()) {
             this.mainWindow.restore();
           }
           this.mainWindow.focus();
           
-          // Send IPC event to navigate to todos page
-          this.mainWindow.webContents.send('navigate-to-todo', todoId);
+          // Navigate to todos page
+          this.mainWindow.webContents.send('navigate-to-todos');
         }
       });
 
       notification.show();
-      console.log(`[Notifications] Shown: ${title} - ${body}`);
+      console.log(`[Notifications] Shown: ${title}`);
     } catch (error) {
       console.error('[Notifications] Failed to show notification:', error);
     }
   }
 
-  clearNotificationState(todoId: string) {
-    const removed = this.notifiedTodos.delete(todoId);
-    if (removed) {
-      console.log(`[Notifications] Cleared notification state for todo: ${todoId}`);
-    }
-  }
-
   clearAllState() {
-    const count = this.notifiedTodos.size;
-    this.notifiedTodos.clear();
-    if (count > 0) {
-      console.log(`[Notifications] Cleared notification state for ${count} todo(s)`);
-    }
+    this.lastMorningCheck = null;
+    this.lastAfternoonCheck = null;
+    console.log('[Notifications] Cleared notification state');
   }
 
   // Get current state for debugging
   getState() {
     return {
-      notifiedTodos: Array.from(this.notifiedTodos),
-      lastCheck: this.lastCheck,
+      lastMorningCheck: this.lastMorningCheck,
+      lastAfternoonCheck: this.lastAfternoonCheck,
       isRunning: this.timer !== null,
     };
   }

@@ -288,12 +288,6 @@ ipcMain.handle('check-notifications', async () => {
   }
 });
 
-ipcMain.handle('clear-notification-state', (_event, todoId: string) => {
-  if (notificationService) {
-    notificationService.clearNotificationState(todoId);
-  }
-});
-
 ipcMain.handle('restart-notification-service', async () => {
   if (notificationService) {
     await notificationService.restart();
