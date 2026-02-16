@@ -178,7 +178,8 @@ export class NotificationService {
           this.sendNotification(
             '⚠️ Overdue Task',
             `${todo.content} (overdue by ${timeStr})`,
-            todoId
+            todoId,
+            true
           );
           this.notifiedTodos.add(todoId);
           notificationsSent++;
@@ -203,7 +204,8 @@ export class NotificationService {
           this.sendNotification(
             '⏰ Task Due Soon',
             `${todo.content} (due in ${timeStr})`,
-            todoId
+            todoId,
+            false
           );
           this.notifiedTodos.add(todoId);
           notificationsSent++;
@@ -222,13 +224,13 @@ export class NotificationService {
     }
   }
 
-  private sendNotification(title: string, body: string, todoId: string) {
+  private sendNotification(title: string, body: string, todoId: string, isOverdue: boolean = false) {
     try {
       const notification = new Notification({
         title,
         body,
         silent: false,
-        urgency: title.includes('Overdue') ? 'critical' : 'normal',
+        urgency: isOverdue ? 'critical' : 'normal',
       });
 
       notification.on('click', () => {

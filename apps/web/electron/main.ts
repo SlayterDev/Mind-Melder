@@ -364,7 +364,11 @@ app.whenReady().then(() => {
   const apiUrl = getApiUrl();
   notificationService = new NotificationService(apiUrl, mainWindow);
   
-  // Start notification service after a delay to ensure API is ready
+  // Start notification service after a delay to allow:
+  // 1. API server to be ready and accepting connections
+  // 2. Settings to be initialized in the database
+  // 3. Main window to complete initial render
+  // This prevents spurious errors on first launch
   setTimeout(() => {
     if (notificationService) {
       notificationService.start();
