@@ -92,8 +92,8 @@ export default function TagEditor({
           onKeyDown={handleKeyDown}
           onBlur={() => tagInput && addTag(tagInput)}
           placeholder={tags.length === 0 ? placeholder : ''}
-          className={`flex-1 bg-transparent border-none outline-none placeholder-gray-500 min-w-[80px] ${
-            isSm ? 'text-xs text-gray-200' : 'text-gray-200'
+          className={`flex-1 bg-transparent border-none outline-none placeholder-gray-500 min-w-[80px] text-gray-200 ${
+            isSm ? 'text-xs' : ''
           }`}
           disabled={tags.length >= maxTags}
           autoFocus={autoFocus}
