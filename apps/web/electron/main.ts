@@ -307,28 +307,30 @@ ipcMain.handle('get-notification-state', () => {
   return null;
 });
 
-// Helper to get API URL from environment or use default
+// Helper to get API URL from config file
 function getApiUrl(): string {
-  // In development, use localhost
-  if (isDev) {
-    return 'http://localhost:3000/api/v1';
-  }
-  
-  // In production, check for configured API URL
-  // This could come from a config file or environment variable
+  // Check for configured API URL in config file (same location as web config)
   const configPath = path.join(app.getPath('userData'), 'config.json');
   try {
     if (fsSync.existsSync(configPath)) {
       const config = JSON.parse(fsSync.readFileSync(configPath, 'utf-8'));
       if (config.apiUrl) {
-        return config.apiUrl;
+        // Ensure it ends with /api/v1
+        let url = config.apiUrl.trim();
+        if (url.endsWith('/')) {
+          url = url.slice(0, -1);
+        }
+        if (!url.endsWith('/api/v1')) {
+          url = url + '/api/v1';
+        }
+        return url;
       }
     }
   } catch (error) {
     console.error('[Config] Failed to read config:', error);
   }
   
-  // Default to localhost
+  // Default to localhost (works for both dev and prod if API is local)
   return 'http://localhost:3000/api/v1';
 }
 

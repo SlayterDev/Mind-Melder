@@ -17,6 +17,16 @@ interface Todo {
   status: string;
 }
 
+interface Settings {
+  notificationsEnabled?: boolean;
+  notificationsCheckInterval?: number;
+  notificationsReminderMinutes?: number;
+  notificationsShowOverdue?: boolean;
+  notificationsShowUpcoming?: boolean;
+  notificationsQuietHoursStart?: string | null;
+  notificationsQuietHoursEnd?: string | null;
+}
+
 export class NotificationService {
   private notifiedTodos = new Set<string>();
   private lastCheck: Date = new Date(0);
@@ -31,6 +41,21 @@ export class NotificationService {
 
   setMainWindow(window: BrowserWindow) {
     this.mainWindow = window;
+  }
+
+  // Simple API helper for main process (no browser dependencies)
+  private async fetchAPI<T>(endpoint: string): Promise<T> {
+    const response = await fetch(`${this.apiBaseUrl}${endpoint}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.statusText}`);
+    }
+
+    return response.json();
   }
 
   async start() {
@@ -74,13 +99,7 @@ export class NotificationService {
 
   private async getSettings(): Promise<NotificationSettings> {
     try {
-      const response = await fetch(`${this.apiBaseUrl}/settings`);
-      if (!response.ok) {
-        console.warn('[Notifications] Failed to fetch settings, using defaults');
-        return this.getDefaultSettings();
-      }
-
-      const settings = await response.json();
+      const settings = await this.fetchAPI<Settings>('/settings');
       
       // Extract notification settings from the settings object
       return {
@@ -114,18 +133,36 @@ export class NotificationService {
     if (!settings.quietHoursStart || !settings.quietHoursEnd) return false;
     
     const now = new Date();
-    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    // Use 24-hour format (HH:MM) - always use getHours() which returns 0-23
+    const currentHours = now.getHours();
+    const currentMinutes = now.getMinutes();
+    const currentTimeMinutes = currentHours * 60 + currentMinutes;
     
-    const start = settings.quietHoursStart;
-    const end = settings.quietHoursEnd;
+    // Parse start and end times (expected format: "HH:MM" in 24-hour format)
+    const parseTime = (timeStr: string): number => {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      // Handle invalid input gracefully
+      if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+        return -1;
+      }
+      return hours * 60 + minutes;
+    };
+    
+    const startMinutes = parseTime(settings.quietHoursStart);
+    const endMinutes = parseTime(settings.quietHoursEnd);
+    
+    // If parsing failed, disable quiet hours
+    if (startMinutes === -1 || endMinutes === -1) {
+      return false;
+    }
     
     // Handle overnight quiet hours (e.g., 22:00 to 08:00)
-    if (start > end) {
-      return currentTime >= start || currentTime <= end;
+    if (startMinutes > endMinutes) {
+      return currentTimeMinutes >= startMinutes || currentTimeMinutes <= endMinutes;
     }
     
     // Normal quiet hours (e.g., 13:00 to 14:00)
-    return currentTime >= start && currentTime <= end;
+    return currentTimeMinutes >= startMinutes && currentTimeMinutes <= endMinutes;
   }
 
   async checkAndNotify() {
@@ -142,14 +179,8 @@ export class NotificationService {
 
       console.log('[Notifications] Checking for due todos...');
 
-      // Fetch pending todos with due dates
-      const response = await fetch(`${this.apiBaseUrl}/todos?status=pending`);
-      if (!response.ok) {
-        console.error('[Notifications] Failed to fetch todos:', response.statusText);
-        return;
-      }
-
-      const todos: Todo[] = await response.json();
+      // Fetch pending todos with due dates using API helper
+      const todos = await this.fetchAPI<Todo[]>('/todos?status=pending');
       const todosWithDates = todos.filter(t => t.dueDate);
 
       console.log(`[Notifications] Found ${todosWithDates.length} todos with due dates`);
