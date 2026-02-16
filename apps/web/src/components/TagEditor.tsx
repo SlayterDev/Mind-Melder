@@ -53,24 +53,14 @@ export default function TagEditor({
     }
   };
 
-  const isSm = size === 'sm';
-
-  const wrapperClass = isSm
-    ? 'px-2 py-1.5 flex flex-wrap items-center gap-1.5 rounded border border-gray-700 bg-gray-800/50'
-    : 'input-accent w-full px-3 py-2 flex flex-wrap items-center gap-2 min-h-[46px]';
-
-  const badgeClass = isSm
-    ? 'px-2 py-0.5 bg-blue-900/20 border border-blue-700/40 rounded text-xs text-blue-300/90 flex items-center gap-1'
-    : 'badge-accent px-3 py-1 text-xs flex items-center gap-1';
-
   return (
     <div className={className}>
       <div
-        className={wrapperClass}
+        className={`flex flex-wrap items-center ${size === 'sm' ? 'px-2 py-1.5 gap-1.5 rounded border border-gray-700 bg-gray-800/50' : 'input-accent w-full px-3 py-2 gap-2 min-h-[46px]'}`}
         onClick={() => inputRef.current?.focus()}
       >
         {tags.map((tag) => (
-          <span key={tag} className={badgeClass}>
+          <span key={tag} className={`flex items-center text-xs ${size === 'sm' ? 'px-2 py-0.5 bg-blue-900/20 border border-blue-700/40 rounded text-blue-300/90 gap-1' : 'badge-accent px-3 py-1 gap-1'}`}>
             {tag}
             <button
               type="button"
@@ -93,7 +83,7 @@ export default function TagEditor({
           onBlur={() => tagInput && addTag(tagInput)}
           placeholder={tags.length === 0 ? placeholder : ''}
           className={`flex-1 bg-transparent border-none outline-none placeholder-gray-500 min-w-[80px] text-gray-200 ${
-            isSm ? 'text-xs' : ''
+            size === 'sm' ? 'text-xs' : ''
           }`}
           disabled={tags.length >= maxTags}
           autoFocus={autoFocus}
