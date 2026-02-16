@@ -6,3 +6,4 @@ export * from './templates-repository.js';
 export * from './settings-repository.js';
 export * from './tags-repository.js';
 export * from './conversations-repository.js';
+export * from './weekly-reviews-repository.js';

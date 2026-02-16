@@ -3,6 +3,7 @@ import { BrowserRouter, HashRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import CapturePage from './pages/CapturePage';
 import TodaySheetPage from './pages/TodaySheetPage';
+import WeeklyReviewPage from './pages/WeeklyReviewPage';
 import InboxPage from './pages/InboxPage';
 import NotesPage from './pages/NotesPage';
 import NewNotePage from './pages/NewNotePage';
@@ -23,6 +24,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<CapturePage />} />
       <Route path="/today" element={<TodaySheetPage />} />
+      <Route path="/weekly-review" element={<WeeklyReviewPage />} />
       <Route path="/inbox" element={<InboxPage />} />
       <Route path="/notes/new" element={<NewNotePage />} />
       <Route path="/notes/:id" element={<NoteDetailPage />} />

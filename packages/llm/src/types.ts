@@ -1,4 +1,44 @@
-import type { Capture, Template, Todo, Tag } from 'types';
+import type { Capture, Template, Todo, Tag, OrganizedNote } from 'types';
+
+// Weekly Review types
+export interface WeeklyReviewInput {
+  weekStartDate: string; // ISO date (YYYY-MM-DD) - Monday
+  weekEndDate: string; // ISO date (YYYY-MM-DD) - Sunday
+  completedTodos: Todo[];
+  pendingTodos: Todo[];
+  captures: Capture[];
+  notes: OrganizedNote[];
+  todaySheets: any[]; // Using any[] to avoid circular dependency with database
+}
+
+export interface WeeklyReviewOutput {
+  summary: string; // 2-3 sentence high-level week summary
+  insights: {
+    accomplishments: string[]; // Key completed tasks and achievements
+    patterns: {
+      completionRate: number; // 0-100 percentage
+      topCategories: string[]; // Most active tag categories
+      observations: string[]; // AI-generated behavioral observations
+    };
+    carryForward: Array<{
+      todoId: string;
+      content: string;
+      reason: string; // Why it wasn't completed
+    }>;
+    recommendations: string[]; // Actionable suggestions for next week
+  };
+}
+
+// Template Suggestions types
+export interface TemplateSuggestion {
+  title: string; // Brief title for the suggestion
+  description: string; // Detailed explanation of why this would improve the template
+  improvedPrompt: string; // The full improved template prompt text
+}
+
+export interface TemplateSuggestionsOutput {
+  suggestions: [TemplateSuggestion, TemplateSuggestion, TemplateSuggestion]; // Always exactly 3 suggestions
+}
 
 // Today Sheet types
 export interface TodaySheetInput {
@@ -125,6 +165,21 @@ export interface LLMProvider {
    * @returns Transcribed text
    */
   transcribe(audioBuffer: Buffer, options?: TranscribeOptions): Promise<TranscriptionResult>;
+
+  /**
+   * Generate a weekly review analyzing a week's worth of activity
+   * @param input - Week's captures, todos, notes, and context
+   * @returns Structured insights, accomplishments, and recommendations
+   */
+  generateWeeklyReview(input: WeeklyReviewInput): Promise<WeeklyReviewOutput>;
+
+  /**
+   * Generate suggestions to improve a template prompt
+   * @param template - The current template to analyze
+   * @param weeklyReview - Optional recent weekly review for context
+   * @returns Three improvement suggestions with reasoning
+   */
+  generateTemplateSuggestions(template: Template, weeklyReview?: WeeklyReviewOutput): Promise<TemplateSuggestionsOutput>;
 }
 
 // Transcription types

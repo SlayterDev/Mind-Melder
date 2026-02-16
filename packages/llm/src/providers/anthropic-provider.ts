@@ -4,9 +4,9 @@ import { BaseLLMProvider } from '../base-provider.js';
 import type {
   LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput,
   TodaySheetOutput, ChatMessage, StreamCallbacks, ToolCall, ToolDefinition,
-  TranscribeOptions, TranscriptionResult
+  TranscribeOptions, TranscriptionResult, WeeklyReviewInput, WeeklyReviewOutput, TemplateSuggestionsOutput
 } from '../types.js';
-import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
+import { organizedOutputSchema, todaySheetOutputSchema, weeklyReviewOutputSchema, templateSuggestionsOutputSchema } from '../validation.js';
 
 export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
   private client: Anthropic;
@@ -242,5 +242,47 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
 
   async transcribe(_audioBuffer: Buffer, _options?: TranscribeOptions): Promise<TranscriptionResult> {
     throw new Error('Transcription is not supported by the Anthropic provider.');
+  }
+
+  async generateWeeklyReview(input: WeeklyReviewInput): Promise<WeeklyReviewOutput> {
+    const userPrompt = this.buildWeeklyReviewPrompt(input);
+
+    const response = await this.client.messages.create({
+      model: this.model,
+      max_tokens: 2000,
+      temperature: Math.min(this.temperature, 0.7),
+      system: 'You are a productivity coach helping users reflect on their week.',
+      messages: [
+        { role: 'user', content: userPrompt },
+      ],
+    });
+
+    const responseContent = response.content[0];
+    if (responseContent.type !== 'text') {
+      throw new Error('Unexpected response type from Anthropic');
+    }
+
+    return this.parseResponse<WeeklyReviewOutput>(responseContent.text, weeklyReviewOutputSchema);
+  }
+
+  async generateTemplateSuggestions(template: Template, weeklyReview?: WeeklyReviewOutput): Promise<TemplateSuggestionsOutput> {
+    const userPrompt = this.buildTemplateSuggestionsPrompt(template, weeklyReview);
+
+    const response = await this.client.messages.create({
+      model: this.model,
+      max_tokens: 3000,
+      temperature: Math.min(this.temperature, 0.7),
+      system: 'You are a productivity coach helping users improve their organization templates.',
+      messages: [
+        { role: 'user', content: userPrompt },
+      ],
+    });
+
+    const responseContent = response.content[0];
+    if (responseContent.type !== 'text') {
+      throw new Error('Unexpected response type from Anthropic');
+    }
+
+    return this.parseResponse<TemplateSuggestionsOutput>(responseContent.text, templateSuggestionsOutputSchema);
   }
 }

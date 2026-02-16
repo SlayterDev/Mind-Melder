@@ -258,3 +258,49 @@ export const transcribeAPI = {
     return response.json();
   },
 };
+
+// Weekly Reviews
+export interface WeeklyReviewInsights {
+  accomplishments: string[];
+  patterns: {
+    completionRate: number;
+    topCategories: string[];
+    observations: string[];
+  };
+  carryForward: Array<{
+    todoId: string;
+    content: string;
+    reason: string;
+  }>;
+  recommendations: string[];
+}
+
+export interface WeeklyReview {
+  id: string;
+  userId: string;
+  weekStartDate: string; // ISO date
+  weekEndDate: string; // ISO date
+  summary: string;
+  insights: WeeklyReviewInsights;
+  createdAt: string;
+}
+
+export const weeklyReviewAPI = {
+  generate: (weekStartDate?: string, forceRegenerate?: boolean) =>
+    fetchAPI<{ success: boolean; review: WeeklyReview; message: string }>(
+      '/weekly-review/generate',
+      {
+        method: 'POST',
+        body: JSON.stringify({ 
+          ...(weekStartDate && { weekStartDate }),
+          ...(forceRegenerate !== undefined && { forceRegenerate })
+        }),
+      }
+    ),
+  getLatest: () => fetchAPI<WeeklyReview>('/weekly-review/latest'),
+  list: (page: number = 1, perPage: number = 10) =>
+    fetchAPI<{ reviews: WeeklyReview[]; page: number; perPage: number }>(
+      `/weekly-review?page=${page}&perPage=${perPage}`
+    ),
+  get: (id: string) => fetchAPI<WeeklyReview>(`/weekly-review/${id}`),
+};
