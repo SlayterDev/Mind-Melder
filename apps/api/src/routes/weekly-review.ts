@@ -9,6 +9,7 @@ import { validateBody, validateQuery, ApiError } from '../middleware/index.js';
 // Validation schemas
 const generateReviewSchema = z.object({
   weekStartDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), // ISO date format YYYY-MM-DD
+  forceRegenerate: z.boolean().optional().default(false),
 });
 
 const listReviewsSchema = z.object({
@@ -25,13 +26,13 @@ export function createWeeklyReviewRouter(db: Database, settingsRepo: SettingsRep
     validateBody(generateReviewSchema),
     asyncHandler(async (req, res) => {
       const userId = 'test-user-1'; // TODO: Get from auth context
-      const { weekStartDate } = req.body;
+      const { weekStartDate, forceRegenerate } = req.body;
 
       try {
         const settings = await settingsRepo.getOrCreate(userId);
         const llmProvider = ProviderFactory.createFromSettings(settings);
         const weeklyReviewService = new WeeklyReviewService(db, llmProvider);
-        const review = await weeklyReviewService.generateReview(userId, weekStartDate);
+        const review = await weeklyReviewService.generateReview(userId, weekStartDate, forceRegenerate);
 
         res.status(200).json({
           success: true,

@@ -360,7 +360,7 @@ YOUR TASK:
    - Notice patterns in timing, types of tasks, blockers
 4. For pending todos that should carry forward:
    - Select 3-5 most important incomplete tasks
-   - Explain why each wasn't completed (lack of time, blocked, needs clarity, etc.)
+   - Explain why it's acceptable to carry them forward (e.g., "This is a long-term project that spans multiple weeks", "This requires input from others that wasn't available", "This is lower priority and can wait")
 5. Provide 3-5 actionable recommendations for next week:
    - Focus areas based on patterns
    - Process improvements

@@ -52,7 +52,8 @@ export class WeeklyReviewService {
    */
   async generateReview(
     userId: string,
-    weekStartDate?: string
+    weekStartDate?: string,
+    forceRegenerate: boolean = false
   ): Promise<WeeklyReview> {
     // 1. Determine week bounds
     const targetDate = weekStartDate ? new Date(weekStartDate) : new Date();
@@ -60,8 +61,13 @@ export class WeeklyReviewService {
 
     // 2. Check if review already exists for this week
     const existingReview = await this.weeklyReviewsRepo.findByWeek(userId, monday);
-    if (existingReview) {
+    if (existingReview && !forceRegenerate) {
       return existingReview;
+    }
+    
+    // If regenerating, delete the old review
+    if (existingReview && forceRegenerate) {
+      await this.weeklyReviewsRepo.delete(existingReview.id);
     }
 
     // 3. Gather data for the week
@@ -69,20 +75,22 @@ export class WeeklyReviewService {
     const sundayDate = new Date(sunday);
     sundayDate.setHours(23, 59, 59, 999);
 
-    // Get all todos (completed and pending) from the week
+    // Get all todos and filter by completion date (for completed) or creation date (for pending)
     const allTodos = await this.todosRepo.findByUserId(userId);
-    const weekTodos = allTodos.filter(todo => {
-      const createdAt = new Date(todo.createdAt);
-      return createdAt >= mondayDate && createdAt <= sundayDate;
-    });
-
-    const completedTodos = weekTodos.filter(todo => {
+    
+    // Completed todos: those completed during this week (regardless of when created)
+    const completedTodos = allTodos.filter(todo => {
       if (todo.status !== 'completed' || !todo.completedAt) return false;
       const completedAt = new Date(todo.completedAt);
       return completedAt >= mondayDate && completedAt <= sundayDate;
     });
 
-    const pendingTodos = weekTodos.filter(todo => todo.status === 'pending');
+    // Pending todos: those created during this week and still pending
+    const pendingTodos = allTodos.filter(todo => {
+      if (todo.status !== 'pending') return false;
+      const createdAt = new Date(todo.createdAt);
+      return createdAt >= mondayDate && createdAt <= sundayDate;
+    });
 
     // Get captures from the week
     const allCaptures = await this.capturesRepo.findByUserId(userId);
@@ -91,11 +99,13 @@ export class WeeklyReviewService {
       return timestamp >= mondayDate && timestamp <= sundayDate;
     });
 
-    // Get notes created during the week
+    // Get notes created or edited during the week
     const allNotes = await this.notesRepo.findByUserId(userId);
     const weekNotes = allNotes.filter(note => {
       const createdAt = new Date(note.createdAt);
-      return createdAt >= mondayDate && createdAt <= sundayDate;
+      const updatedAt = new Date(note.updatedAt);
+      return (createdAt >= mondayDate && createdAt <= sundayDate) ||
+             (updatedAt >= mondayDate && updatedAt <= sundayDate);
     });
 
     // Get today sheets from the week (optional - for context)

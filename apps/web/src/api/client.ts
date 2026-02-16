@@ -274,12 +274,15 @@ export interface WeeklyReview {
 }
 
 export const weeklyReviewAPI = {
-  generate: (weekStartDate?: string) =>
+  generate: (weekStartDate?: string, forceRegenerate?: boolean) =>
     fetchAPI<{ success: boolean; review: WeeklyReview; message: string }>(
       '/weekly-review/generate',
       {
         method: 'POST',
-        body: JSON.stringify(weekStartDate ? { weekStartDate } : {}),
+        body: JSON.stringify({ 
+          ...(weekStartDate && { weekStartDate }),
+          ...(forceRegenerate !== undefined && { forceRegenerate })
+        }),
       }
     ),
   getLatest: () => fetchAPI<WeeklyReview>('/weekly-review/latest'),

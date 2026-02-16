@@ -23,7 +23,8 @@ export default function WeeklyReviewPage() {
 
   // Mutation for generating new review
   const generateMutation = useMutation({
-    mutationFn: () => weeklyReviewAPI.generate(),
+    mutationFn: ({ forceRegenerate }: { forceRegenerate?: boolean }) => 
+      weeklyReviewAPI.generate(undefined, forceRegenerate),
     onSuccess: (data) => {
       setSelectedReview(data.review);
       setShowSuccess(true);
@@ -42,10 +43,10 @@ export default function WeeklyReviewPage() {
     }
   }, [latestReview]);
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (forceRegenerate: boolean = false) => {
     setIsGenerating(true);
     try {
-      await generateMutation.mutateAsync();
+      await generateMutation.mutateAsync({ forceRegenerate });
     } finally {
       setIsGenerating(false);
     }
@@ -76,35 +77,56 @@ export default function WeeklyReviewPage() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Weekly Review</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <h1 className="text-3xl font-bold text-gray-900">Weekly Review</h1>
+          <p className="text-gray-600 mt-1">
             Reflect on your week and plan ahead
           </p>
         </div>
-        <button
-          onClick={handleGenerate}
-          disabled={isGenerating}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <TrendingUp className="w-4 h-4" />
-              Generate Review
-            </>
+        <div className="flex gap-2">
+          {isCurrentWeek && displayReview && (
+            <button
+              onClick={() => handleGenerate(true)}
+              disabled={isGenerating}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Regenerating...
+                </>
+              ) : (
+                <>
+                  <TrendingUp className="w-4 h-4" />
+                  Regenerate
+                </>
+              )}
+            </button>
           )}
-        </button>
+          <button
+            onClick={() => handleGenerate(false)}
+            disabled={isGenerating}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <TrendingUp className="w-4 h-4" />
+                Generate Review
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Success Message */}
       {showSuccess && (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
-          <span className="text-green-800 dark:text-green-200">Weekly review generated successfully!</span>
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-2">
+          <CheckCircle2 className="w-5 h-5 text-green-600" />
+          <span className="text-green-800">Weekly review generated successfully!</span>
         </div>
       )}
 
@@ -117,16 +139,16 @@ export default function WeeklyReviewPage() {
 
       {/* No Review State */}
       {hasNoReview && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
-          <Calendar className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
             No Weekly Reviews Yet
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-gray-600 mb-6">
             Generate your first weekly review to see insights about your productivity patterns.
           </p>
           <button
-            onClick={handleGenerate}
+            onClick={() => handleGenerate(false)}
             disabled={isGenerating}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed inline-flex items-center gap-2"
           >
@@ -149,56 +171,56 @@ export default function WeeklyReviewPage() {
       {displayReview && (
         <div className="space-y-6">
           {/* Week Header */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
               <Calendar className="w-4 h-4" />
               <span>{getWeekLabel(displayReview.weekStartDate, displayReview.weekEndDate)}</span>
               {isCurrentWeek && (
-                <span className="ml-2 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded-full">
+                <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
                   This Week
                 </span>
               )}
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Week Summary</h2>
-            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Week Summary</h2>
+            <p className="text-gray-700 leading-relaxed">
               {displayReview.summary}
             </p>
           </div>
 
           {/* Accomplishments */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Accomplishments</h3>
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <h3 className="text-xl font-semibold text-gray-900">Accomplishments</h3>
             </div>
             <ul className="space-y-2">
               {displayReview.insights.accomplishments.map((item, idx) => (
                 <li key={idx} className="flex items-start gap-2">
-                  <span className="text-green-600 dark:text-green-400 mt-1">✓</span>
-                  <span className="text-gray-700 dark:text-gray-300">{item}</span>
+                  <span className="text-green-600 mt-1">✓</span>
+                  <span className="text-gray-700">{item}</span>
                 </li>
               ))}
             </ul>
           </div>
 
           {/* Patterns & Insights */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Patterns & Insights</h3>
+              <TrendingUp className="w-5 h-5 text-blue-600" />
+              <h3 className="text-xl font-semibold text-gray-900">Patterns & Insights</h3>
             </div>
             
             {/* Completion Rate */}
-            <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Completion Rate</span>
-                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                <span className="text-sm font-medium text-gray-700">Completion Rate</span>
+                <span className="text-2xl font-bold text-blue-600">
                   {displayReview.insights.patterns.completionRate}%
                 </span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+              <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
-                  className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all"
+                  className="bg-blue-600 h-2 rounded-full transition-all"
                   style={{ width: `${displayReview.insights.patterns.completionRate}%` }}
                 ></div>
               </div>
@@ -207,12 +229,12 @@ export default function WeeklyReviewPage() {
             {/* Top Categories */}
             {displayReview.insights.patterns.topCategories.length > 0 && (
               <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Top Categories</h4>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Top Categories</h4>
                 <div className="flex flex-wrap gap-2">
                   {displayReview.insights.patterns.topCategories.map((category, idx) => (
                     <span
                       key={idx}
-                      className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm"
+                      className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
                     >
                       {category}
                     </span>
@@ -223,12 +245,12 @@ export default function WeeklyReviewPage() {
 
             {/* Observations */}
             <div>
-              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Observations</h4>
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Observations</h4>
               <ul className="space-y-2">
                 {displayReview.insights.patterns.observations.map((obs, idx) => (
                   <li key={idx} className="flex items-start gap-2">
-                    <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500 mt-1 flex-shrink-0" />
-                    <span className="text-gray-700 dark:text-gray-300">{obs}</span>
+                    <ArrowRight className="w-4 h-4 text-gray-400 mt-1 flex-shrink-0" />
+                    <span className="text-gray-700">{obs}</span>
                   </li>
                 ))}
               </ul>
@@ -237,16 +259,16 @@ export default function WeeklyReviewPage() {
 
           {/* Carry Forward */}
           {displayReview.insights.carryForward.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center gap-2 mb-4">
-                <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Carry Forward</h3>
+                <Clock className="w-5 h-5 text-yellow-600" />
+                <h3 className="text-xl font-semibold text-gray-900">Carry Forward</h3>
               </div>
               <div className="space-y-3">
                 {displayReview.insights.carryForward.map((item, idx) => (
-                  <div key={idx} className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                    <p className="font-medium text-gray-900 dark:text-white mb-1">{item.content}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 italic">{item.reason}</p>
+                  <div key={idx} className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="font-medium text-gray-900 mb-1">{item.content}</p>
+                    <p className="text-sm text-gray-600 italic">{item.reason}</p>
                   </div>
                 ))}
               </div>
@@ -254,16 +276,16 @@ export default function WeeklyReviewPage() {
           )}
 
           {/* Recommendations */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Target className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Recommendations</h3>
+              <Target className="w-5 h-5 text-purple-600" />
+              <h3 className="text-xl font-semibold text-gray-900">Recommendations</h3>
             </div>
             <ul className="space-y-3">
               {displayReview.insights.recommendations.map((rec, idx) => (
-                <li key={idx} className="flex items-start gap-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                  <span className="text-purple-600 dark:text-purple-400 font-bold">#{idx + 1}</span>
-                  <span className="text-gray-700 dark:text-gray-300">{rec}</span>
+                <li key={idx} className="flex items-start gap-2 p-3 bg-purple-50 rounded-lg">
+                  <span className="text-purple-600 font-bold">#{idx + 1}</span>
+                  <span className="text-gray-700">{rec}</span>
                 </li>
               ))}
             </ul>
@@ -273,20 +295,20 @@ export default function WeeklyReviewPage() {
 
       {/* Review History */}
       {reviewHistory && reviewHistory.reviews.length > 1 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Past Reviews</h3>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Past Reviews</h3>
           <div className="space-y-2">
             {reviewHistory.reviews.filter(r => r.id !== displayReview?.id).map((review) => (
               <button
                 key={review.id}
                 onClick={() => setSelectedReview(review)}
-                className="w-full text-left p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between"
+                className="w-full text-left p-3 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-between"
               >
                 <div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  <span className="text-sm font-medium text-gray-900">
                     {getWeekLabel(review.weekStartDate, review.weekEndDate)}
                   </span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     {review.insights.patterns.completionRate}% completion rate
                   </p>
                 </div>
