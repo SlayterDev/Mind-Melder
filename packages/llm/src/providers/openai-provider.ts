@@ -1,8 +1,8 @@
 import OpenAI from 'openai';
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
-import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, ToolCall, ToolDefinition, TodaySheetInput, TodaySheetOutput, TranscribeOptions, TranscriptionResult, WeeklyReviewInput, WeeklyReviewOutput } from '../types.js';
-import { organizedOutputSchema, todaySheetOutputSchema, weeklyReviewOutputSchema } from '../validation.js';
+import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, ToolCall, ToolDefinition, TodaySheetInput, TodaySheetOutput, TranscribeOptions, TranscriptionResult, WeeklyReviewInput, WeeklyReviewOutput, TemplateSuggestionsOutput } from '../types.js';
+import { organizedOutputSchema, todaySheetOutputSchema, weeklyReviewOutputSchema, templateSuggestionsOutputSchema } from '../validation.js';
 import { getAudioFilename } from '../utils/audio-utils.js';
 
 export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
@@ -288,5 +288,26 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
     }
 
     return this.parseResponse<WeeklyReviewOutput>(content, weeklyReviewOutputSchema);
+  }
+
+  async generateTemplateSuggestions(template: Template, weeklyReview?: WeeklyReviewOutput): Promise<TemplateSuggestionsOutput> {
+    const userPrompt = this.buildTemplateSuggestionsPrompt(template, weeklyReview);
+
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: 'system', content: 'You are a productivity coach helping users improve their organization templates.' },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature: Math.min(this.temperature, 0.7),
+      response_format: { type: 'json_object' },
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('Empty response from OpenAI');
+    }
+
+    return this.parseResponse<TemplateSuggestionsOutput>(content, templateSuggestionsOutputSchema);
   }
 }

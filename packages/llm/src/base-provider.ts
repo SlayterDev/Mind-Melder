@@ -454,4 +454,69 @@ Return valid JSON only.`;
     }
     return obj;
   }
+
+  /**
+   * Build prompt for Template Suggestions generation
+   */
+  protected buildTemplateSuggestionsPrompt(template: import('types').Template, weeklyReview?: import('./types.js').WeeklyReviewOutput): string {
+    const reviewContext = weeklyReview ? `
+RECENT WEEKLY REVIEW INSIGHTS:
+The user's recent productivity patterns show:
+- Completion Rate: ${weeklyReview.insights.patterns.completionRate}%
+- Top Categories: ${weeklyReview.insights.patterns.topCategories.join(', ') || 'None identified'}
+- Key Observations: ${weeklyReview.insights.patterns.observations.join('; ')}
+- Recent Recommendations: ${weeklyReview.insights.recommendations.join('; ')}
+
+Use these insights to suggest improvements that address the user's specific productivity patterns.
+` : '';
+
+    return `You are a productivity coach analyzing a user's template for organizing captures into todos.
+
+CURRENT TEMPLATE:
+Name: ${template.name}
+Prompt: ${template.prompt}
+${reviewContext}
+YOUR TASK:
+Generate exactly 3 suggestions to improve this template. Each suggestion should:
+1. Have a clear, specific title (5-10 words)
+2. Include a detailed description explaining WHY this improvement would help (2-3 sentences)
+3. Provide the COMPLETE improved template prompt text (not just the changes - the full prompt)
+
+FOCUS AREAS FOR SUGGESTIONS:
+- Clarity: Make instructions more specific and actionable
+- Structure: Improve organization and categorization guidance
+- Prioritization: Better criteria for importance and urgency
+- Context: Add guidance for extracting key details (people, dates, projects)
+- Personalization: Tailor to the user's productivity patterns (if weekly review data available)
+
+GUIDELINES:
+- Each suggestion should address a different aspect of the template
+- Suggestions should build on the existing template, not replace it entirely
+- Be specific about what to add or change
+- Keep the improved prompts concise but comprehensive
+- Focus on actionable improvements that will directly help with better todo organization
+
+OUTPUT FORMAT (valid JSON only):
+{
+  "suggestions": [
+    {
+      "title": "Add Priority Scoring Criteria",
+      "description": "The current template doesn't specify how to determine priority. Adding clear criteria for scoring (urgency, impact, dependencies) will help ensure critical tasks are identified correctly.",
+      "improvedPrompt": "The complete improved template prompt goes here..."
+    },
+    {
+      "title": "Include Context Extraction Guidelines",
+      "description": "Missing guidance on extracting key context like people mentioned, deadlines, or project names. This context helps make todos actionable and easy to understand later.",
+      "improvedPrompt": "Another complete improved template prompt goes here..."
+    },
+    {
+      "title": "Add Category Tags",
+      "description": "No categorization strategy is defined. Adding tag categories (work, personal, learning, etc.) helps organize and filter todos effectively.",
+      "improvedPrompt": "Third complete improved template prompt goes here..."
+    }
+  ]
+}
+
+Return valid JSON only.`;
+  }
 }

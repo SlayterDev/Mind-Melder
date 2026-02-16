@@ -48,7 +48,29 @@ export const weeklyReviewOutputSchema = z.object({
   }),
 });
 
+// Validation schema for TemplateSuggestionsOutput
+export const templateSuggestionsOutputSchema = z.object({
+  suggestions: z.tuple([
+    z.object({
+      title: z.string(),
+      description: z.string(),
+      improvedPrompt: z.string(),
+    }),
+    z.object({
+      title: z.string(),
+      description: z.string(),
+      improvedPrompt: z.string(),
+    }),
+    z.object({
+      title: z.string(),
+      description: z.string(),
+      improvedPrompt: z.string(),
+    }),
+  ]),
+});
+
 // Export inferred types
 export type OrganizedOutputSchema = z.infer<typeof organizedOutputSchema>;
 export type TodaySheetOutputSchema = z.infer<typeof todaySheetOutputSchema>;
 export type WeeklyReviewOutputSchema = z.infer<typeof weeklyReviewOutputSchema>;
+export type TemplateSuggestionsOutputSchema = z.infer<typeof templateSuggestionsOutputSchema>;

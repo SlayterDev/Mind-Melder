@@ -29,6 +29,17 @@ export interface WeeklyReviewOutput {
   };
 }
 
+// Template Suggestions types
+export interface TemplateSuggestion {
+  title: string; // Brief title for the suggestion
+  description: string; // Detailed explanation of why this would improve the template
+  improvedPrompt: string; // The full improved template prompt text
+}
+
+export interface TemplateSuggestionsOutput {
+  suggestions: [TemplateSuggestion, TemplateSuggestion, TemplateSuggestion]; // Always exactly 3 suggestions
+}
+
 // Today Sheet types
 export interface TodaySheetInput {
   captures: Capture[];
@@ -161,6 +172,14 @@ export interface LLMProvider {
    * @returns Structured insights, accomplishments, and recommendations
    */
   generateWeeklyReview(input: WeeklyReviewInput): Promise<WeeklyReviewOutput>;
+
+  /**
+   * Generate suggestions to improve a template prompt
+   * @param template - The current template to analyze
+   * @param weeklyReview - Optional recent weekly review for context
+   * @returns Three improvement suggestions with reasoning
+   */
+  generateTemplateSuggestions(template: Template, weeklyReview?: WeeklyReviewOutput): Promise<TemplateSuggestionsOutput>;
 }
 
 // Transcription types
