@@ -1,0 +1,324 @@
+import { useState, useEffect } from 'react';
+import { getSettings, setSetting } from '../api/settings';
+
+interface NotificationSettings {
+  enabled: boolean;
+  checkInterval: number;
+  reminderMinutes: number;
+  showOverdue: boolean;
+  showUpcoming: boolean;
+  quietHoursStart: string;
+  quietHoursEnd: string;
+}
+
+export default function NotificationSettings() {
+  const [settings, setSettings] = useState<NotificationSettings>({
+    enabled: true,
+    checkInterval: 10,
+    reminderMinutes: 60,
+    showOverdue: true,
+    showUpcoming: true,
+    quietHoursStart: '',
+    quietHoursEnd: '',
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [isElectron, setIsElectron] = useState(false);
+
+  useEffect(() => {
+    // Check if running in Electron
+    setIsElectron(
+      typeof window !== 'undefined' && window.electronAPI?.isElectron === true
+    );
+
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const allSettings = await getSettings();
+      
+      // Parse settings with defaults
+      const newSettings: NotificationSettings = {
+        enabled: getSetting(allSettings, 'notifications.enabled', true),
+        checkInterval: getSetting(allSettings, 'notifications.checkInterval', 10),
+        reminderMinutes: getSetting(allSettings, 'notifications.reminderMinutes', 60),
+        showOverdue: getSetting(allSettings, 'notifications.showOverdue', true),
+        showUpcoming: getSetting(allSettings, 'notifications.showUpcoming', true),
+        quietHoursStart: getSetting(allSettings, 'notifications.quietHoursStart', ''),
+        quietHoursEnd: getSetting(allSettings, 'notifications.quietHoursEnd', ''),
+      };
+
+      setSettings(newSettings);
+    } catch (err) {
+      console.error('Failed to load notification settings:', err);
+      setError('Failed to load settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getSetting = <T,>(settings: any[], key: string, defaultValue: T): T => {
+    const setting = settings.find((s: any) => s.key === key);
+    return setting?.value !== undefined ? setting.value : defaultValue;
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      setSuccess(false);
+
+      // Save all settings
+      await Promise.all([
+        setSetting('notifications.enabled', settings.enabled),
+        setSetting('notifications.checkInterval', settings.checkInterval),
+        setSetting('notifications.reminderMinutes', settings.reminderMinutes),
+        setSetting('notifications.showOverdue', settings.showOverdue),
+        setSetting('notifications.showUpcoming', settings.showUpcoming),
+        setSetting('notifications.quietHoursStart', settings.quietHoursStart || null),
+        setSetting('notifications.quietHoursEnd', settings.quietHoursEnd || null),
+      ]);
+
+      // Restart notification service if in Electron
+      if (isElectron && window.electronAPI?.restartNotificationService) {
+        await window.electronAPI.restartNotificationService();
+      }
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      console.error('Failed to save notification settings:', err);
+      setError('Failed to save settings');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCheckNow = async () => {
+    if (isElectron && window.electronAPI?.checkNotifications) {
+      try {
+        await window.electronAPI.checkNotifications();
+        alert('Notification check triggered. If any todos are due soon, you should see a notification.');
+      } catch (err) {
+        console.error('Failed to check notifications:', err);
+        alert('Failed to trigger notification check');
+      }
+    }
+  };
+
+  if (!isElectron) {
+    return (
+      <div className="rounded-lg bg-gray-100 dark:bg-gray-800 p-6">
+        <div className="flex items-start gap-3">
+          <svg
+            className="w-6 h-6 text-blue-500 flex-shrink-0 mt-0.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
+              Desktop App Required
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">
+              Notifications are only available in the desktop app. Download it from the releases page
+              to receive desktop notifications for your todos.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-gray-500 dark:text-gray-400">Loading notification settings...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          Desktop Notifications
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Get notified about upcoming and overdue todos right on your desktop.
+        </p>
+      </div>
+
+      {error && (
+        <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
+          <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
+        </div>
+      )}
+
+      {success && (
+        <div className="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4">
+          <p className="text-green-800 dark:text-green-200 text-sm">Settings saved successfully!</p>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        {/* Master toggle */}
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={settings.enabled}
+            onChange={(e) => setSettings({ ...settings, enabled: e.target.checked })}
+            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+          />
+          <span className="text-gray-900 dark:text-gray-100 font-medium">
+            Enable desktop notifications
+          </span>
+        </label>
+
+        {/* Settings only shown when enabled */}
+        {settings.enabled && (
+          <div className="ml-7 space-y-4 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
+            {/* Check interval */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Check for due todos every:
+              </label>
+              <select
+                value={settings.checkInterval}
+                onChange={(e) =>
+                  setSettings({ ...settings, checkInterval: Number(e.target.value) })
+                }
+                className="block w-full max-w-xs rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="5">5 minutes</option>
+                <option value="10">10 minutes</option>
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60">1 hour</option>
+              </select>
+            </div>
+
+            {/* Reminder timing */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Remind me before due date:
+              </label>
+              <select
+                value={settings.reminderMinutes}
+                onChange={(e) =>
+                  setSettings({ ...settings, reminderMinutes: Number(e.target.value) })
+                }
+                className="block w-full max-w-xs rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                <option value="15">15 minutes</option>
+                <option value="30">30 minutes</option>
+                <option value="60">1 hour</option>
+                <option value="120">2 hours</option>
+                <option value="240">4 hours</option>
+                <option value="1440">1 day</option>
+              </select>
+            </div>
+
+            {/* Show overdue */}
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.showOverdue}
+                onChange={(e) => setSettings({ ...settings, showOverdue: e.target.checked })}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Show notifications for overdue tasks
+              </span>
+            </label>
+
+            {/* Show upcoming */}
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={settings.showUpcoming}
+                onChange={(e) => setSettings({ ...settings, showUpcoming: e.target.checked })}
+                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Show notifications for upcoming tasks
+              </span>
+            </label>
+
+            {/* Quiet hours */}
+            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Quiet hours (optional):
+              </label>
+              <div className="flex items-center gap-4">
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    Start
+                  </label>
+                  <input
+                    type="time"
+                    value={settings.quietHoursStart}
+                    onChange={(e) =>
+                      setSettings({ ...settings, quietHoursStart: e.target.value })
+                    }
+                    className="block w-32 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+                <div className="text-gray-500 dark:text-gray-400 pt-5">to</div>
+                <div>
+                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                    End
+                  </label>
+                  <input
+                    type="time"
+                    value={settings.quietHoursEnd}
+                    onChange={(e) =>
+                      setSettings({ ...settings, quietHoursEnd: e.target.value })
+                    }
+                    className="block w-32 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                No notifications will be sent during quiet hours
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-md font-medium transition-colors"
+        >
+          {saving ? 'Saving...' : 'Save Settings'}
+        </button>
+
+        {settings.enabled && (
+          <button
+            onClick={handleCheckNow}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-md font-medium transition-colors"
+          >
+            Test Notifications
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

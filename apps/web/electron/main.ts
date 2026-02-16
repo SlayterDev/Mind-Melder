@@ -13,6 +13,7 @@ import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { NotificationService } from './notification-service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,6 +21,7 @@ const __dirname = path.dirname(__filename);
 let mainWindow: BrowserWindow | null = null;
 let quickCaptureWindow: BrowserWindow | null = null;
 let recordingWindow: BrowserWindow | null = null;
+let notificationService: NotificationService | null = null;
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -279,6 +281,57 @@ ipcMain.handle('resize-recording-window', (_event, height: number) => {
   recordingWindow.setSize(width, clampedHeight);
 });
 
+// Notification IPC handlers
+ipcMain.handle('check-notifications', async () => {
+  if (notificationService) {
+    await notificationService.checkAndNotify();
+  }
+});
+
+ipcMain.handle('clear-notification-state', (_event, todoId: string) => {
+  if (notificationService) {
+    notificationService.clearNotificationState(todoId);
+  }
+});
+
+ipcMain.handle('restart-notification-service', async () => {
+  if (notificationService) {
+    await notificationService.restart();
+  }
+});
+
+ipcMain.handle('get-notification-state', () => {
+  if (notificationService) {
+    return notificationService.getState();
+  }
+  return null;
+});
+
+// Helper to get API URL from environment or use default
+function getApiUrl(): string {
+  // In development, use localhost
+  if (isDev) {
+    return 'http://localhost:3000/api/v1';
+  }
+  
+  // In production, check for configured API URL
+  // This could come from a config file or environment variable
+  const configPath = path.join(app.getPath('userData'), 'config.json');
+  try {
+    if (fsSync.existsSync(configPath)) {
+      const config = JSON.parse(fsSync.readFileSync(configPath, 'utf-8'));
+      if (config.apiUrl) {
+        return config.apiUrl;
+      }
+    }
+  } catch (error) {
+    console.error('[Config] Failed to read config:', error);
+  }
+  
+  // Default to localhost
+  return 'http://localhost:3000/api/v1';
+}
+
 // App lifecycle
 app.whenReady().then(() => {
   // Handle getDisplayMedia requests — provides screen source + system audio loopback
@@ -307,9 +360,23 @@ app.whenReady().then(() => {
   createMainWindow();
   registerGlobalShortcuts();
 
+  // Initialize notification service
+  const apiUrl = getApiUrl();
+  notificationService = new NotificationService(apiUrl, mainWindow);
+  
+  // Start notification service after a delay to ensure API is ready
+  setTimeout(() => {
+    if (notificationService) {
+      notificationService.start();
+    }
+  }, 3000);
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createMainWindow();
+      if (notificationService) {
+        notificationService.setMainWindow(mainWindow);
+      }
     }
   });
 });
@@ -322,4 +389,9 @@ app.on('window-all-closed', () => {
 
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
+  
+  // Stop notification service
+  if (notificationService) {
+    notificationService.stop();
+  }
 });
