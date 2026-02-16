@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ReactNode, useState, useEffect } from 'react';
 import { useInboxCount } from '../api/queries';
-import { PenLine, CalendarDays, Inbox, FileText, ListChecks, Layers, MessageSquare, Cog, Menu, X, Mic } from 'lucide-react';
+import { PenLine, CalendarDays, Inbox, FileText, ListChecks, Layers, MessageSquare, Cog, Menu, X, Mic, TrendingUp } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
@@ -37,6 +37,7 @@ export default function Layout({ children }: LayoutProps) {
   const navItems = [
     { path: '/', label: 'Capture', icon: PenLine },
     { path: '/today', label: 'Today Sheet', icon: CalendarDays },
+    { path: '/weekly-review', label: 'Weekly Review', icon: TrendingUp },
     { path: '/inbox', label: 'Inbox', icon: Inbox },
     { path: '/notes', label: 'Notes', icon: FileText },
     { path: '/todos', label: 'Todos', icon: ListChecks },
