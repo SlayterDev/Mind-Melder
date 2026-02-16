@@ -101,7 +101,7 @@ export class WeeklyReviewService {
     // Get today sheets from the week (optional - for context)
     const allTodaySheets = await this.todaySheetsRepo.findByUserId(userId);
     const weekTodaySheets = allTodaySheets.filter(sheet => {
-      const sheetDate = new Date(sheet.date);
+      const sheetDate = new Date(sheet.generatedAt);
       return sheetDate >= mondayDate && sheetDate <= sundayDate;
     });
 
