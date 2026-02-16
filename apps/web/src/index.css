@@ -4,7 +4,8 @@
 
 @layer base {
   /* Ensure safe area insets use the theme background color */
-  html, body {
+  html, body, #root {
+    height: 100%;
     background-color: #030712; /* gray-950 */
   }
 }

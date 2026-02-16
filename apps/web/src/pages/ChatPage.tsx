@@ -494,7 +494,7 @@ export default function ChatPage() {
       {/* Mobile Conversations Drawer */}
       <div className="md:hidden">
         {/* Mobile header bar */}
-        <div className="flex items-center gap-2 p-2 border-b border-accent/20 bg-gray-900/50">
+        <div className="flex items-center gap-2 p-2 mt-2 border-b border-accent/20 bg-gray-900/50">
           <button
             onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
             className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-800/50 transition-colors text-left"

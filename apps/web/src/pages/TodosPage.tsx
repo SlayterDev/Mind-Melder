@@ -146,27 +146,27 @@ export default function TodosPage() {
         </div>
 
         <div className="flex gap-2 sheet-card p-1">
-          {(['pending', 'completed', 'all'] as const).map((filter) => (
+            {(['pending', 'completed', 'all'] as const).map((filter) => (
             <button
               key={filter}
               onClick={() => setStatusFilter(filter)}
-              className={`px-4 py-2 rounded-md font-medium transition-colors capitalize ${
-                statusFilter === filter
-                  ? 'text-white shadow-lg'
-                  : 'text-gray-400 hover:text-gray-200'
+              className={`flex-1 md:flex-none px-4 py-2 rounded-md font-medium transition-colors capitalize ${
+              statusFilter === filter
+                ? 'text-white shadow-lg'
+                : 'text-gray-400 hover:text-gray-200'
               }`}
               style={
-                statusFilter === filter
-                  ? {
-                      backgroundColor: 'rgb(114 97 175 / 0.6)',
-                      boxShadow: '0 10px 15px -3px rgb(114 97 175 / 0.3)',
-                    }
-                  : undefined
+              statusFilter === filter
+                ? {
+                  backgroundColor: 'rgb(114 97 175 / 0.6)',
+                  boxShadow: '0 10px 15px -3px rgb(114 97 175 / 0.3)',
+                }
+                : undefined
               }
             >
               {filter}
             </button>
-          ))}
+            ))}
         </div>
       </div>
 
