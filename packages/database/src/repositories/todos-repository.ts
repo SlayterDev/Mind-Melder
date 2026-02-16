@@ -1,6 +1,7 @@
 import { eq, and, desc, ne, asc, inArray, sql, lt } from 'drizzle-orm';
 import { todos, type Todo, type NewTodo } from '../schema/todos.js';
 import type { Database } from '../client.js';
+import { buildPrefixSearchQuery } from '../utils/search.js';
 
 export class TodosRepository {
   constructor(private db: Database) {}
@@ -215,17 +216,23 @@ export class TodosRepository {
       return [];
     }
 
+    const prefixQuery = buildPrefixSearchQuery(query);
+    if (!prefixQuery) {
+      // All terms were filtered out (e.g., input contained only special characters)
+      return [];
+    }
+
     return this.db
       .select()
       .from(todos)
       .where(
         and(
           eq(todos.userId, userId),
-          sql`${todos}.search_vector @@ plainto_tsquery('english', ${query})`
+          sql`${todos}.search_vector @@ to_tsquery('english', ${prefixQuery})`
         )
       )
       .orderBy(
-        sql`ts_rank(${todos}.search_vector, plainto_tsquery('english', ${query})) DESC`
+        sql`ts_rank(${todos}.search_vector, to_tsquery('english', ${prefixQuery})) DESC`
       );
   }
 }

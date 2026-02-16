@@ -227,6 +227,18 @@ export const settingsAPI = {
     fetchAPI<Settings>('/settings', { method: 'PATCH', body: JSON.stringify(data) }),
 };
 
+// Search
+export interface SearchResults {
+  captures?: any[];
+  todos?: any[];
+  notes?: any[];
+}
+
+export const searchAPI = {
+  search: (query: string, type: 'all' | 'captures' | 'todos' | 'notes' = 'all') =>
+    fetchAPI<SearchResults>(`/search?q=${encodeURIComponent(query)}&type=${type}`),
+};
+
 // Transcription
 export const transcribeAPI = {
   upload: async (blob: Blob): Promise<{ success: boolean; message: string }> => {
