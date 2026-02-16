@@ -115,7 +115,15 @@ export class WeeklyReviewService {
       return sheetDate >= mondayDate && sheetDate <= sundayDate;
     });
 
-    // 4. Call LLM to generate weekly review
+    // 4. Check if there's any data to review
+    const hasData = completedTodos.length > 0 || pendingTodos.length > 0 ||
+                    weekCaptures.length > 0 || weekNotes.length > 0;
+
+    if (!hasData) {
+      throw new Error('No activity found for this week. Add some captures, notes, or todos first.');
+    }
+
+    // 5. Call LLM to generate weekly review
     let aiResult: WeeklyReviewOutput;
     try {
       aiResult = await this.llmProvider.generateWeeklyReview({
@@ -134,7 +142,7 @@ export class WeeklyReviewService {
       throw error;
     }
 
-    // 5. Create weekly_reviews record
+    // 6. Create weekly_reviews record
     const review = await this.weeklyReviewsRepo.create({
       userId,
       weekStartDate: monday,
