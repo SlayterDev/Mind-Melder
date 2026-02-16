@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* Ensure safe area insets use the theme background color */
+  html, body, #root {
+    height: 100%;
+    background-color: #030712; /* gray-950 */
+  }
+}
+
 @layer components {
   /* Today Sheet Card Styles */
   .sheet-card {

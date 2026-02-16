@@ -488,7 +488,7 @@ export default function TodaySheetPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-0">
       {/* Quick Capture */}
-      <div className="mb-8">
+      <div className="hidden md:block mb-8">
         <QuickCaptureInput variant="input" placeholder="Quick capture..." autoFocus />
       </div>
 
@@ -515,7 +515,7 @@ export default function TodaySheetPage() {
                 </label>
               </div>
             </div>
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-col items-stretch md:items-end gap-2 w-full md:w-auto">
               <button
                 onClick={() => handleGenerate.mutateAsync()}
                 disabled={isGenerating}
