@@ -62,7 +62,14 @@ export default function WeeklyReviewPage() {
 
   const displayReview = selectedReview || latestReview;
   const hasNoReview = !loadingLatest && !displayReview && !latestError;
-  const isCurrentWeek = displayReview && new Date(displayReview.weekStartDate) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  
+  // Check if review contains current date
+  const isCurrentWeek = displayReview ? (() => {
+    const now = new Date();
+    const start = new Date(displayReview.weekStartDate);
+    const end = new Date(displayReview.weekEndDate);
+    return now >= start && now <= end;
+  })() : false;
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">

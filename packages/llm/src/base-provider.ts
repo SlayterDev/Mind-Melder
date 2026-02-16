@@ -304,21 +304,33 @@ Total should not exceed ${input.context.workingHoursMinutes} minutes.`;
    * Build prompt for Weekly Review generation
    */
   protected buildWeeklyReviewPrompt(input: import('./types.js').WeeklyReviewInput): string {
+    // Limit items to prevent token overflow (max 50 of each type)
+    const MAX_ITEMS = 50;
+    
     const completedList = input.completedTodos
+      .slice(0, MAX_ITEMS)
       .map((t, i) => `${i + 1}. ${t.content}${t.tags ? ` [Tags: ${t.tags.join(', ')}]` : ''}`)
       .join('\n');
 
     const pendingList = input.pendingTodos
+      .slice(0, MAX_ITEMS)
       .map((t, i) => `${i + 1}. ID: ${t.id} | ${t.content}${t.dueDate ? ` (Due: ${new Date(t.dueDate).toLocaleDateString()})` : ''}${t.tags ? ` [Tags: ${t.tags.join(', ')}]` : ''}`)
       .join('\n');
 
     const capturesList = input.captures
+      .slice(0, MAX_ITEMS)
       .map((c, i) => `${i + 1}. [${new Date(c.timestamp).toLocaleString()}] ${c.content}`)
       .join('\n');
 
     const notesList = input.notes
+      .slice(0, MAX_ITEMS)
       .map((n, i) => `${i + 1}. ${n.title}`)
       .join('\n');
+
+    const totalCompleted = input.completedTodos.length;
+    const totalPending = input.pendingTodos.length;
+    const totalCaptures = input.captures.length;
+    const totalNotes = input.notes.length;
 
     return `You are generating a Weekly Review - a reflective analysis of a user's productivity patterns and accomplishments.
 
@@ -326,16 +338,16 @@ WEEK PERIOD:
 - Start: ${input.weekStartDate} (Monday)
 - End: ${input.weekEndDate} (Sunday)
 
-COMPLETED TODOS (${input.completedTodos.length}):
+COMPLETED TODOS (${totalCompleted}${totalCompleted > MAX_ITEMS ? `, showing first ${MAX_ITEMS}` : ''}):
 ${completedList || 'No completed todos this week'}
 
-PENDING/INCOMPLETE TODOS (${input.pendingTodos.length}):
+PENDING/INCOMPLETE TODOS (${totalPending}${totalPending > MAX_ITEMS ? `, showing first ${MAX_ITEMS}` : ''}):
 ${pendingList || 'No pending todos'}
 
-CAPTURES (${input.captures.length}):
+CAPTURES (${totalCaptures}${totalCaptures > MAX_ITEMS ? `, showing first ${MAX_ITEMS}` : ''}):
 ${capturesList || 'No captures this week'}
 
-NOTES CREATED (${input.notes.length}):
+NOTES CREATED (${totalNotes}${totalNotes > MAX_ITEMS ? `, showing first ${MAX_ITEMS}` : ''}):
 ${notesList || 'No notes created'}
 
 YOUR TASK:

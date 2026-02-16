@@ -1,4 +1,4 @@
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { weeklyReviews, type WeeklyReview, type NewWeeklyReview } from '../schema/weekly-reviews.js';
 import type { Database } from '../client.js';
 
@@ -57,9 +57,9 @@ export class WeeklyReviewsRepository {
 
   async count(userId: string): Promise<number> {
     const result = await this.db
-      .select({ count: weeklyReviews.id })
+      .select({ count: sql<number>`count(*)` })
       .from(weeklyReviews)
       .where(eq(weeklyReviews.userId, userId));
-    return result.length;
+    return result[0]?.count ?? 0;
   }
 }
