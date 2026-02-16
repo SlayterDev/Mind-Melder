@@ -1,8 +1,10 @@
 import type { Capture, Template, Tag } from 'types';
-import type { TodaySheetInput } from './types.js';
+import type { TodaySheetInput, TokenUsage } from './types.js';
 import { z } from 'zod';
 
 export abstract class BaseLLMProvider {
+  lastUsage: TokenUsage | null = null;
+
   /**
    * Build the system prompt for organization
    */

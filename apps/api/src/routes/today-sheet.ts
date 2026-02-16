@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import type { Database, SettingsRepository } from 'database';
 import { ProviderFactory } from 'llm';
+import type { TokenTrackingService } from '../services/token-tracking-service.js';
 import { TodosRepository } from 'database';
 import { TodaySheetService } from '../services/today-sheet-service.js';
 import { asyncHandler } from '../utils/async-handler.js';
@@ -31,7 +32,7 @@ const reorderSchema = z.object({
   })),
 });
 
-export function createTodaySheetRouter(db: Database, settingsRepo: SettingsRepository): Router {
+export function createTodaySheetRouter(db: Database, settingsRepo: SettingsRepository, tokenTracker?: TokenTrackingService): Router {
   const router = Router();
   const todosRepo = new TodosRepository(db);
 
@@ -48,6 +49,10 @@ export function createTodaySheetRouter(db: Database, settingsRepo: SettingsRepos
         const llmProvider = ProviderFactory.createFromSettings(settings);
         const todaySheetService = new TodaySheetService(db, llmProvider);
         const sheet = await todaySheetService.generateSheet(userId, templateId, settings.contentLockEnabled);
+
+        if (tokenTracker && llmProvider.lastUsage) {
+          tokenTracker.trackUsage(userId, settings.llmProvider, settings.llmModel || 'default', 'today_sheet', llmProvider.lastUsage);
+        }
 
         res.status(200).json({
           success: true,

@@ -1,6 +1,7 @@
 import { Router, type Router as ExpressRouter } from 'express';
 import multer from 'multer';
 import { ProviderFactory, getAudioFilename } from 'llm';
+import type { TokenTrackingService } from '../services/token-tracking-service.js';
 import type { Database, SettingsRepository, OrganizedNotesRepository } from 'database';
 import { ApiError } from '../middleware/index.js';
 import { asyncHandler } from '../utils/async-handler.js';
@@ -33,7 +34,7 @@ const upload = multer({
   },
 });
 
-export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepository, notesRepo: OrganizedNotesRepository): ExpressRouter {
+export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepository, notesRepo: OrganizedNotesRepository, tokenTracker?: TokenTrackingService): ExpressRouter {
   const router = Router();
 
   // POST /api/v1/transcribe - Upload audio for transcription
@@ -99,6 +100,10 @@ export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepos
               mimeType: req.file?.mimetype,
             });
             text = result.text;
+
+            if (tokenTracker && provider.lastUsage) {
+              tokenTracker.trackUsage(userId, settings.llmProvider, settings.llmModel || 'default', 'transcribe', provider.lastUsage);
+            }
           }
 
           console.log(`[Transcribe] Transcription completed for user ${userId}, file ${req.file?.originalname}`);

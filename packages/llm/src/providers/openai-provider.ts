@@ -25,6 +25,17 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
     this.temperature = config.temperature ?? 0.7;
   }
 
+  private storeUsage(response: { usage?: { prompt_tokens?: number; completion_tokens?: number } | null }) {
+    if (response.usage) {
+      this.lastUsage = {
+        inputTokens: response.usage.prompt_tokens ?? null,
+        outputTokens: response.usage.completion_tokens ?? null,
+      };
+    } else {
+      this.lastUsage = null;
+    }
+  }
+
   async organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean, contentLockEnabled?: boolean): Promise<OrganizedOutput> {
     const systemPrompt = this.buildSystemPrompt();
     const userPrompt = this.buildOrganizePrompt(captures, template, tags, includeDescriptions ?? false, contentLockEnabled ?? false);
@@ -39,6 +50,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       response_format: { type: 'json_object' },
     });
 
+    this.storeUsage(response);
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('Empty response from OpenAI');
@@ -60,6 +72,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       response_format: { type: 'json_object' },
     });
 
+    this.storeUsage(response);
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('Empty response from OpenAI');
@@ -83,6 +96,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       response_format: { type: 'json_object' },
     });
 
+    this.storeUsage(response);
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('Empty response from OpenAI');
@@ -107,6 +121,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       ],
     });
 
+    this.storeUsage(response);
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('Empty response from OpenAI');
@@ -245,6 +260,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       response_format: { type: 'json_object' },
     });
 
+    this.storeUsage(response);
     const responseContent = response.choices[0]?.message?.content;
     if (!responseContent) {
       throw new Error('Empty response from OpenAI');
@@ -266,6 +282,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       ...(options?.prompt ? { prompt: options.prompt } : {}),
     });
 
+    this.lastUsage = null; // Whisper API doesn't return token usage
     return { text: response.text };
   }
 
@@ -282,6 +299,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       response_format: { type: 'json_object' },
     });
 
+    this.storeUsage(response);
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('Empty response from OpenAI');
@@ -303,6 +321,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       response_format: { type: 'json_object' },
     });
 
+    this.storeUsage(response);
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('Empty response from OpenAI');
