@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { tokenUsageAPI, type UsageSummary, type UsageDetails } from '../api/client';
 import { ArrowLeft } from 'lucide-react';
+import { formatTokenCount } from '../utils/format';
+
+const PER_PAGE = 25;
 
 const PERIOD_OPTIONS = [
   { label: '7 days', days: 7 },
@@ -15,17 +18,11 @@ const METHOD_LABELS: Record<string, string> = {
   weekly_review: 'Weekly Review',
   chat: 'Chat',
   refine_note: 'Refine Note',
-  generate_title: 'Generate Title',
+  generate_title: 'Generate Chat Title',
   transcribe: 'Transcribe',
   template_suggestions: 'Template Suggestions',
   extract_tasks: 'Extract Tasks',
 };
-
-function formatTokenCount(count: number): string {
-  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
-  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K`;
-  return count.toString();
-}
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleString(undefined, {
@@ -60,7 +57,7 @@ export default function TokenUsagePage() {
         provider: filterProvider || undefined,
         method: filterMethod || undefined,
         page,
-        perPage: 25,
+        perPage: PER_PAGE,
       }),
     ])
       .then(([summaryData, detailsData]) => {
@@ -266,10 +263,10 @@ export default function TokenUsagePage() {
               </table>
 
               {/* Pagination */}
-              {details.total > 25 && (
+              {details.total > PER_PAGE && (
                 <div className="flex items-center justify-between p-3 border-t border-gray-700">
                   <p className="text-xs text-gray-500">
-                    Showing {(page - 1) * 25 + 1}-{Math.min(page * 25, details.total)} of{' '}
+                    Showing {(page - 1) * PER_PAGE + 1}-{Math.min(page * PER_PAGE, details.total)} of{' '}
                     {details.total}
                   </p>
                   <div className="flex gap-2">
@@ -282,7 +279,7 @@ export default function TokenUsagePage() {
                     </button>
                     <button
                       onClick={() => setPage((p) => p + 1)}
-                      disabled={page * 25 >= details.total}
+                      disabled={page * PER_PAGE >= details.total}
                       className="px-3 py-1 text-sm bg-gray-800 rounded hover:bg-gray-700 disabled:opacity-50"
                     >
                       Next

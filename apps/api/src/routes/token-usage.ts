@@ -1,6 +1,22 @@
 import { Router, type Router as ExpressRouter } from 'express';
+import { z } from 'zod';
 import { asyncHandler } from '../utils/async-handler.js';
+import { validateQuery } from '../middleware/index.js';
 import type { TokenTrackingService } from '../services/token-tracking-service.js';
+
+// Validation schemas
+const summaryQuerySchema = z.object({
+  days: z.coerce.number().int().min(1).max(365).optional().default(30),
+});
+
+const detailsQuerySchema = z.object({
+  start: z.string().datetime().optional(),
+  end: z.string().datetime().optional(),
+  provider: z.string().optional(),
+  method: z.string().optional(),
+  page: z.coerce.number().int().min(1).optional().default(1),
+  perPage: z.coerce.number().int().min(1).max(100).optional().default(50),
+});
 
 export function createTokenUsageRouter(tokenTrackingService: TokenTrackingService): ExpressRouter {
   const router = Router();
@@ -8,11 +24,12 @@ export function createTokenUsageRouter(tokenTrackingService: TokenTrackingServic
   // GET /api/v1/token-usage/summary - Aggregated usage summary
   router.get(
     '/summary',
+    validateQuery(summaryQuerySchema),
     asyncHandler(async (req, res) => {
       const userId = 'test-user-1'; // TODO: Get from auth context
-      const days = parseInt(req.query.days as string) || 30;
+      const { days } = req.query;
 
-      const summary = await tokenTrackingService.getSummary(userId, days);
+      const summary = await tokenTrackingService.getSummary(userId, Number(days));
       res.json(summary);
     })
   );
@@ -20,6 +37,7 @@ export function createTokenUsageRouter(tokenTrackingService: TokenTrackingServic
   // GET /api/v1/token-usage - Detailed usage logs
   router.get(
     '/',
+    validateQuery(detailsQuerySchema),
     asyncHandler(async (req, res) => {
       const userId = 'test-user-1'; // TODO: Get from auth context
       const { start, end, provider, method, page, perPage } = req.query;
@@ -35,8 +53,8 @@ export function createTokenUsageRouter(tokenTrackingService: TokenTrackingServic
           provider: provider as string | undefined,
           method: method as string | undefined,
         },
-        parseInt(page as string) || 1,
-        parseInt(perPage as string) || 50
+        Number(page),
+        Number(perPage)
       );
 
       res.json(result);

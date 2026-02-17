@@ -99,4 +99,27 @@ export class TokenUsageRepository {
 
     return result ?? { totalInputTokens: 0, totalOutputTokens: 0, totalRequests: 0 };
   }
+
+  async getTotalUsageByDateRange(
+    userId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<UsageTotals> {
+    const [result] = await this.db
+      .select({
+        totalInputTokens: sql<number>`coalesce(sum(${tokenUsage.inputTokens}), 0)::integer`,
+        totalOutputTokens: sql<number>`coalesce(sum(${tokenUsage.outputTokens}), 0)::integer`,
+        totalRequests: sql<number>`count(*)::integer`,
+      })
+      .from(tokenUsage)
+      .where(
+        and(
+          eq(tokenUsage.userId, userId),
+          gte(tokenUsage.createdAt, startDate),
+          lte(tokenUsage.createdAt, endDate)
+        )
+      );
+
+    return result ?? { totalInputTokens: 0, totalOutputTokens: 0, totalRequests: 0 };
+  }
 }
