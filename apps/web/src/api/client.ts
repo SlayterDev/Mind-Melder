@@ -309,6 +309,7 @@ export const weeklyReviewAPI = {
       `/weekly-review?page=${page}&perPage=${perPage}`
     ),
   get: (id: string) => fetchAPI<WeeklyReview>(`/weekly-review/${id}`),
+  // Note: Tuple type enforces exactly 3 suggestions, matching backend Zod schema
   getTemplateSuggestions: (templateId: string) =>
     fetchAPI<{ success: boolean; suggestions: [TemplateSuggestion, TemplateSuggestion, TemplateSuggestion] }>(
       '/weekly-review/template-suggestions',
