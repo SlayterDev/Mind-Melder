@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { weeklyReviewAPI, templatesAPI, type WeeklyReview, type TemplateSuggestion } from '../api/client';
-import { Calendar, TrendingUp, Target, ArrowRight, Loader2, CheckCircle2, Clock, Sparkles, AlertCircle, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, TrendingUp, Target, ArrowRight, Loader2, CheckCircle2,
+   Clock, Sparkles, AlertCircle, Lightbulb, ChevronDown, ChevronUp, RotateCw } from 'lucide-react';
 
 export default function WeeklyReviewPage() {
   const [selectedReview, setSelectedReview] = useState<WeeklyReview | null>(null);
@@ -385,10 +386,10 @@ export default function WeeklyReviewPage() {
               <div className="sheet-card-inner p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <Lightbulb className="w-5 h-5 text-yellow-400" />
+                    <Lightbulb className="w-5 h-5 text-yellow-500" />
                     <h3 className="text-xl font-semibold text-gray-100">Template Improvements</h3>
                   </div>
-                  {!showSuggestions && (
+                  {!showSuggestions && !suggestions && (
                     <button
                       onClick={handleGetSuggestions}
                       disabled={loadingSuggestions}
@@ -406,6 +407,34 @@ export default function WeeklyReviewPage() {
                         </>
                       )}
                     </button>
+                  )}
+                  {suggestions && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleGetSuggestions}
+                        disabled={loadingSuggestions}
+                        className="btn-accent flex items-center gap-2 mr-2"
+                      >
+                        {loadingSuggestions ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <RotateCw className="w-4 h-4" />
+                            Regenerate
+                          </>
+                        )}
+                      </button>
+                      {!showSuggestions && (
+                        <button
+                          onClick={() => setShowSuggestions(true)}
+                        >
+                          <ChevronUp className="w-6 h-6" />
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -439,9 +468,9 @@ export default function WeeklyReviewPage() {
                         >
                           <div className="flex-1">
                             <div className="flex items-start gap-2">
-                              <span className="text-yellow-400 font-bold text-sm mt-0.5">#{idx + 1}</span>
+                              <span className="text-yellow-500 font-bold text-sm mt-0.5">#{idx + 1}</span>
                               <div>
-                                <h4 className="font-semibold text-gray-100">{suggestion.title}</h4>
+                                <h4 className="font-semibold text-gray-200">{suggestion.title}</h4>
                                 <p className="text-sm text-gray-400 mt-1">{suggestion.description}</p>
                               </div>
                             </div>
@@ -492,7 +521,6 @@ export default function WeeklyReviewPage() {
                     <button
                       onClick={() => {
                         setShowSuggestions(false);
-                        setSuggestions(null);
                         setExpandedSuggestion(null);
                       }}
                       className="text-sm text-gray-400 hover:text-gray-300 transition-colors mt-2"
