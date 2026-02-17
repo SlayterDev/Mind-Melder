@@ -10,7 +10,7 @@ export const tokenUsage = pgTable(
     method: text('method').notNull(), // organize | today_sheet | weekly_review | chat | refine_note | generate_title | transcribe | template_suggestions | extract_tasks
     inputTokens: integer('input_tokens'), // nullable for ollama/transcription
     outputTokens: integer('output_tokens'), // nullable
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => ({
     userIdIdx: index('token_usage_user_id_idx').on(table.userId),

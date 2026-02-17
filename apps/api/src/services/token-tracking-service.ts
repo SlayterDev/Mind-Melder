@@ -33,7 +33,7 @@ export class TokenTrackingService {
 
     const [aggregated, totals] = await Promise.all([
       this.tokenUsageRepo.getAggregatedUsage(userId, startDate, endDate),
-      this.tokenUsageRepo.getTotalUsage(userId),
+      this.tokenUsageRepo.getTotalUsageByDateRange(userId, startDate, endDate),
     ]);
 
     return { aggregated, totals, periodDays: days };
