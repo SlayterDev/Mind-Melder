@@ -1,13 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { weeklyReviewAPI, type WeeklyReview } from '../api/client';
-import { Calendar, TrendingUp, Target, ArrowRight, Loader2, CheckCircle2, Clock, Sparkles, AlertCircle } from 'lucide-react';
+import { weeklyReviewAPI, templatesAPI, type WeeklyReview, type TemplateSuggestion } from '../api/client';
+import { Calendar, TrendingUp, Target, ArrowRight, Loader2, CheckCircle2,
+   Clock, Sparkles, AlertCircle, Lightbulb, ChevronDown, ChevronUp, RotateCw } from 'lucide-react';
 
 export default function WeeklyReviewPage() {
   const [selectedReview, setSelectedReview] = useState<WeeklyReview | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  // Template suggestions state
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<TemplateSuggestion[] | null>(null);
+  const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
+  const [expandedSuggestion, setExpandedSuggestion] = useState<number | null>(null);
+  const [acceptingSuggestion, setAcceptingSuggestion] = useState<number | null>(null);
 
   // Query for latest review
   const { data: latestReview, isLoading: loadingLatest, error: latestError, refetch } = useQuery({
@@ -20,6 +29,12 @@ export default function WeeklyReviewPage() {
   const { data: reviewHistory, isLoading: loadingHistory } = useQuery({
     queryKey: ['weekly-review', 'list'],
     queryFn: () => weeklyReviewAPI.list(1, 10),
+  });
+
+  // Query for templates (to get the active template for suggestions)
+  const { data: templates } = useQuery({
+    queryKey: ['templates'],
+    queryFn: () => templatesAPI.list(),
   });
 
   // Mutation for generating new review
@@ -52,6 +67,56 @@ export default function WeeklyReviewPage() {
       await generateMutation.mutateAsync({ forceRegenerate });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleGetSuggestions = async () => {
+    // Get the active template
+    const activeTemplate = templates?.find(t => t.isActive);
+    if (!activeTemplate) {
+      setSuggestionsError('No active template found. Please activate a template first.');
+      return;
+    }
+
+    setLoadingSuggestions(true);
+    setSuggestionsError(null);
+    try {
+      const result = await weeklyReviewAPI.getTemplateSuggestions(activeTemplate.id);
+      setSuggestions(result.suggestions);
+      setShowSuggestions(true);
+    } catch (error: any) {
+      console.error('Failed to get template suggestions:', error);
+      setSuggestionsError(error.message || 'Failed to generate suggestions. Please try again.');
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const handleAcceptSuggestion = async (index: number) => {
+    if (!suggestions || !templates) return;
+    
+    const suggestion = suggestions[index];
+    const activeTemplate = templates.find(t => t.isActive);
+    if (!activeTemplate) return;
+
+    setAcceptingSuggestion(index);
+    try {
+      await templatesAPI.update(activeTemplate.id, {
+        prompt: suggestion.improvedPrompt,
+      });
+      
+      // Show success message
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+      
+      // Close suggestions panel
+      setShowSuggestions(false);
+      setSuggestions(null);
+    } catch (error: any) {
+      console.error('Failed to update template:', error);
+      setSuggestionsError(error.message || 'Failed to update template. Please try again.');
+    } finally {
+      setAcceptingSuggestion(null);
     }
   };
 
@@ -313,6 +378,157 @@ export default function WeeklyReviewPage() {
                     </li>
                   ))}
                 </ul>
+              </div>
+            </div>
+
+            {/* Template Improvement Suggestions */}
+            <div className="animate-fade-in" style={{ animationDelay: '600ms' }}>
+              <div className="sheet-card-inner p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="w-5 h-5 text-yellow-500" />
+                    <h3 className="text-xl font-semibold text-gray-100">Template Improvements</h3>
+                  </div>
+                  {!showSuggestions && !suggestions && (
+                    <button
+                      onClick={handleGetSuggestions}
+                      disabled={loadingSuggestions}
+                      className="btn-accent flex items-center gap-2"
+                    >
+                      {loadingSuggestions ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          Get Suggestions
+                        </>
+                      )}
+                    </button>
+                  )}
+                  {suggestions && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleGetSuggestions}
+                        disabled={loadingSuggestions}
+                        className="btn-accent flex items-center gap-2 mr-2"
+                      >
+                        {loadingSuggestions ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <RotateCw className="w-4 h-4" />
+                            Regenerate
+                          </>
+                        )}
+                      </button>
+                      {!showSuggestions && (
+                        <button
+                          onClick={() => setShowSuggestions(true)}
+                        >
+                          <ChevronUp className="w-6 h-6" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {suggestionsError && (
+                  <div className="mb-4 p-3 rounded-lg flex items-start gap-2" style={{ backgroundColor: 'rgb(239 68 68 / 0.1)', border: '1px solid rgb(239 68 68 / 0.3)' }}>
+                    <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-red-300 text-sm">{suggestionsError}</span>
+                  </div>
+                )}
+
+                {!showSuggestions && !suggestionsError && (
+                  <p className="text-gray-400 text-sm">
+                    Get AI-powered suggestions to improve your organization template based on this week's review insights.
+                  </p>
+                )}
+
+                {showSuggestions && suggestions && (
+                  <div className="space-y-3">
+                    {suggestions.map((suggestion, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-lg border"
+                        style={{ 
+                          backgroundColor: 'rgb(234 179 8 / 0.05)', 
+                          borderColor: 'rgb(234 179 8 / 0.2)' 
+                        }}
+                      >
+                        <button
+                          onClick={() => setExpandedSuggestion(expandedSuggestion === idx ? null : idx)}
+                          className="w-full p-4 flex items-start justify-between gap-3 text-left hover:bg-opacity-80 transition-colors"
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-start gap-2">
+                              <span className="text-yellow-500 font-bold text-sm mt-0.5">#{idx + 1}</span>
+                              <div>
+                                <h4 className="font-semibold text-gray-200">{suggestion.title}</h4>
+                                <p className="text-sm text-gray-400 mt-1">{suggestion.description}</p>
+                              </div>
+                            </div>
+                          </div>
+                          {expandedSuggestion === idx ? (
+                            <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                          ) : (
+                            <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                          )}
+                        </button>
+                        
+                        {expandedSuggestion === idx && (
+                          <div className="px-4 pb-4 space-y-3">
+                            <div>
+                              <h5 className="text-xs font-semibold text-gray-400 uppercase mb-2">Improved Template Prompt</h5>
+                              <div 
+                                className="p-3 rounded text-sm text-gray-300 font-mono whitespace-pre-wrap"
+                                style={{ 
+                                  backgroundColor: 'rgb(31 41 55 / 0.5)', 
+                                  border: '1px solid rgb(75 85 99 / 0.3)' 
+                                }}
+                              >
+                                {suggestion.improvedPrompt}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleAcceptSuggestion(idx)}
+                              disabled={acceptingSuggestion === idx}
+                              className="btn-accent w-full flex items-center justify-center gap-2"
+                            >
+                              {acceptingSuggestion === idx ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  Applying...
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle2 className="w-4 h-4" />
+                                  Apply This Suggestion
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    
+                    <button
+                      onClick={() => {
+                        setShowSuggestions(false);
+                        setExpandedSuggestion(null);
+                      }}
+                      className="text-sm text-gray-400 hover:text-gray-300 transition-colors mt-2"
+                    >
+                      Hide Suggestions
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

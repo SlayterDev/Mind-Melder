@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import type { Database, SettingsRepository } from 'database';
+import type { Database, SettingsRepository, TemplatesRepository } from 'database';
 import { ProviderFactory } from 'llm';
 import type { TokenTrackingService } from '../services/token-tracking-service.js';
 import { WeeklyReviewService } from '../services/weekly-review-service.js';
@@ -18,7 +18,11 @@ const listReviewsSchema = z.object({
   perPage: z.coerce.number().int().min(1).max(50).optional().default(10),
 });
 
-export function createWeeklyReviewRouter(db: Database, settingsRepo: SettingsRepository, tokenTracker?: TokenTrackingService): Router {
+const templateSuggestionsSchema = z.object({
+  templateId: z.string().uuid(),
+});
+
+export function createWeeklyReviewRouter(db: Database, settingsRepo: SettingsRepository, templatesRepo: TemplatesRepository, tokenTracker?: TokenTrackingService): Router {
   const router = Router();
 
   // POST /api/v1/weekly-review/generate - Generate a weekly review
@@ -108,6 +112,50 @@ export function createWeeklyReviewRouter(db: Database, settingsRepo: SettingsRep
       }
 
       res.json(review);
+    })
+  );
+
+  // POST /api/v1/weekly-review/template-suggestions - Generate template improvement suggestions
+  router.post(
+    '/template-suggestions',
+    validateBody(templateSuggestionsSchema),
+    asyncHandler(async (req, res) => {
+      const userId = 'test-user-1'; // TODO: Get from auth context
+      const { templateId } = req.body;
+
+      // Get the template
+      const template = await templatesRepo.findById(templateId);
+      if (!template) {
+        throw new ApiError(404, 'Template not found');
+      }
+
+      // Verify user owns the template
+      if (template.userId !== userId) {
+        throw new ApiError(403, 'Unauthorized');
+      }
+
+      // Get the latest weekly review for context (optional)
+      const settings = await settingsRepo.getOrCreate(userId);
+      const llmProvider = ProviderFactory.createFromSettings(settings);
+      const weeklyReviewService = new WeeklyReviewService(db, llmProvider);
+      const latestReview = await weeklyReviewService.getLatestReview(userId);
+
+      // Generate suggestions
+      const weeklyReviewOutput = latestReview ? {
+        summary: latestReview.summary,
+        insights: latestReview.insights as any,
+      } : undefined;
+
+      const suggestions = await llmProvider.generateTemplateSuggestions(template, weeklyReviewOutput);
+
+      if (tokenTracker && llmProvider.lastUsage) {
+        tokenTracker.trackUsage(userId, settings.llmProvider, settings.llmModel || 'default', 'template_suggestions', llmProvider.lastUsage);
+      }
+
+      res.json({
+        success: true,
+        suggestions: suggestions.suggestions,
+      });
     })
   );
 
