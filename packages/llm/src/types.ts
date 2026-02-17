@@ -116,6 +116,9 @@ export interface StreamCallbacks {
 
 // LLM Provider interface
 export interface LLMProvider {
+  /** Token usage from the most recent API call (null if unavailable) */
+  lastUsage: TokenUsage | null;
+
   /**
    * Organize a batch of captures by extracting actionable todos
    * @param captures - Array of unorganized captures
@@ -192,6 +195,12 @@ export interface TranscribeOptions {
 
 export interface TranscriptionResult {
   text: string;
+}
+
+// Token usage tracking
+export interface TokenUsage {
+  inputTokens: number | null;
+  outputTokens: number | null;
 }
 
 // Provider configuration

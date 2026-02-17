@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import type { Database, SettingsRepository } from 'database';
 import { ProviderFactory } from 'llm';
+import type { TokenTrackingService } from '../services/token-tracking-service.js';
 import { WeeklyReviewService } from '../services/weekly-review-service.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, validateQuery, ApiError } from '../middleware/index.js';
@@ -17,7 +18,7 @@ const listReviewsSchema = z.object({
   perPage: z.coerce.number().int().min(1).max(50).optional().default(10),
 });
 
-export function createWeeklyReviewRouter(db: Database, settingsRepo: SettingsRepository): Router {
+export function createWeeklyReviewRouter(db: Database, settingsRepo: SettingsRepository, tokenTracker?: TokenTrackingService): Router {
   const router = Router();
 
   // POST /api/v1/weekly-review/generate - Generate a weekly review
@@ -33,6 +34,10 @@ export function createWeeklyReviewRouter(db: Database, settingsRepo: SettingsRep
         const llmProvider = ProviderFactory.createFromSettings(settings);
         const weeklyReviewService = new WeeklyReviewService(db, llmProvider);
         const review = await weeklyReviewService.generateReview(userId, weekStartDate, forceRegenerate);
+
+        if (tokenTracker && llmProvider.lastUsage) {
+          tokenTracker.trackUsage(userId, settings.llmProvider, settings.llmModel || 'default', 'weekly_review', llmProvider.lastUsage);
+        }
 
         res.status(200).json({
           success: true,

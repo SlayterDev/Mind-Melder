@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { settingsAPI, ollamaAPI, type Settings, type OllamaModel } from '../api/client';
+import { useNavigate } from 'react-router-dom';
+import { settingsAPI, ollamaAPI, tokenUsageAPI, type Settings, type OllamaModel, type UsageSummary } from '../api/client';
 import { Cog, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { getServerUrl, setApiUrl, testConnection } from '../api/config';
 import ServerConnection from '../components/ServerConnection';
+import TokenUsageCard from '../components/TokenUsageCard';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
@@ -38,11 +40,13 @@ const PROVIDER_MODELS: Record<string, { label: string; models: { value: string; 
 };
 
 export default function SettingsPage() {
+  const navigate = useNavigate();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
 
   // Server connection state (Electron only)
   const [serverUrl, setServerUrl] = useState(getServerUrl());
@@ -132,6 +136,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadSettings();
+    tokenUsageAPI.getSummary(30).then(setUsageSummary).catch(() => {});
   }, []);
 
   // Sync local state when settings change (but don't overwrite active edits)
@@ -598,6 +603,9 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* Token Usage */}
+        <TokenUsageCard usageSummary={usageSummary} />
 
         {/* Server Connection (Electron only) */}
         {isElectron && (

@@ -259,6 +259,59 @@ export const transcribeAPI = {
   },
 };
 
+// Token Usage
+export interface AggregatedUsage {
+  provider: string;
+  model: string;
+  method: string;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  count: number;
+}
+
+export interface UsageTotals {
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalRequests: number;
+}
+
+export interface UsageSummary {
+  aggregated: AggregatedUsage[];
+  totals: UsageTotals;
+  periodDays: number;
+}
+
+export interface TokenUsageRecord {
+  id: string;
+  userId: string;
+  provider: string;
+  model: string;
+  method: string;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  createdAt: string;
+}
+
+export interface UsageDetails {
+  records: TokenUsageRecord[];
+  total: number;
+}
+
+export const tokenUsageAPI = {
+  getSummary: (days: number = 30) =>
+    fetchAPI<UsageSummary>(`/token-usage/summary?days=${days}`),
+  getDetails: (params: { start?: string; end?: string; provider?: string; method?: string; page?: number; perPage?: number } = {}) => {
+    const searchParams = new URLSearchParams();
+    if (params.start) searchParams.set('start', params.start);
+    if (params.end) searchParams.set('end', params.end);
+    if (params.provider) searchParams.set('provider', params.provider);
+    if (params.method) searchParams.set('method', params.method);
+    if (params.page) searchParams.set('page', params.page.toString());
+    if (params.perPage) searchParams.set('perPage', params.perPage.toString());
+    return fetchAPI<UsageDetails>(`/token-usage?${searchParams.toString()}`);
+  },
+};
+
 // Weekly Reviews
 export interface WeeklyReviewInsights {
   accomplishments: string[];

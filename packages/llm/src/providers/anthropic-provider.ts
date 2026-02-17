@@ -28,6 +28,17 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     this.temperature = config.temperature ?? 0.7;
   }
 
+  private storeUsage(response: { usage?: { input_tokens?: number; output_tokens?: number } }) {
+    if (response.usage) {
+      this.lastUsage = {
+        inputTokens: response.usage.input_tokens ?? null,
+        outputTokens: response.usage.output_tokens ?? null,
+      };
+    } else {
+      this.lastUsage = null;
+    }
+  }
+
   async organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean, contentLockEnabled?: boolean): Promise<OrganizedOutput> {
     const systemPrompt = this.buildSystemPrompt();
     const userPrompt = this.buildOrganizePrompt(captures, template, tags, includeDescriptions ?? false, contentLockEnabled ?? false);
@@ -42,6 +53,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       ],
     });
 
+    this.storeUsage(response);
     const content = response.content[0];
     if (content.type !== 'text') {
       throw new Error('Unexpected response type from Anthropic');
@@ -63,6 +75,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       ],
     });
 
+    this.storeUsage(response);
     const content = response.content[0];
     if (content.type !== 'text') {
       throw new Error('Unexpected response type from Anthropic');
@@ -91,6 +104,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       ],
     });
 
+    this.storeUsage(response);
     const content = response.content[0];
     if (content.type !== 'text') {
       throw new Error('Unexpected response type from Anthropic');
@@ -118,6 +132,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       ],
     });
 
+    this.storeUsage(response);
     const content = response.content[0];
     if (content.type !== 'text') {
       throw new Error('Unexpected response type from Anthropic');
@@ -214,7 +229,8 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       callbacks.onError?.(error);
     });
 
-    await stream.finalMessage();
+    const finalMsg = await stream.finalMessage();
+    this.storeUsage(finalMsg);
     callbacks.onComplete(fullTextResponse);
   }
 
@@ -232,6 +248,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       ],
     });
 
+    this.storeUsage(response);
     const responseContent = response.content[0];
     if (responseContent.type !== 'text') {
       throw new Error('Unexpected response type from Anthropic');
@@ -257,6 +274,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       ],
     });
 
+    this.storeUsage(response);
     const responseContent = response.content[0];
     if (responseContent.type !== 'text') {
       throw new Error('Unexpected response type from Anthropic');
@@ -278,6 +296,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       ],
     });
 
+    this.storeUsage(response);
     const responseContent = response.content[0];
     if (responseContent.type !== 'text') {
       throw new Error('Unexpected response type from Anthropic');
