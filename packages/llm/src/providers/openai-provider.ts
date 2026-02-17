@@ -176,6 +176,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       model: this.model,
       messages: openaiMessages,
       stream: true,
+      stream_options: { include_usage: true },
       temperature: this.temperature,
       ...(openaiTools?.length ? { tools: openaiTools } : {}),
     });
@@ -184,6 +185,11 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
     const toolCallsInProgress: Map<number, { id: string; name: string; arguments: string }> = new Map();
 
     for await (const chunk of response) {
+      // Final chunk with usage data (choices is empty)
+      if (chunk.usage) {
+        this.storeUsage({ usage: chunk.usage });
+      }
+
       const delta = chunk.choices[0]?.delta;
       const finishReason = chunk.choices[0]?.finish_reason;
 
