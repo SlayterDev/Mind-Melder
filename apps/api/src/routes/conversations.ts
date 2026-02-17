@@ -1,7 +1,8 @@
 import { Router, type Router as ExpressRouter, type Response } from 'express';
 import { ConversationsRepository, Database, SettingsRepository } from 'database';
 import { createConversationSchema, chatMessageInputSchema, updateConversationSchema } from 'types';
-import { ProviderFactory, chatTools, type ChatMessage, type ToolCall, type LLMProvider } from 'llm';
+import { ProviderFactory, chatTools, type ChatMessage, type ToolCall, type LLMProvider, type TokenUsage } from 'llm';
+import type { TokenTrackingService } from '../services/token-tracking-service.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, ApiError } from '../middleware/index.js';
 import { ChatToolExecutor } from '../services/chat-tool-executor.js';
@@ -49,7 +50,8 @@ function normalizeGeneratedTitle(raw: string | null | undefined): string {
 export function createConversationsRouter(
   db: Database,
   conversationsRepo: ConversationsRepository,
-  settingsRepo: SettingsRepository
+  settingsRepo: SettingsRepository,
+  tokenTracker?: TokenTrackingService
 ): ExpressRouter {
   const router = Router();
 
@@ -190,6 +192,10 @@ export function createConversationsRouter(
         { role: 'assistant', content: assistantContent },
       ]);
 
+      if (tokenTracker && llmProvider.lastUsage) {
+        tokenTracker.trackUsage(userId, settings.llmProvider, settings.llmModel || 'default', 'generate_title', llmProvider.lastUsage);
+      }
+
       const normalizedTitle = normalizeGeneratedTitle(rawTitle);
 
       // If the LLM output is unusable after normalization, fall back to a safe default
@@ -319,6 +325,10 @@ export function createConversationsRouter(
           messages,
           res
         );
+
+        if (tokenTracker && llmProvider.lastUsage) {
+          tokenTracker.trackUsage(userId, settings.llmProvider, settings.llmModel || 'default', 'chat', llmProvider.lastUsage);
+        }
 
         if (toolCalls.length === 0) {
           // No tool calls - save final message and end

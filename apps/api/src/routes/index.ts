@@ -8,3 +8,4 @@ export * from './search.js';
 export * from './ollama.js';
 export * from './conversations.js';
 export * from './transcribe.js';
+export * from './token-usage.js';

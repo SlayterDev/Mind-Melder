@@ -12,6 +12,7 @@ import {
   SettingsRepository,
   TagsRepository,
   ConversationsRepository,
+  TokenUsageRepository,
 } from 'database';
 import { 
   createCapturesRouter,
@@ -23,13 +24,15 @@ import {
   createSearchRouter,
   createOllamaRouter,
   createConversationsRouter,
-  createTranscribeRouter
+  createTranscribeRouter,
+  createTokenUsageRouter
 } from './routes/index.js';
 import { createOrganizeRouter } from './routes/organize.js';
 import { createTodaySheetRouter } from './routes/today-sheet.js';
 import { createWeeklyReviewRouter } from './routes/weekly-review.js';
 import { errorHandler, requestLogger } from './middleware/index.js';
 import { SchedulerService } from './services/scheduler-service.js';
+import { TokenTrackingService } from './services/token-tracking-service.js';
 
 // Load .env from project root
 const __filename = fileURLToPath(import.meta.url);
@@ -53,8 +56,10 @@ const templatesRepo = new TemplatesRepository(db);
 const settingsRepo = new SettingsRepository(db);
 const tagsRepo = new TagsRepository(db);
 const conversationsRepo = new ConversationsRepository(db);
+const tokenUsageRepo = new TokenUsageRepository(db);
 
-// Initialize scheduler
+// Initialize services
+const tokenTrackingService = new TokenTrackingService(tokenUsageRepo);
 const scheduler = new SchedulerService(db, settingsRepo);
 
 // Middleware
@@ -70,17 +75,18 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/v1/captures', createCapturesRouter(capturesRepo));
 app.use('/api/v1/todos', createTodosRouter(todosRepo));
-app.use('/api/v1/notes', createNotesRouter(db, notesRepo, settingsRepo));
+app.use('/api/v1/notes', createNotesRouter(db, notesRepo, settingsRepo, tokenTrackingService));
 app.use('/api/v1/templates', createTemplatesRouter(templatesRepo));
 app.use('/api/v1/settings', createSettingsRouter(settingsRepo, scheduler));
 app.use('/api/v1/tags', createTagsRouter(tagsRepo));
 app.use('/api/v1/search', createSearchRouter(db));
-app.use('/api/v1/organize', createOrganizeRouter(db, settingsRepo));
-app.use('/api/v1/today-sheet', createTodaySheetRouter(db, settingsRepo));
-app.use('/api/v1/weekly-review', createWeeklyReviewRouter(db, settingsRepo, templatesRepo));
+app.use('/api/v1/organize', createOrganizeRouter(db, settingsRepo, tokenTrackingService));
+app.use('/api/v1/today-sheet', createTodaySheetRouter(db, settingsRepo, tokenTrackingService));
+app.use('/api/v1/weekly-review', createWeeklyReviewRouter(db, settingsRepo, templatesRepo, tokenTrackingService));
 app.use('/api/v1/ollama', createOllamaRouter(settingsRepo));
-app.use('/api/v1/conversations', createConversationsRouter(db, conversationsRepo, settingsRepo));
-app.use('/api/v1/transcribe', createTranscribeRouter(db, settingsRepo, notesRepo));
+app.use('/api/v1/conversations', createConversationsRouter(db, conversationsRepo, settingsRepo, tokenTrackingService));
+app.use('/api/v1/transcribe', createTranscribeRouter(db, settingsRepo, notesRepo, tokenTrackingService));
+app.use('/api/v1/token-usage', createTokenUsageRouter(tokenTrackingService));
 
 // Error handler (must be last)
 app.use(errorHandler);

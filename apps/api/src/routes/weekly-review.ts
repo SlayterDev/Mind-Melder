@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import type { Database, SettingsRepository, TemplatesRepository } from 'database';
 import { ProviderFactory } from 'llm';
+import type { TokenTrackingService } from '../services/token-tracking-service.js';
 import { WeeklyReviewService } from '../services/weekly-review-service.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, validateQuery, ApiError } from '../middleware/index.js';
@@ -21,7 +22,7 @@ const templateSuggestionsSchema = z.object({
   templateId: z.string().uuid(),
 });
 
-export function createWeeklyReviewRouter(db: Database, settingsRepo: SettingsRepository, templatesRepo: TemplatesRepository): Router {
+export function createWeeklyReviewRouter(db: Database, settingsRepo: SettingsRepository, templatesRepo: TemplatesRepository, tokenTracker?: TokenTrackingService): Router {
   const router = Router();
 
   // POST /api/v1/weekly-review/generate - Generate a weekly review
@@ -37,6 +38,10 @@ export function createWeeklyReviewRouter(db: Database, settingsRepo: SettingsRep
         const llmProvider = ProviderFactory.createFromSettings(settings);
         const weeklyReviewService = new WeeklyReviewService(db, llmProvider);
         const review = await weeklyReviewService.generateReview(userId, weekStartDate, forceRegenerate);
+
+        if (tokenTracker && llmProvider.lastUsage) {
+          tokenTracker.trackUsage(userId, settings.llmProvider, settings.llmModel || 'default', 'weekly_review', llmProvider.lastUsage);
+        }
 
         res.status(200).json({
           success: true,
@@ -142,6 +147,10 @@ export function createWeeklyReviewRouter(db: Database, settingsRepo: SettingsRep
       } : undefined;
 
       const suggestions = await llmProvider.generateTemplateSuggestions(template, weeklyReviewOutput);
+
+      if (tokenTracker && llmProvider.lastUsage) {
+        tokenTracker.trackUsage(userId, settings.llmProvider, settings.llmModel || 'default', 'template_suggestions', llmProvider.lastUsage);
+      }
 
       res.json({
         success: true,

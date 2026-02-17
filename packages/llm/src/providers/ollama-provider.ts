@@ -52,6 +52,13 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     };
   }
 
+  private storeUsage(response: { prompt_eval_count?: number; eval_count?: number }) {
+    this.lastUsage = {
+      inputTokens: response.prompt_eval_count ?? null,
+      outputTokens: response.eval_count ?? null,
+    };
+  }
+
   async organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean, contentLockEnabled?: boolean): Promise<OrganizedOutput> {
     const systemPrompt = this.buildSystemPrompt();
     const userPrompt = this.buildOrganizePrompt(captures, template, tags, includeDescriptions ?? false, contentLockEnabled ?? false);
@@ -69,6 +76,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       },
     });
 
+    this.storeUsage(response);
     return this.parseResponse<OrganizedOutput>(response.message.content, organizedOutputSchema);
   }
 
@@ -88,6 +96,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       },
     });
 
+    this.storeUsage(response);
     const result = this.parseResponse<{ todos: { content: string; dueDate?: string }[] }>(
       response.message.content
     );
@@ -111,6 +120,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       },
     });
 
+    this.storeUsage(response);
     return this.parseResponse<TodaySheetOutput>(response.message.content, todaySheetOutputSchema);
   }
 
@@ -133,6 +143,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       },
     });
 
+    this.storeUsage(response);
     return response.message.content.trim();
   }
 
@@ -194,6 +205,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
           tools: ollamaTools,
         });
 
+        this.storeUsage(response);
         // Send text content as tokens
         if (response.message.content) {
           callbacks.onToken(response.message.content);
@@ -294,6 +306,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       },
     });
 
+    this.storeUsage(response);
     return this.parseResponse<{ title: string; content: string }>(response.message.content);
   }
 
@@ -317,6 +330,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       },
     });
 
+    this.storeUsage(response);
     return this.parseResponse<WeeklyReviewOutput>(response.message.content, weeklyReviewOutputSchema);
   }
 
@@ -336,6 +350,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       },
     });
 
+    this.storeUsage(response);
     return this.parseResponse<TemplateSuggestionsOutput>(response.message.content, templateSuggestionsOutputSchema);
   }
 }

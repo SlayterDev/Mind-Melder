@@ -15,6 +15,7 @@ import SetupPage from './pages/SetupPage';
 import QuickCapturePage from './pages/QuickCapturePage';
 import RecordingPage from './pages/RecordingPage';
 import ChatPage from './pages/ChatPage';
+import TokenUsagePage from './pages/TokenUsagePage';
 import { isApiConfigured } from './api/config';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
@@ -34,6 +35,7 @@ function AppRoutes() {
       <Route path="/chat/:id" element={<ChatPage />} />
       <Route path="/chat" element={<ChatPage />} />
       <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/settings/usage" element={<TokenUsagePage />} />
     </Routes>
   );
 }
