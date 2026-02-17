@@ -285,6 +285,12 @@ export interface WeeklyReview {
   createdAt: string;
 }
 
+export interface TemplateSuggestion {
+  title: string;
+  description: string;
+  improvedPrompt: string;
+}
+
 export const weeklyReviewAPI = {
   generate: (weekStartDate?: string, forceRegenerate?: boolean) =>
     fetchAPI<{ success: boolean; review: WeeklyReview; message: string }>(
@@ -303,4 +309,12 @@ export const weeklyReviewAPI = {
       `/weekly-review?page=${page}&perPage=${perPage}`
     ),
   get: (id: string) => fetchAPI<WeeklyReview>(`/weekly-review/${id}`),
+  getTemplateSuggestions: (templateId: string) =>
+    fetchAPI<{ success: boolean; suggestions: [TemplateSuggestion, TemplateSuggestion, TemplateSuggestion] }>(
+      '/weekly-review/template-suggestions',
+      {
+        method: 'POST',
+        body: JSON.stringify({ templateId }),
+      }
+    ),
 };
