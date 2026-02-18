@@ -1,6 +1,10 @@
 # Mind-Melder
 
+[![CI](https://github.com/SlayterDev/Mind-Melder/actions/workflows/ci.yml/badge.svg)](https://github.com/SlayterDev/Mind-Melder/actions/workflows/ci.yml) [![BuyMeACoffee](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-donate-yellow.svg)](https://buymeacoffee.com/slayterdev)
+
 A self-hosted productivity tool that captures quick notes throughout the day and uses LLM summarization to organize them into structured notes and actionable todo lists.
+
+![mm_trailer](./media/MM_trailer.gif)
 
 ## Key Features
 
@@ -11,8 +15,13 @@ A self-hosted productivity tool that captures quick notes throughout the day and
 - Global tag management for AI-guided categorization
 - User-defined templates for personalized structure
 - Feedback system for AI-generated todos
+- Record and transcribe system audio (OpenAI or local whisper)
 - Desktop app via Electron (macOS, Windows, Linux)
 - Self-hosted via Docker Compose
+
+| <img width="600" src="./media/TodaySheet.png">  Today Sheet - Structured Daily Plan | <img width="600" src="./media/Templates.png"> Customize AI prompts with templates|
+| -- | -- |
+| <img width="600" src="./media/Chat.png"> Chat using your todos and notes | <img width="600" src="./media/Transcriptions.png"> Transcribe and summarizr audio |
 
 ## Quick Start
 
@@ -25,8 +34,7 @@ curl -O https://raw.githubusercontent.com/SlayterDev/Mind-Melder/main/docker-com
 ### 2. Create a `.env` file
 
 ```env
-# Required — choose one LLM provider
-LLM_PROVIDER=openai
+# Required — add an API key for at least one AI provider (or use Ollama)
 OPENAI_API_KEY=sk-...
 
 # Optional overrides (defaults shown)
@@ -43,15 +51,14 @@ OPENAI_API_KEY=sk-...
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-The UI is available at `http://localhost:8080`.
+The UI is available at `http://localhost:8080`. Set your LLM provider in settings based on the keys you setup in your `.env` file.
 
-Download the native app from releases for hotkey quick capture and system audio recording and transcription.
+Download the native app from [releases](https://github.com/SlayterDev/Mind-Melder/releases) for hotkey quick capture and system audio recording and transcription.
 
 ## Configuration
 
 | Variable | Default | Description |
 |---|---|---|
-| `LLM_PROVIDER` | `openai` | LLM backend: `openai`, `anthropic`, or `ollama` |
 | `OPENAI_API_KEY` | — | OpenAI API key (when using OpenAI) |
 | `ANTHROPIC_API_KEY` | — | Anthropic API key (when using Anthropic) |
 | `OLLAMA_BASE_URL` | `http://host.docker.internal:11434` | Ollama server URL (when using Ollama) |
@@ -70,9 +77,9 @@ See [LOCAL_WHISPER_SETUP.md](./docs/LOCAL_WHISPER_SETUP.md) for transcribing rec
 ## Usage Flow
 
 1. **Capture** — Hit keyboard shortcut anywhere (`cmd+shift+C`), type a note, press Enter
-2. **Organize** — Click "Organize Now" or let the scheduler run to process captures with AI
-3. **Today Sheet** — Generate an AI-powered daily plan from captures and todos
-4. **Search** — Full-text search across all captures, notes, and todos
+2. **Today Sheet** — Generate an AI-powered daily plan from captures and todos
+3. **Search** — Full-text search across all captures, notes, and todos
+4. **Chat** - Chat with your LLM about your todos and notes
 5. **Review** — Check Organized Notes and Todo List with tags
 6. **Complete** — Check off todos as you finish them
 
@@ -84,7 +91,7 @@ If you prefer to build images locally instead of pulling from GHCR:
 git clone https://github.com/SlayterDev/Mind-Melder.git
 cd Mind-Melder
 cp .env.example .env
-# Edit .env with your LLM provider key
+# Edit .env with your LLM provider key(s)
 
 docker compose build
 docker compose up -d
@@ -107,4 +114,4 @@ This project follows strict scope boundaries defined in [PROJECT_SPEC.md](./docs
 
 ## License
 
-TBD
+Licensed under the [Apache 2.0](./LICENSE) License.
