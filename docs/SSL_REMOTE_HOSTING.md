@@ -123,7 +123,7 @@ docker compose -f docker-compose.prod.yml -f docker-compose.ssl.yml run --rm \
   -d your.domain.com
 ```
 
-**3c. Add the ssl nginx config** add this block to the end of `nginx/conf.d/mind-melder.conf`:
+**3c. Add the ssl nginx config:** add this block to the end of `nginx/conf.d/mind-melder.conf`:
 
 ```nginx
 # HTTPS — web UI
