@@ -104,7 +104,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
 
     const response = await this.client.chat.completions.create({
       model: this.model,
-      max_tokens: 4096,
+      max_completion_tokens: 4096,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -127,7 +127,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
 
     const response = await this.client.chat.completions.create({
       model: this.model,
-      max_tokens: 2048,
+      max_completion_tokens: 2048,
       messages: [
         { role: 'system', content: this.buildSystemPrompt() },
         { role: 'user', content: prompt },
@@ -152,7 +152,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
 
     const response = await this.client.chat.completions.create({
       model: this.model,
-      max_tokens: 4096,
+      max_completion_tokens: 4096,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -178,7 +178,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
 
     const response = await this.client.chat.completions.create({
       model: this.model,
-      max_tokens: 30,
+      max_completion_tokens: 30,
       temperature: 0.3,
       messages: [
         { role: 'system', content: this.buildChatTitleSystemPrompt() },
@@ -362,7 +362,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
 
     const response = await this.client.chat.completions.create({
       model: this.model,
-      max_tokens: 3000,
+      max_completion_tokens: 3000,
       messages: [
         { role: 'system', content: 'You are a productivity coach helping users reflect on their week.' },
         { role: 'user', content: userPrompt },
@@ -385,7 +385,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
 
     const response = await this.client.chat.completions.create({
       model: this.model,
-      max_tokens: 3000,
+      max_completion_tokens: 3000,
       messages: [
         { role: 'system', content: 'You are a productivity coach helping users improve their organization templates.' },
         { role: 'user', content: userPrompt },
