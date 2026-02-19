@@ -31,11 +31,9 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-capture}
-      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      ORGANIZATION_SCHEDULE: ${ORGANIZATION_SCHEDULE:-0 17 * * *}
       TZ: ${TZ:-America/Chicago}
     ports:
       - '${API_PORT:-3000}:3000'

@@ -20,21 +20,11 @@ Mind Melder uses Large Language Models (LLMs) to automatically organize your cap
 
 ## Configuration
 
-### 1. Choose Your Provider
-
-Edit your `.env` file and set the `LLM_PROVIDER` variable:
-
-```bash
-# Choose one: openai, anthropic, ollama
-LLM_PROVIDER=openai
-```
-
-### 2. Configure API Keys
+### Configure API Keys
 
 #### OpenAI
 
 ```bash
-LLM_PROVIDER=openai
 OPENAI_API_KEY=sk-your-api-key-here
 ```
 
@@ -45,7 +35,6 @@ Default model: `gpt-4o-mini` (fast and cost-effective)
 #### Anthropic
 
 ```bash
-LLM_PROVIDER=anthropic
 ANTHROPIC_API_KEY=sk-ant-your-api-key-here
 ```
 
@@ -56,7 +45,6 @@ Default model: `claude-3-5-sonnet-20241022`
 #### Ollama (Local)
 
 ```bash
-LLM_PROVIDER=ollama
 OLLAMA_BASE_URL=http://localhost:11434
 ```
 
@@ -68,10 +56,6 @@ OLLAMA_BASE_URL=http://localhost:11434
 Default model: `mistral`
 
 **Important:** Ollama now uses structured outputs (JSON schema) for better reliability. Make sure you're using a recent version of Ollama (v0.1.26+) that supports the `format` parameter with JSON schemas.
-
-### 3. Optional: Override Model
-
-You can specify a different model by setting it in code when creating the provider, but the defaults are recommended.
 
 ## Usage
 

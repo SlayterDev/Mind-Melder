@@ -42,7 +42,6 @@ OPENAI_API_KEY=sk-...
 # API_PORT=3000
 # WEB_PORT=8080
 # TZ=America/Chicago
-# ORGANIZATION_SCHEDULE=0 17 * * *
 ```
 
 ### 3. Start the stack
