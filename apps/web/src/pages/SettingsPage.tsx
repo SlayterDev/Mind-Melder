@@ -346,7 +346,7 @@ export default function SettingsPage() {
                 <input
                   type="range"
                   min="0"
-                  max="2"
+                  max="1"
                   step="0.1"
                   value={settings.llmTemperature}
                   onChange={(e) => handleUpdate({ llmTemperature: parseFloat(e.target.value) })}
