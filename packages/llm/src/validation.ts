@@ -55,7 +55,7 @@ export const templateSuggestionsOutputSchema = z.object({
     title: z.string(),
     description: z.string(),
     improvedPrompt: z.string(),
-  })),
+  })).length(3),
 });
 
 // Validation schema for ExtractTasksOutput

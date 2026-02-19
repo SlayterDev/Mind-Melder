@@ -61,7 +61,7 @@ export class OpenAIProvider extends BaseLLMProvider implements LLMProvider {
       this.temperature = 1; // Some models don't support other temp values
       this.usesStructuredOutputs = true;
     } else {
-      var temp = config.temperature ?? 0.7;
+      let temp = config.temperature ?? 0.7;
       temp = Math.max(0.3, Math.min(temp, 1)); // Ensure temp is between 0 and 1
       this.temperature = temp;
       this.usesStructuredOutputs = false;
