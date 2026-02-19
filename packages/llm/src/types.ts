@@ -37,7 +37,7 @@ export interface TemplateSuggestion {
 }
 
 export interface TemplateSuggestionsOutput {
-  suggestions: [TemplateSuggestion, TemplateSuggestion, TemplateSuggestion]; // Always exactly 3 suggestions
+  suggestions: TemplateSuggestion[];
 }
 
 // Today Sheet types

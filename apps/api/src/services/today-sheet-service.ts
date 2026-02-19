@@ -160,7 +160,7 @@ export class TodaySheetService {
               todaySheetOrder: i,
               todaySheetId: todaySheet.id,
               timeEstimate: item.timeEstimate as any,
-              priorityScore: item.priorityScore,
+              priorityScore: Math.round(item.priorityScore),
               tags: item.tags,
               dueDate: todo.dueDate || (item.dueDate ? new Date(item.dueDate) : null),
               feedbackVote: 'none',

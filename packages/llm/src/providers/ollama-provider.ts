@@ -24,7 +24,10 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     this.baseURL = config.baseURL || 'http://localhost:11434';
     this.client = new Ollama({ host: this.baseURL });
     this.model = config.model || 'mistral';
-    this.temperature = config.temperature ?? 0.7;
+
+    let temp = config.temperature ?? 0.7;
+    temp = Math.max(0.3, Math.min(1, temp)); // Clamp between 0 and 1
+    this.temperature = temp;
     
     // Pre-convert schemas once during construction
     this.organizedOutputJsonSchema = zodToJsonSchema(organizedOutputSchema, 'organizedOutput');
@@ -92,7 +95,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       stream: false,
       format: this.taskExtractionJsonSchema,
       options: {
-        temperature: Math.min(this.temperature, 0.5),
+        temperature: this.temperature,
       },
     });
 
@@ -116,7 +119,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       stream: false,
       format: this.todaySheetOutputJsonSchema,
       options: {
-        temperature: Math.min(this.temperature, 0.5),
+        temperature: this.temperature,
       },
     });
 
@@ -302,7 +305,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       stream: false,
       format: refineNoteJsonSchema,
       options: {
-        temperature: Math.min(this.temperature, 0.5),
+        temperature: this.temperature,
       },
     });
 
@@ -326,7 +329,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       stream: false,
       format: this.weeklyReviewOutputJsonSchema,
       options: {
-        temperature: Math.min(this.temperature, 0.7),
+        temperature: this.temperature,
       },
     });
 
@@ -346,7 +349,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       stream: false,
       format: this.templateSuggestionsOutputJsonSchema,
       options: {
-        temperature: Math.min(this.temperature, 0.7),
+        temperature: this.temperature,
       },
     });
 

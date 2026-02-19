@@ -5,7 +5,7 @@ export const todaySheetTaskItemSchema = z.object({
   title: z.string(),
   description: z.string().optional(),
   timeEstimate: z.enum(['quick', 'medium', 'long']),
-  priorityScore: z.number().min(0).max(100),
+  priorityScore: z.number().int().min(0).max(100),
   tags: z.array(z.string()),
   sourceType: z.enum(['capture', 'todo']),
   sourceId: z.string().uuid(),
@@ -49,24 +49,27 @@ export const weeklyReviewOutputSchema = z.object({
 });
 
 // Validation schema for TemplateSuggestionsOutput
+// Uses z.array() instead of z.tuple() for compatibility with JSON Schema Structured Outputs
 export const templateSuggestionsOutputSchema = z.object({
-  suggestions: z.tuple([
-    z.object({
-      title: z.string(),
-      description: z.string(),
-      improvedPrompt: z.string(),
-    }),
-    z.object({
-      title: z.string(),
-      description: z.string(),
-      improvedPrompt: z.string(),
-    }),
-    z.object({
-      title: z.string(),
-      description: z.string(),
-      improvedPrompt: z.string(),
-    }),
-  ]),
+  suggestions: z.array(z.object({
+    title: z.string(),
+    description: z.string(),
+    improvedPrompt: z.string(),
+  })).length(3),
+});
+
+// Validation schema for ExtractTasksOutput
+export const extractTasksOutputSchema = z.object({
+  todos: z.array(z.object({
+    content: z.string(),
+    dueDate: z.string().optional(),
+  })),
+});
+
+// Validation schema for RefineNoteOutput
+export const refineNoteOutputSchema = z.object({
+  title: z.string(),
+  content: z.string(),
 });
 
 // Export inferred types
@@ -74,3 +77,5 @@ export type OrganizedOutputSchema = z.infer<typeof organizedOutputSchema>;
 export type TodaySheetOutputSchema = z.infer<typeof todaySheetOutputSchema>;
 export type WeeklyReviewOutputSchema = z.infer<typeof weeklyReviewOutputSchema>;
 export type TemplateSuggestionsOutputSchema = z.infer<typeof templateSuggestionsOutputSchema>;
+export type ExtractTasksOutputSchema = z.infer<typeof extractTasksOutputSchema>;
+export type RefineNoteOutputSchema = z.infer<typeof refineNoteOutputSchema>;

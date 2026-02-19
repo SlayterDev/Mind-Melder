@@ -21,7 +21,7 @@ A self-hosted productivity tool that captures quick notes throughout the day and
 
 | <img width="600" src="./media/TodaySheet.png">  Today Sheet - Structured Daily Plan | <img width="600" src="./media/Templates.png"> Customize AI prompts with templates|
 | -- | -- |
-| <img width="600" src="./media/Chat.png"> Chat using your todos and notes | <img width="600" src="./media/Transcriptions.png"> Transcribe and summarizr audio |
+| <img width="600" src="./media/Chat.png"> Chat using your todos and notes | <img width="600" src="./media/Transcriptions.png"> Transcribe and summarize audio |
 
 ## Quick Start
 
@@ -42,7 +42,6 @@ OPENAI_API_KEY=sk-...
 # API_PORT=3000
 # WEB_PORT=8080
 # TZ=America/Chicago
-# ORGANIZATION_SCHEDULE=0 17 * * *
 ```
 
 ### 3. Start the stack
@@ -68,7 +67,6 @@ Download the native app from [releases](https://github.com/SlayterDev/Mind-Melde
 | `API_PORT` | `3000` | Host port for the API |
 | `WEB_PORT` | `8080` | Host port for the web UI |
 | `TZ` | `America/Chicago` | Timezone for scheduling |
-| `ORGANIZATION_SCHEDULE` | `0 17 * * *` | Cron schedule for auto-organization |
 
 See [LLM_SETUP.md](./docs/LLM_SETUP.md) for detailed LLM provider configuration.
 
@@ -79,7 +77,7 @@ See [LOCAL_WHISPER_SETUP.md](./docs/LOCAL_WHISPER_SETUP.md) for transcribing rec
 1. **Capture** — Hit keyboard shortcut anywhere (`cmd+shift+C`), type a note, press Enter
 2. **Today Sheet** — Generate an AI-powered daily plan from captures and todos
 3. **Search** — Full-text search across all captures, notes, and todos
-4. **Chat** - Chat with your LLM about your todos and notes
+4. **Chat** — Chat with your LLM about your todos and notes
 5. **Review** — Check Organized Notes and Todo List with tags
 6. **Complete** — Check off todos as you finish them
 
