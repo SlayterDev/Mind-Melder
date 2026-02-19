@@ -25,7 +25,10 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     });
 
     this.model = config.model || 'claude-sonnet-4-5';
-    this.temperature = config.temperature ?? 0.7;
+
+    let temp = config.temperature ?? 0.7;
+    temp = Math.max(0.3, Math.min(1, temp)); // Clamp between 0 and 1
+    this.temperature = temp;
   }
 
   private storeUsage(response: { usage?: { input_tokens?: number; output_tokens?: number } }) {
@@ -68,7 +71,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 2048,
-      temperature: Math.min(this.temperature, 0.5),
+      temperature: this.temperature,
       system: this.buildSystemPrompt(),
       messages: [
         { role: 'user', content: prompt },
@@ -94,7 +97,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 4096,
-      temperature: Math.min(this.temperature, 0.5),
+      temperature: this.temperature,
       system: systemPrompt,
       messages: [
         {
@@ -241,7 +244,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 4096,
-      temperature: Math.min(this.temperature, 0.5),
+      temperature: this.temperature,
       system: systemPrompt,
       messages: [
         { role: 'user', content: userPrompt },
@@ -267,7 +270,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 2000,
-      temperature: Math.min(this.temperature, 0.7),
+      temperature: this.temperature,
       system: 'You are a productivity coach helping users reflect on their week.',
       messages: [
         { role: 'user', content: userPrompt },
@@ -289,7 +292,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 3000,
-      temperature: Math.min(this.temperature, 0.7),
+      temperature: this.temperature,
       system: 'You are a productivity coach helping users improve their organization templates.',
       messages: [
         { role: 'user', content: userPrompt },

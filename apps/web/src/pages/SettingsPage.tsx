@@ -16,11 +16,13 @@ const PROVIDER_MODELS: Record<string, { label: string; models: { value: string; 
   openai: {
     label: 'OpenAI',
     models: [
-      { value: '', label: 'Default (gpt-4o-mini)' },
-      { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-      { value: 'gpt-4o', label: 'GPT-4o' },
-      { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
-      { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
+      { value: '', label: 'Default (gpt-5-mini)' },
+      { value: 'gpt-5-mini', label: 'GPT-5 mini' },
+      { value: 'gpt-5', label: 'GPT-5' },
+      { value: 'gpt-5.2', label: 'GPT-5.2' },
+      { value: 'gpt-5.2-pro', label: 'GPT-5.2 Pro' },
+      { value: 'gpt-4.1', label: 'GPT-4.1' },
+      { value: 'gpt-4o-mini', label: 'GPT-4o mini' },
     ],
   },
   anthropic: {
@@ -29,8 +31,9 @@ const PROVIDER_MODELS: Record<string, { label: string; models: { value: string; 
       { value: '', label: 'Default (claude-sonnet-4-5)' },
       { value: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5' },
       { value: 'claude-opus-4-5', label: 'Claude Opus 4.5' },
-      { value: 'claude-3-5-sonnet-latest', label: 'Claude 3.5 Sonnet' },
-      { value: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku' },
+      { value: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' },
+      { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
+      { value: 'claude-opus-4-6', label: 'Claude Opus 4.6' },
     ],
   },
   ollama: {

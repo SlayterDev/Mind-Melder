@@ -183,6 +183,14 @@ Format:
    * Build prompt for Today Sheet generation
    */
   protected buildTodaySheetPrompt(input: TodaySheetInput): string {
+    const MAX_CAPTURES = 30;
+    const MAX_TODOS = 50;
+    const MAX_FEEDBACK = 20;
+
+    const captures = input.captures.slice(0, MAX_CAPTURES);
+    const existingTodos = input.existingTodos.slice(0, MAX_TODOS);
+    const feedbackTodos = input.feedbackTodos.slice(0, MAX_FEEDBACK);
+
     const remainingHours = Math.max(0, 17 - input.context.currentTimeOfDay); // 9-5 workday
 
     // Build tags instruction if tags are provided
@@ -207,13 +215,13 @@ CONTEXT:
 - Available working time: ${input.context.workingHoursMinutes} minutes
 - Date: ${input.context.currentDate}
 
-UNORGANIZED CAPTURES (${input.captures.length}):
-${input.captures.map((c, i) =>
+UNORGANIZED CAPTURES (${captures.length}${input.captures.length > MAX_CAPTURES ? `, showing first ${MAX_CAPTURES}` : ''}):
+${captures.map((c, i) =>
   `${i + 1}. ID: ${c.id} | [${new Date(c.timestamp).toLocaleString()}] ${c.content}`
 ).join('\n')}
 
-EXISTING TODOS (${input.existingTodos.length}):
-${input.existingTodos.map((t, i) =>
+EXISTING TODOS (${existingTodos.length}${input.existingTodos.length > MAX_TODOS ? `, showing first ${MAX_TODOS}` : ''}):
+${existingTodos.map((t, i) =>
   `${i + 1}. ID: ${t.id} | ${t.content}${t.dueDate ? ` (Due: ${new Date(t.dueDate).toLocaleDateString()})` : ''}`
 ).join('\n')}
 
@@ -240,12 +248,12 @@ ${input.contentLockEnabled
 9. Defer to user template instructions below for any additional formatting or organization rules
 10. Look for critical info like people, deadlines, project names to include in titles/descriptions
 
-${input.feedbackTodos.length > 0 
+${feedbackTodos.length > 0
   ? `PREVIOUS USER FEEDBACK:
-Use to improve task extraction and prioritization. Don't consider these as input captures unless they are also in the captures or existing todos list above. 
-${input.feedbackTodos.map((t, i) =>
+Use to improve task extraction and prioritization. Don't consider these as input captures unless they are also in the captures or existing todos list above.
+${feedbackTodos.map((t, i) =>
   `${i + 1}. ID: ${t.id} | ${t.content} | ${t.dueDate ? new Date(t.dueDate).toLocaleDateString() : 'No due date'} | Tags: [${t.tags?.join(', ')}] | Feedback: ${t.feedbackVote === 'thumbs_up' ? 'Helpful' : 'Not Helpful'}${t.feedbackText ? ` | Comments: ${t.feedbackText}` : ''}`
-).join('\n')}` 
+).join('\n')}`
   : ''}
 
 ${tagsInstruction}

@@ -80,7 +80,7 @@ export class OrganizationService {
           description: todo.description,
           dueDate: todo.dueDate ? new Date(todo.dueDate) : undefined,
           timeEstimate: todo.timeEstimate,
-          priorityScore: todo.priorityScore,
+          priorityScore: todo.priorityScore != null ? Math.round(todo.priorityScore) : undefined,
           tags: todo.tags,
           userId,
         });
