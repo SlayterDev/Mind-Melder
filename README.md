@@ -72,6 +72,8 @@ See [LLM_SETUP.md](./docs/LLM_SETUP.md) for detailed LLM provider configuration.
 
 See [LOCAL_WHISPER_SETUP.md](./docs/LOCAL_WHISPER_SETUP.md) for transcribing recordings locally.
 
+See [SSL_REMOTE_HOSTING.md](./docs/SSL_REMOTE_HOSTING.md) for instructions on SSL setup.
+
 ## Usage Flow
 
 1. **Capture** — Hit keyboard shortcut anywhere (`cmd+shift+C`), type a note, press Enter
