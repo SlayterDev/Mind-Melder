@@ -52,7 +52,7 @@ docker compose -f docker-compose.prod.yml up -d
 
 The UI is available at `http://localhost:8080`. Set your LLM provider in settings based on the keys you setup in your `.env` file.
 
-Download the native app from [releases](https://github.com/SlayterDev/Mind-Melder/releases) for hotkey quick capture and system audio recording and transcription.
+Download the native app from [releases](https://github.com/SlayterDev/Mind-Melder/releases) for hotkey quick capture, system audio recording, and transcription.
 
 ## Configuration
 
@@ -71,6 +71,8 @@ Download the native app from [releases](https://github.com/SlayterDev/Mind-Melde
 See [LLM_SETUP.md](./docs/LLM_SETUP.md) for detailed LLM provider configuration.
 
 See [LOCAL_WHISPER_SETUP.md](./docs/LOCAL_WHISPER_SETUP.md) for transcribing recordings locally.
+
+See [SSL_REMOTE_HOSTING.md](./docs/SSL_REMOTE_HOSTING.md) for instructions on SSL setup.
 
 ## Usage Flow
 
