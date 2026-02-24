@@ -4,6 +4,9 @@ import { ProviderFactory } from 'llm';
 import { TodaySheetService } from './today-sheet-service.js';
 import { OrganizationService } from './organization-service.js';
 import { timeToCron, cronToDescription } from '../utils/time-utils.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('Scheduler');
 
 interface ScheduledJob {
   task: ScheduledTask;
@@ -26,16 +29,16 @@ export class SchedulerService {
    * Initialize all scheduled jobs based on current settings
    */
   async initialize(): Promise<void> {
-    console.log('[Scheduler] Initializing scheduled jobs...');
-    
+    logger.info('Initializing scheduled jobs');
+
     try {
       const settings = await this.settingsRepo.getOrCreate(this.userId);
-      
+
       // Schedule today sheet generation
       if (settings.todaySheetScheduleEnabled && settings.todaySheetTime) {
         this.scheduleTodaySheet(settings.todaySheetTime);
       }
-      
+
       // Schedule organization flow
       if (settings.organizeScheduleEnabled && settings.organizeScheduleTime) {
         this.scheduleOrganize(
@@ -44,10 +47,10 @@ export class SchedulerService {
           settings.organizeScheduleWeekday
         );
       }
-      
-      console.log(`[Scheduler] Initialization complete. Active jobs: ${this.jobs.size}`);
+
+      logger.info('Scheduler initialization complete', { activeJobCount: this.jobs.size });
     } catch (error) {
-      console.error('[Scheduler] Failed to initialize:', error);
+      logger.errorWithException('Failed to initialize scheduler', error);
     }
   }
 
@@ -56,33 +59,37 @@ export class SchedulerService {
    */
   scheduleTodaySheet(time: string): void {
     const jobKey = 'today-sheet';
-    
+
     // Stop existing job if any
     this.stopJob(jobKey);
-    
+
     // Convert time to CRON
     const cronExpression = timeToCron(time, 'daily');
     const description = `Today Sheet generation: ${cronToDescription(cronExpression)}`;
-    
-    console.log(`[Scheduler] Scheduling: ${description}`);
-    
+
+    logger.info('Scheduling job', { jobKey, description, cronExpression });
+
     // Create the scheduled task
     const task = cron.schedule(cronExpression, async () => {
-      console.log('[Scheduler] Executing today sheet generation...');
+      logger.info('Executing scheduled today sheet generation', { jobKey });
       try {
         const settings = await this.settingsRepo.getOrCreate(this.userId);
         const llmProvider = ProviderFactory.createFromSettings(settings);
         const todaySheetService = new TodaySheetService(this.db, llmProvider);
-        
+
         const sheet = await todaySheetService.generateSheet(this.userId, undefined, settings.contentLockEnabled);
-        console.log(`[Scheduler] Today sheet generated successfully. Processed ${sheet.capturesProcessed} captures.`);
+        logger.info('Scheduled today sheet generation succeeded', {
+          jobKey,
+          capturesProcessed: sheet.capturesProcessed,
+          todosIncluded: sheet.todosIncluded,
+        });
       } catch (error) {
-        console.error('[Scheduler] Today sheet generation failed:', error);
+        logger.errorWithException('Scheduled today sheet generation failed', error, { jobKey });
       }
     });
-    
+
     this.jobs.set(jobKey, { task, description });
-    console.log(`[Scheduler] Job scheduled: ${description}`);
+    logger.info('Job scheduled', { jobKey, description });
   }
 
   /**
@@ -90,33 +97,37 @@ export class SchedulerService {
    */
   scheduleOrganize(time: string, frequency: 'daily' | 'weekly', weekday: string): void {
     const jobKey = 'organize';
-    
+
     // Stop existing job if any
     this.stopJob(jobKey);
-    
+
     // Convert time to CRON
     const cronExpression = timeToCron(time, frequency, weekday);
     const description = `Organization flow: ${cronToDescription(cronExpression)}`;
-    
-    console.log(`[Scheduler] Scheduling: ${description}`);
-    
+
+    logger.info('Scheduling job', { jobKey, description, cronExpression });
+
     // Create the scheduled task
     const task = cron.schedule(cronExpression, async () => {
-      console.log('[Scheduler] Executing organization flow...');
+      logger.info('Executing scheduled organization flow', { jobKey });
       try {
         const settings = await this.settingsRepo.getOrCreate(this.userId);
         const llmProvider = ProviderFactory.createFromSettings(settings);
         const organizationService = new OrganizationService(this.db, llmProvider);
-        
+
         const result = await organizationService.organizeCaptures(this.userId);
-        console.log(`[Scheduler] Organization completed. Created ${result.todosCount} todos from ${result.capturesProcessed} captures.`);
+        logger.info('Scheduled organization flow succeeded', {
+          jobKey,
+          capturesProcessed: result.capturesProcessed,
+          todosCreated: result.todosCount,
+        });
       } catch (error) {
-        console.error('[Scheduler] Organization flow failed:', error);
+        logger.errorWithException('Scheduled organization flow failed', error, { jobKey });
       }
     });
-    
+
     this.jobs.set(jobKey, { task, description });
-    console.log(`[Scheduler] Job scheduled: ${description}`);
+    logger.info('Job scheduled', { jobKey, description });
   }
 
   /**
@@ -127,7 +138,7 @@ export class SchedulerService {
     if (job) {
       job.task.stop();
       this.jobs.delete(jobKey);
-      console.log(`[Scheduler] Job stopped: ${job.description}`);
+      logger.info('Job stopped', { jobKey, description: job.description });
     }
   }
 
@@ -135,10 +146,10 @@ export class SchedulerService {
    * Stop all scheduled jobs
    */
   stopAll(): void {
-    console.log('[Scheduler] Stopping all jobs...');
+    logger.info('Stopping all scheduled jobs', { jobCount: this.jobs.size });
     for (const [key, job] of this.jobs) {
       job.task.stop();
-      console.log(`[Scheduler] Job stopped: ${job.description}`);
+      logger.debug('Job stopped', { jobKey: key, description: job.description });
     }
     this.jobs.clear();
   }
@@ -157,7 +168,7 @@ export class SchedulerService {
    * Reload all jobs from current settings
    */
   async reload(): Promise<void> {
-    console.log('[Scheduler] Reloading scheduled jobs...');
+    logger.info('Reloading scheduled jobs');
     this.stopAll();
     await this.initialize();
   }

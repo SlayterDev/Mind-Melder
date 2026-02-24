@@ -1,5 +1,8 @@
 import type { TokenUsageRepository } from 'database';
 import type { TokenUsage } from 'llm';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('TokenTrackingService');
 
 export class TokenTrackingService {
   constructor(private tokenUsageRepo: TokenUsageRepository) {}
@@ -20,13 +23,28 @@ export class TokenTrackingService {
         inputTokens: usage.inputTokens,
         outputTokens: usage.outputTokens,
       });
+      logger.debug('Token usage recorded', {
+        userId,
+        provider,
+        model,
+        method,
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+      });
     } catch (error) {
       // Log but don't throw — token tracking should never break the main flow
-      console.error('Failed to track token usage:', error);
+      logger.errorWithException('Failed to track token usage', error, {
+        userId,
+        provider,
+        model,
+        method,
+      });
     }
   }
 
   async getSummary(userId: string, days: number = 30) {
+    logger.debug('Fetching token usage summary', { userId, days });
+
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
@@ -47,6 +65,15 @@ export class TokenTrackingService {
     page: number = 1,
     perPage: number = 50
   ) {
+    logger.debug('Fetching token usage details', {
+      userId,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      filters,
+      page,
+      perPage,
+    });
+
     return this.tokenUsageRepo.getByDateRange(userId, startDate, endDate, filters, page, perPage);
   }
 }
