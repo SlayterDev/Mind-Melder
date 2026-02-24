@@ -20,6 +20,29 @@ const ENV_LEVEL = ((process.env.LOG_LEVEL ?? 'info').toLowerCase()) as LogLevel;
 const MIN_LEVEL: number = LOG_LEVELS[ENV_LEVEL] ?? LOG_LEVELS.info;
 const IS_PROD = process.env.NODE_ENV === 'production';
 
+// ANSI color codes — only applied in dev (non-production) when the output is a TTY
+const ANSI = {
+  reset:  '\x1b[0m',
+  dim:    '\x1b[2m',
+  cyan:   '\x1b[36m',
+  green:  '\x1b[32m',
+  yellow: '\x1b[33m',
+  red:    '\x1b[31m',
+  bold:   '\x1b[1m',
+} as const;
+
+const USE_COLOR =
+  !IS_PROD &&
+  process.stdout.isTTY === true &&
+  process.env.NO_COLOR === undefined;
+
+const LEVEL_COLORS: Record<LogLevel, string> = {
+  debug: ANSI.cyan,
+  info:  ANSI.green,
+  warn:  ANSI.yellow,
+  error: ANSI.red,
+};
+
 function shouldLog(level: LogLevel): boolean {
   return LOG_LEVELS[level] >= MIN_LEVEL;
 }
@@ -59,9 +82,22 @@ function formatEntry(entry: Record<string, unknown>): string {
   }
 
   const { timestamp, level, context, message, ...rest } = entry;
-  const levelTag = String(level).toUpperCase().padEnd(5);
+  const lvl = level as LogLevel;
+  const levelTag = String(lvl).toUpperCase().padEnd(5);
   const metaStr =
     Object.keys(rest).length > 0 ? ' ' + JSON.stringify(rest) : '';
+
+  if (USE_COLOR) {
+    const color = LEVEL_COLORS[lvl];
+    return (
+      `${ANSI.dim}${timestamp}${ANSI.reset} ` +
+      `${color}${ANSI.bold}[${levelTag}]${ANSI.reset} ` +
+      `${ANSI.dim}[${context}]${ANSI.reset} ` +
+      `${color}${message}${ANSI.reset}` +
+      `${ANSI.dim}${metaStr}${ANSI.reset}`
+    );
+  }
+
   return `${timestamp} [${levelTag}] [${context}] ${message}${metaStr}`;
 }
 
