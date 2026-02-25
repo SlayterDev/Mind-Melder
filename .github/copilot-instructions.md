@@ -40,9 +40,21 @@ pnpm db:migrate               # Run pending migrations
 pnpm db:generate              # Create new migration from schema changes
 pnpm db:studio                # Open Drizzle Studio at http://localhost:4983
 
+# Desktop app (Electron)
+pnpm desktop:dev               # Start API + Electron app
+pnpm desktop:build             # Build desktop app for current platform
+pnpm desktop:build:mac         # Build for macOS
+pnpm desktop:build:win         # Build for Windows
+pnpm desktop:build:linux       # Build for Linux
+
+# Code quality
+pnpm lint                      # Run ESLint
+pnpm format                    # Format with Prettier
+
 # Testing scripts (manual Tilt resources or run directly)
 ./scripts/test-api.sh          # Test all API endpoints
 ./scripts/test-organization.sh # Test LLM organization flow
+./scripts/test-today-sheet-api.sh # Test Today Sheet generation
 ./scripts/clear-db.sh          # Clear all data
 
 # Production build
@@ -173,6 +185,51 @@ OLLAMA_BASE_URL=http://localhost:11434
 **User scoping**: All queries filtered by `userId`. Current hardcoded as `'test-user-1'` – auth is post-MVP.
 
 **Migrations**: Generated via `pnpm db:generate` after schema changes in `packages/database/src/schema/`, applied with `pnpm db:migrate`
+
+## API Endpoints
+
+All endpoints are prefixed with `/api/v1`:
+
+**Captures** (`/captures`): POST `/`, GET `/`, GET `/unorganized`, GET `/:id`, DELETE `/:id`
+
+**Todos** (`/todos`): POST `/`, GET `/` (?status=pending|completed|cancelled), GET `/:id`, PATCH `/:id`, PATCH `/:id/complete`, PATCH `/:id/feedback`, DELETE `/:id`
+
+**Organized Notes** (`/notes`): POST `/`, GET `/`, GET `/:id`, PATCH `/:id`, DELETE `/:id`
+
+**Templates** (`/templates`): POST `/`, GET `/`, GET `/active`, GET `/:id`, PATCH `/:id`, DELETE `/:id`
+
+**Tags** (`/tags`): POST `/`, GET `/`, GET `/:id`, PATCH `/:id`, DELETE `/:id`
+
+**Organization** (`/organize`): POST `/` – Trigger LLM organization (optional: templateId)
+
+**Today Sheet** (`/today-sheet`): POST `/generate`, GET `/`, PATCH `/todos/:id`, PATCH `/reorder`
+
+**Search** (`/search`): GET `/?q={query}&type={all|captures|todos|notes}`
+
+**Settings** (`/settings`): GET `/:key`, POST `/`, GET `/`
+
+**Ollama** (`/ollama`): GET `/models`, GET `/health`
+
+## Engineering Principles
+
+**Architecture**:
+- RESTful API with versioned endpoints
+- Database-agnostic data layer
+- Provider-agnostic LLM interface
+- Clear separation: data layer → business logic → API routes → UI components
+
+**Code Quality**:
+- Start with interfaces/types before implementation
+- Prefer composition and dependency injection for testability
+- Self-documenting code with clear naming
+- Comments only for non-obvious logic
+- Validate inputs at API boundaries only
+
+**Security**:
+- Sanitize all user inputs before storage
+- Validate LLM responses before persisting
+- Never log sensitive user content
+- Design for multi-tenancy from the start (even if single-user initially)
 
 ## Strict Scope Boundaries
 
