@@ -205,6 +205,9 @@ export interface Settings {
   // Content Lock
   contentLockEnabled: boolean;
 
+  // Include Tag Descriptions in LLM prompts
+  includeTagDescriptions: boolean;
+
   // Legacy CRON-based scheduling (deprecated but kept for compatibility)
   organizationSchedule: string;
   scheduleEnabled: boolean;

@@ -48,7 +48,8 @@ export class TodaySheetService {
   async generateSheet(
     userId: string,
     templateId?: string,
-    contentLockEnabled: boolean = false
+    contentLockEnabled: boolean = false,
+    includeTagDescriptions: boolean = false
   ): Promise<TodaySheet> {
     // 1. Gather inputs
     const captures = await this.capturesRepo.findUnorganized(userId);
@@ -80,6 +81,7 @@ export class TodaySheetService {
         feedbackTodos,
         template,
         tags: userTags,
+        includeDescriptions: includeTagDescriptions,
         contentLockEnabled,
         context: {
           currentTimeOfDay: new Date().getHours(),
