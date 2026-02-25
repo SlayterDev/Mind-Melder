@@ -6,6 +6,7 @@ import { getServerUrl, setApiUrl, testConnection } from '../api/config';
 import ServerConnection from '../components/ServerConnection';
 import NotificationSettings from '../components/NotificationSettings';
 import TokenUsageCard from '../components/TokenUsageCard';
+import { Switch } from '../components/Switch';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
@@ -47,7 +48,6 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
@@ -164,16 +164,16 @@ export default function SettingsPage() {
   const handleUpdate = async (updates: Partial<Settings>) => {
     if (!settings) return;
 
-    setIsSaving(true);
+    const previous = settings;
+    setSettings({ ...settings, ...updates });
     setError(null);
     try {
       const updated = await settingsAPI.update(updates);
       setSettings(updated);
     } catch (err) {
+      setSettings(previous);
       setError('Failed to save settings');
       console.error('Failed to update settings:', err);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -250,7 +250,7 @@ export default function SettingsPage() {
                   <button
                     key={key}
                     onClick={() => handleUpdate({ llmProvider: key as Settings['llmProvider'], llmModel: null })}
-                    disabled={isSaving}
+                    disabled={false}
                     className={`px-4 py-2 rounded-lg font-medium transition-all ${
                       settings.llmProvider === key
                         ? 'bg-accent text-white'
@@ -274,7 +274,7 @@ export default function SettingsPage() {
                     <select
                       value={settings.llmModel || ''}
                       onChange={(e) => handleUpdate({ llmModel: e.target.value || null })}
-                      disabled={isSaving || isLoadingOllamaModels}
+                      disabled={isLoadingOllamaModels}
                       className="input-accent w-full max-w-md"
                     >
                       {ollamaModels.length === 0 && (
@@ -309,7 +309,7 @@ export default function SettingsPage() {
                 <select
                   value={settings.llmModel || ''}
                   onChange={(e) => handleUpdate({ llmModel: e.target.value || null })}
-                  disabled={isSaving}
+                  disabled={false}
                   className="input-accent w-full max-w-md"
                 >
                   {currentProvider.models.map((model) => (
@@ -351,7 +351,7 @@ export default function SettingsPage() {
                   step="0.1"
                   value={settings.llmTemperature}
                   onChange={(e) => handleUpdate({ llmTemperature: parseFloat(e.target.value) })}
-                  disabled={isSaving}
+                  disabled={false}
                   className="w-full max-w-md accent-accent"
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -379,7 +379,7 @@ export default function SettingsPage() {
                         fetchOllamaModels();
                       }
                     }}
-                    disabled={isSaving}
+                    disabled={false}
                     placeholder={DEFAULT_OLLAMA_URL}
                     className="input-accent w-full max-w-md"
                   />
@@ -397,19 +397,11 @@ export default function SettingsPage() {
                       Use a local whisper.cpp server for audio transcription
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleUpdate({ whisperEnabled: !settings.whisperEnabled })}
-                    disabled={isSaving}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${
-                      settings.whisperEnabled ? 'bg-accent' : 'bg-gray-600'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                        settings.whisperEnabled ? 'translate-x-7' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
+                  <Switch
+                    checked={!!settings.whisperEnabled}
+                    onChange={(v) => handleUpdate({ whisperEnabled: v })}
+                    disabled={false}
+                  />
                 </div>
 
                 {settings.whisperEnabled && (
@@ -429,7 +421,7 @@ export default function SettingsPage() {
                           await handleUpdate({ whisperUrl: localWhisperUrl });
                         }
                       }}
-                      disabled={isSaving}
+                      disabled={false}
                       placeholder="http://127.0.0.1:3005"
                       className="input-accent w-full max-w-md"
                     />
@@ -453,19 +445,11 @@ export default function SettingsPage() {
                   Preserve original capture and todo text. AI will not rewrite titles or existing descriptions.
                 </p>
               </div>
-              <button
-                onClick={() => handleUpdate({ contentLockEnabled: !settings.contentLockEnabled })}
-                disabled={isSaving}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  settings.contentLockEnabled ? 'bg-accent' : 'bg-gray-600'
-                }`}
-              >
-                <div
-                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                    settings.contentLockEnabled ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+              <Switch
+                checked={!!settings.contentLockEnabled}
+                onChange={(v) => handleUpdate({ contentLockEnabled: v })}
+                disabled={false}
+              />
             </div>
             <div className="flex items-center justify-between">
               <div>
@@ -476,19 +460,11 @@ export default function SettingsPage() {
                   Include tag descriptions in AI prompts for better categorization. Disable to save tokens.
                 </p>
               </div>
-              <button
-                onClick={() => handleUpdate({ includeTagDescriptions: !settings.includeTagDescriptions })}
-                disabled={isSaving}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  settings.includeTagDescriptions ? 'bg-accent' : 'bg-gray-600'
-                }`}
-              >
-                <div
-                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                    settings.includeTagDescriptions ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+              <Switch
+                checked={!!settings.includeTagDescriptions}
+                onChange={(v) => handleUpdate({ includeTagDescriptions: v })}
+                disabled={false}
+              />
             </div>
           </div>
         </div>
@@ -502,19 +478,11 @@ export default function SettingsPage() {
             <h4 className="text-md font-medium text-gray-300">Today Sheet Generation</h4>
             
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => handleUpdate({ todaySheetScheduleEnabled: !settings.todaySheetScheduleEnabled })}
-                disabled={isSaving}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  settings.todaySheetScheduleEnabled ? 'bg-accent' : 'bg-gray-700'
-                }`}
-              >
-                <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                    settings.todaySheetScheduleEnabled ? 'left-7' : 'left-1'
-                  }`}
-                />
-              </button>
+              <Switch
+                checked={!!settings.todaySheetScheduleEnabled}
+                onChange={(v) => handleUpdate({ todaySheetScheduleEnabled: v })}
+                disabled={false}
+              />
               <span className="text-gray-300">
                 {settings.todaySheetScheduleEnabled ? 'Enabled' : 'Disabled'}
               </span>
@@ -536,7 +504,7 @@ export default function SettingsPage() {
                     handleUpdate({ todaySheetTime: localTodaySheetTime });
                   }
                 }}
-                disabled={isSaving || !settings.todaySheetScheduleEnabled}
+                disabled={!settings.todaySheetScheduleEnabled}
                 className="input-accent w-48"
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -550,19 +518,11 @@ export default function SettingsPage() {
             <h4 className="text-md font-medium text-gray-300">Organization Flow</h4>
             
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => handleUpdate({ organizeScheduleEnabled: !settings.organizeScheduleEnabled })}
-                disabled={isSaving}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  settings.organizeScheduleEnabled ? 'bg-accent' : 'bg-gray-700'
-                }`}
-              >
-                <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                    settings.organizeScheduleEnabled ? 'left-7' : 'left-1'
-                  }`}
-                />
-              </button>
+              <Switch
+                checked={!!settings.organizeScheduleEnabled}
+                onChange={(v) => handleUpdate({ organizeScheduleEnabled: v })}
+                disabled={false}
+              />
               <span className="text-gray-300">
                 {settings.organizeScheduleEnabled ? 'Enabled' : 'Disabled'}
               </span>
@@ -576,7 +536,7 @@ export default function SettingsPage() {
                 <select
                   value={settings.organizeScheduleFrequency}
                   onChange={(e) => handleUpdate({ organizeScheduleFrequency: e.target.value as 'daily' | 'weekly' })}
-                  disabled={isSaving || !settings.organizeScheduleEnabled}
+                  disabled={!settings.organizeScheduleEnabled}
                   className="input-accent w-48"
                 >
                   <option value="daily">Daily</option>
@@ -592,7 +552,7 @@ export default function SettingsPage() {
                   <select
                     value={settings.organizeScheduleWeekday}
                     onChange={(e) => handleUpdate({ organizeScheduleWeekday: e.target.value })}
-                    disabled={isSaving || !settings.organizeScheduleEnabled}
+                    disabled={!settings.organizeScheduleEnabled}
                     className="input-accent w-48"
                   >
                     <option value="0">Sunday</option>
@@ -622,7 +582,7 @@ export default function SettingsPage() {
                       handleUpdate({ organizeScheduleTime: localOrganizeTime });
                     }
                   }}
-                  disabled={isSaving || !settings.organizeScheduleEnabled}
+                  disabled={!settings.organizeScheduleEnabled}
                   className="input-accent w-48"
                 />
                 <p className="text-xs text-gray-500 mt-1">

@@ -1,32 +1,6 @@
 import { useState, useEffect } from 'react';
 import { settingsAPI, type Settings } from '../api/client';
-
-function Toggle({
-  checked,
-  onChange,
-  disabled,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      disabled={disabled}
-      className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-50 ${
-        checked ? 'bg-accent' : 'bg-gray-600'
-      }`}
-    >
-      <div
-        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-          checked ? 'translate-x-7' : 'translate-x-1'
-        }`}
-      />
-    </button>
-  );
-}
+import { Switch } from './Switch';
 
 export default function NotificationSettings() {
   const [settings, setSettings] = useState<Partial<Settings>>({
@@ -137,7 +111,7 @@ export default function NotificationSettings() {
           <div>
             <p className="text-sm font-medium text-gray-300 mb-1">Desktop App Required</p>
             <p className="text-xs text-gray-500">
-              Notifications are only available in the desktop app. Download it from the releases page
+              Notifications are only available in the desktop app. Download it from the <a target='about:blank' href="https://github.com/SlayterDev/Mind-Melder/releases" className="text-accent underline">releases</a> page
               to receive desktop notifications for your todos.
             </p>
           </div>
@@ -174,7 +148,7 @@ export default function NotificationSettings() {
       {/* Master toggle */}
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-gray-300">Enable desktop notifications</p>
-        <Toggle
+        <Switch
           checked={!!settings.notificationsEnabled}
           onChange={(v) => setSettings({ ...settings, notificationsEnabled: v })}
           disabled={saving}
@@ -191,7 +165,7 @@ export default function NotificationSettings() {
                 <p className="text-sm font-medium text-gray-300">Morning reminder</p>
                 <p className="text-xs text-gray-500 mt-0.5">Today's tasks and overdue items</p>
               </div>
-              <Toggle
+              <Switch
                 checked={!!settings.notificationsMorningReminderEnabled}
                 onChange={(v) => setSettings({ ...settings, notificationsMorningReminderEnabled: v })}
                 disabled={saving}
@@ -219,7 +193,7 @@ export default function NotificationSettings() {
                 <p className="text-sm font-medium text-gray-300">Afternoon reminder</p>
                 <p className="text-xs text-gray-500 mt-0.5">Preview of tomorrow's tasks</p>
               </div>
-              <Toggle
+              <Switch
                 checked={!!settings.notificationsAfternoonReminderEnabled}
                 onChange={(v) => setSettings({ ...settings, notificationsAfternoonReminderEnabled: v })}
                 disabled={saving}
@@ -246,7 +220,7 @@ export default function NotificationSettings() {
               <p className="text-sm font-medium text-gray-300">Include overdue tasks</p>
               <p className="text-xs text-gray-500 mt-0.5">Show overdue items in morning reminder</p>
             </div>
-            <Toggle
+            <Switch
               checked={!!settings.notificationsShowOverdue}
               onChange={(v) => setSettings({ ...settings, notificationsShowOverdue: v })}
               disabled={saving}
