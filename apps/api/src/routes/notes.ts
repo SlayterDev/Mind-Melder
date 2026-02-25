@@ -7,6 +7,9 @@ import type { TokenTrackingService } from '../services/token-tracking-service.js
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, ApiError } from '../middleware/index.js';
 import { NotesService } from '../services/notes-service.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('NotesRouter');
 
 // Route-specific validation schemas
 const appendNoteSchema = z.object({
@@ -116,11 +119,15 @@ export function createNotesRouter(db: Database, notesRepo: OrganizedNotesReposit
       const settings = await settingsRepo.getOrCreate(userId);
       const llmProvider = ProviderFactory.createFromSettings(settings);
 
+      logger.info('Calling LLM provider for note refinement', { userId, noteId: id, provider: settings.llmProvider, model: settings.llmModel });
+
       const refined = await llmProvider.refineNote(note.title, note.content, prompt);
 
       if (tokenTracker && llmProvider.lastUsage) {
         tokenTracker.trackUsage(userId, settings.llmProvider, settings.llmModel || 'default', 'refine_note', llmProvider.lastUsage);
       }
+
+      logger.debug('LLM provider returned refined content', { userId, noteId: id });
 
       res.json(refined);
     })

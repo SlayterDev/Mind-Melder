@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Mic, Monitor, Pause, Play, Square, Loader2, Headphones, Check, AlertCircle } from 'lucide-react';
+import { X, Mic, Monitor, Pause, Play, Square, Loader2, Headphones, Check, AlertCircle, FolderOpen } from 'lucide-react';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import RecordingPermissionPrompt from '../components/RecordingPermissionPrompt';
 import { transcribeAPI } from '../api/client';
@@ -108,13 +108,24 @@ export default function RecordingPage() {
           {isActive ? 'Recording' : 'Record Audio'}
         </span>
         {!isActive && (
-          <button
-            onClick={handleClose}
-            className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-gray-200 transition-colors"
+          <div
+            className="flex items-center gap-1"
             style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
           >
-            <X className="w-4 h-4" />
-          </button>
+            <button
+              onClick={() => window.electronAPI?.openRecordingsFolder()}
+              title="Open recordings folder"
+              className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-gray-200 transition-colors"
+            >
+              <FolderOpen className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleClose}
+              className="p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-gray-200 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         )}
       </div>
 
