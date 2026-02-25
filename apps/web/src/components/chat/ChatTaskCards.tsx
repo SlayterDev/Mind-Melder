@@ -93,6 +93,15 @@ export function ChatTaskCards({ todoIds }: ChatTaskCardsProps) {
     }
   };
 
+  const handleUpdateTags = async (id: string, tags: string[]) => {
+    try {
+      await todosAPI.update(id, { tags });
+      await loadTodos();
+    } catch (err) {
+      console.error('Failed to update tags:', err);
+    }
+  };
+
   const handleSubmitFeedback = async (id: string, vote: FeedbackVote, feedbackText?: string) => {
     try {
       await todosAPI.submitFeedback(id, { vote, feedbackText });
@@ -135,6 +144,7 @@ export function ChatTaskCards({ todoIds }: ChatTaskCardsProps) {
               onUpdateContent={handleUpdateContent}
               onUpdateTimeEstimate={handleUpdateTimeEstimate}
               onSubmitFeedback={handleSubmitFeedback}
+              onUpdateTags={handleUpdateTags}
             />
           ))}
         </SortableContext>

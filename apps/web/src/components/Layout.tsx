@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ReactNode, useState, useEffect } from 'react';
 import { useInboxCount } from '../api/queries';
-import { PenLine, CalendarDays, Inbox, FileText, ListChecks, Layers, MessageSquare, Cog, Menu, X, Mic } from 'lucide-react';
+import { PenLine, CalendarDays, Inbox, FileText, ListChecks, Layers, MessageSquare, Cog, Menu, X, Mic, TrendingUp } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
@@ -37,6 +37,7 @@ export default function Layout({ children }: LayoutProps) {
   const navItems = [
     { path: '/', label: 'Capture', icon: PenLine },
     { path: '/today', label: 'Today Sheet', icon: CalendarDays },
+    { path: '/weekly-review', label: 'Weekly Review', icon: TrendingUp },
     { path: '/inbox', label: 'Inbox', icon: Inbox },
     { path: '/notes', label: 'Notes', icon: FileText },
     { path: '/todos', label: 'Todos', icon: ListChecks },
@@ -48,7 +49,7 @@ export default function Layout({ children }: LayoutProps) {
   const closeDrawer = () => setIsDrawerOpen(false);
 
   return (
-    <div className="flex h-screen bg-gray-950 text-gray-100 overflow-hidden">
+    <div className="flex h-full bg-gray-950 text-gray-100 overflow-hidden">
       {/* Sidebar - Desktop */}
       <aside className="hidden md:block w-64 bg-gray-900 border-r border-gray-800 shadow-2xl flex-shrink-0">
         {/* Draggable title bar region for Electron */}
@@ -197,7 +198,7 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex-1 min-h-0">{children}</div>
         ) : (
           <div className="flex-1 min-h-0 overflow-auto">
-            <div className="max-w-5xl mx-auto p-4 md:p-8">{children}</div>
+            <div className="max-w-5xl mx-auto p-4 md:p-8" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>{children}</div>
           </div>
         )}
       </main>

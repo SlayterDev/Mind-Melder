@@ -272,6 +272,33 @@ This project follows milestone-based development with NO feature creep:
 - Admin panels or dashboards
 - Elaborate class hierarchies (prefer functions and composition)
 
+## Logging
+
+The API uses a structured logger at `apps/api/src/utils/logger.ts`. See **`docs/LOGGING.md`** for the full guide.
+
+**Quick reference:**
+
+```typescript
+import { createLogger } from '../utils/logger.js';
+const logger = createLogger('MyService'); // context label, PascalCase
+
+logger.debug('Intermediate state', { userId, count });     // suppressed in prod by default
+logger.info('Operation started', { userId });              // normal events
+logger.warn('Unexpected but recoverable', { userId });     // non-fatal issues
+logger.error('Operation failed', { userId, message });     // fatal to the operation
+logger.errorWithException('Unhandled failure', err, { userId }); // preserves stack trace
+```
+
+**Rules:**
+- Create one logger per module at the top level — never per request
+- Always include `userId` in service/route log lines
+- Never log raw user content (note text, capture body, todo text)
+- Never log credentials, API keys, or full settings objects
+- Use `debug` for counts and intermediate state; `info` for start/end of significant operations
+- Log level is controlled by `LOG_LEVEL` env var (default: `info`); `NODE_ENV=production` switches to JSON output
+
+**Request correlation:** Every HTTP request gets a UUID (`requestId`) emitted on both the "received" and "completed" lines, and returned to the client as `X-Request-Id`.
+
 ## Engineering Principles
 
 **Architecture**:
@@ -316,6 +343,9 @@ OLLAMA_BASE_URL=http://localhost:11434
 API_PORT=3000
 WEB_PORT=8080
 NODE_ENV=development
+
+# Logging (see docs/LOGGING.md)
+LOG_LEVEL=info               # debug | info | warn | error
 
 # Timezone
 TZ=America/Chicago

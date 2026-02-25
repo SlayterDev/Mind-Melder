@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Check, X, ChevronDown, ChevronRight, Pencil, Save, Calendar, Zap, Clock, Hourglass, Flame, Target, Lightbulb, Package, Trash2 } from 'lucide-react';
+import { Check, X, ChevronDown, ChevronRight, Pencil, Save, Calendar, Zap, Clock, Hourglass, Flame, Target, Lightbulb, Package, Trash2, Tag } from 'lucide-react';
 import type { TimeEstimate } from '../api/client';
+import TagEditor from './TagEditor';
 
 type TodaySheetSection = 'must_do_today' | 'likely_today' | 'opportunistic' | 'overflow' | 'none';
 
@@ -14,6 +15,7 @@ interface TodoCardProps {
     completedAt?: string;
     timeEstimate?: TimeEstimate;
     todaySheetSection?: TodaySheetSection;
+    tags?: string[];
   };
   onToggleComplete: (id: string, status: string) => void;
   onUpdateContent: (id: string, content: string) => void;
@@ -21,6 +23,7 @@ interface TodoCardProps {
   onUpdateDueDate: (id: string, dueDate: string | null) => void;
   onUpdateTimeEstimate: (id: string, timeEstimate: TimeEstimate) => void;
   onUpdateTodaySheetSection?: (id: string, section: TodaySheetSection) => void;
+  onUpdateTags?: (id: string, tags: string[]) => void;
   onDelete: (id: string) => void;
 }
 
@@ -46,6 +49,7 @@ export default function TodoCard({
   onUpdateDueDate,
   onUpdateTimeEstimate,
   onUpdateTodaySheetSection,
+  onUpdateTags,
   onDelete,
 }: TodoCardProps) {
   const [expandedDescription, setExpandedDescription] = useState(false);
@@ -57,6 +61,7 @@ export default function TodoCard({
   const [selectedDate, setSelectedDate] = useState('');
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showTodaySheetDropdown, setShowTodaySheetDropdown] = useState(false);
+  const [showTagEditor, setShowTagEditor] = useState(false);
 
   const getTimeEstimateDisplay = (estimate: TimeEstimate) => {
     const displays: Record<string, { icon: typeof Zap; label: string }> = {
@@ -348,7 +353,57 @@ export default function TodoCard({
             {todo.completedAt && (
               <span>Completed: {getDateOnly(todo.completedAt).toLocaleDateString()}</span>
             )}
+
+            {/* Tags */}
+            {!showTagEditor && (!todo.tags || todo.tags.length === 0) && (
+              <button
+                onClick={() => setShowTagEditor(true)}
+                className="px-2 py-0.5 badge-chip cursor-pointer hover:opacity-80 transition-opacity"
+                title="Add tags"
+              >
+                <Tag className="w-3 h-3" />
+              </button>
+            )}
+            {!showTagEditor && todo.tags && todo.tags.length > 0 && (
+              <>
+                {todo.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-2 py-0.5 bg-blue-900/20 border border-blue-700/40 rounded text-xs text-blue-300/90"
+                  >
+                    {tag}
+                  </span>
+                ))}
+                <button
+                  onClick={() => setShowTagEditor(true)}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity px-1 py-0.5 hover:bg-gray-700 rounded"
+                  title="Edit tags"
+                >
+                  <Pencil className="w-3 h-3 text-gray-400" />
+                </button>
+              </>
+            )}
           </div>
+
+          {/* Tag Editor */}
+          {showTagEditor && (
+            <div className="flex items-center gap-2 mt-2">
+              <TagEditor
+                tags={todo.tags || []}
+                onChange={(newTags) => onUpdateTags?.(todo.id, newTags)}
+                onClose={() => setShowTagEditor(false)}
+                size="sm"
+                autoFocus
+                className="flex-1"
+              />
+              <button
+                onClick={() => setShowTagEditor(false)}
+                className="px-2 py-1 bg-gray-700 text-gray-400 rounded text-xs hover:bg-gray-600 flex-shrink-0"
+              >
+                <Check className="w-3 h-3" />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2">

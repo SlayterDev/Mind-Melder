@@ -28,6 +28,9 @@ export const settings = pgTable(
     // Content Lock
     contentLockEnabled: boolean('content_lock_enabled').notNull().default(false),
 
+    // Include Tag Descriptions in LLM prompts
+    includeTagDescriptions: boolean('include_tag_descriptions').notNull().default(false),
+
     // New Organization scheduling
     organizeScheduleEnabled: boolean('organize_schedule_enabled').notNull().default(false),
     organizeScheduleFrequency: scheduleFrequencyEnum('organize_schedule_frequency').notNull().default('daily'),

@@ -1,9 +1,13 @@
 import { Router, type Router as ExpressRouter } from 'express';
 import multer from 'multer';
 import { ProviderFactory, getAudioFilename } from 'llm';
+import type { TokenTrackingService } from '../services/token-tracking-service.js';
 import type { Database, SettingsRepository, OrganizedNotesRepository } from 'database';
 import { ApiError } from '../middleware/index.js';
 import { asyncHandler } from '../utils/async-handler.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('TranscribeRoute');
 
 const ALLOWED_MIME_TYPES = [
   'audio/mpeg',       // mp3
@@ -33,7 +37,7 @@ const upload = multer({
   },
 });
 
-export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepository, notesRepo: OrganizedNotesRepository): ExpressRouter {
+export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepository, notesRepo: OrganizedNotesRepository, tokenTracker?: TokenTrackingService): ExpressRouter {
   const router = Router();
 
   // POST /api/v1/transcribe - Upload audio for transcription
@@ -51,8 +55,20 @@ export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepos
       const audioBuffer = req.file.buffer;
       const useWhisper = settings.whisperEnabled;
 
+      logger.info('Transcription request received', {
+        userId,
+        filename: req.file.originalname,
+        mimeType: req.file.mimetype,
+        fileSizeBytes: req.file.size,
+        useWhisper,
+      });
+
       // If not using local whisper, validate the LLM provider supports transcription
       if (!useWhisper && settings.llmProvider !== 'openai') {
+        logger.warn('Transcription rejected: provider does not support it', {
+          userId,
+          llmProvider: settings.llmProvider,
+        });
         throw new ApiError(400, `Transcription is not supported by the ${settings.llmProvider} provider. Enable local whisper or switch to OpenAI.`);
       }
 
@@ -61,8 +77,13 @@ export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepos
 
       // Fire-and-forget background work
       (async () => {
+        const startTime = Date.now();
         try {
-          console.log(`[Transcribe] Starting transcription for user ${userId}, file ${req.file?.originalname}`);
+          logger.info('Starting background transcription', {
+            userId,
+            filename: req.file?.originalname,
+            useWhisper,
+          });
 
           let text: string;
 
@@ -79,6 +100,13 @@ export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepos
             formData.append('temperature_inc', '0.2');
             formData.append('response_format', 'json');
 
+            logger.debug('Sending audio to whisper.cpp server', {
+              userId,
+              whisperUrl: settings.whisperUrl,
+              filename,
+              mimeType,
+            });
+
             const whisperResponse = await fetch(`${settings.whisperUrl}/inference`, {
               method: 'POST',
               body: formData,
@@ -86,6 +114,11 @@ export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepos
 
             if (!whisperResponse.ok) {
               const body = await whisperResponse.text().catch(() => '');
+              logger.error('Whisper server returned an error', {
+                userId,
+                httpStatus: whisperResponse.status,
+                responseBody: body,
+              });
               throw new Error(`Whisper server error (${whisperResponse.status}): ${body}`);
             }
 
@@ -99,9 +132,19 @@ export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepos
               mimeType: req.file?.mimetype,
             });
             text = result.text;
+
+            if (tokenTracker && provider.lastUsage) {
+              tokenTracker.trackUsage(userId, settings.llmProvider, settings.llmModel || 'default', 'transcribe', provider.lastUsage);
+            }
           }
 
-          console.log(`[Transcribe] Transcription completed for user ${userId}, file ${req.file?.originalname}`);
+          const durationMs = Date.now() - startTime;
+          logger.info('Transcription completed', {
+            userId,
+            filename: req.file?.originalname,
+            durationMs,
+            textLengthChars: text.length,
+          });
 
           const dateStr = new Date().toLocaleDateString('en-US', {
             month: 'short',
@@ -115,9 +158,16 @@ export function createTranscribeRouter(db: Database, settingsRepo: SettingsRepos
             content: text,
             tags: ['transcription'],
           });
-          console.log(`[Transcribe] Transcription saved for user ${userId}, file ${req.file?.originalname}`);
+
+          logger.info('Transcription saved as note', {
+            userId,
+            filename: req.file?.originalname,
+          });
         } catch (err) {
-          console.error('[transcribe] Background transcription failed:', err);
+          logger.errorWithException('Background transcription failed', err, {
+            userId,
+            filename: req.file?.originalname,
+          });
         }
       })();
     })

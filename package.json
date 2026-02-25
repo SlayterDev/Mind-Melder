@@ -1,6 +1,6 @@
 {
   "name": "mind-melder",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Quick Capture & AI Organizer - Self-hosted productivity tool",
   "private": true,
   "packageManager": "pnpm@10.28.2",

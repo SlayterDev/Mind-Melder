@@ -1,8 +1,8 @@
 import { Ollama } from 'ollama';
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
-import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, ToolCall, ToolDefinition, TodaySheetInput, TodaySheetOutput, TranscribeOptions, TranscriptionResult } from '../types.js';
-import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
+import type { ChatMessage, LLMProvider, OrganizedOutput, ProviderConfig, StreamCallbacks, ToolCall, ToolDefinition, TodaySheetInput, TodaySheetOutput, TranscribeOptions, TranscriptionResult, WeeklyReviewInput, WeeklyReviewOutput, TemplateSuggestionsOutput } from '../types.js';
+import { organizedOutputSchema, todaySheetOutputSchema, weeklyReviewOutputSchema, templateSuggestionsOutputSchema } from '../validation.js';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
@@ -14,6 +14,8 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
   // Cache converted JSON schemas to avoid repeated conversions
   private organizedOutputJsonSchema: ReturnType<typeof zodToJsonSchema>;
   private todaySheetOutputJsonSchema: ReturnType<typeof zodToJsonSchema>;
+  private weeklyReviewOutputJsonSchema: ReturnType<typeof zodToJsonSchema>;
+  private templateSuggestionsOutputJsonSchema: ReturnType<typeof zodToJsonSchema>;
   private taskExtractionJsonSchema: object;
 
   constructor(config: ProviderConfig) {
@@ -22,11 +24,16 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     this.baseURL = config.baseURL || 'http://localhost:11434';
     this.client = new Ollama({ host: this.baseURL });
     this.model = config.model || 'mistral';
-    this.temperature = config.temperature ?? 0.7;
+
+    let temp = config.temperature ?? 0.7;
+    temp = Math.max(0.3, Math.min(1, temp)); // Clamp between 0 and 1
+    this.temperature = temp;
     
     // Pre-convert schemas once during construction
     this.organizedOutputJsonSchema = zodToJsonSchema(organizedOutputSchema, 'organizedOutput');
     this.todaySheetOutputJsonSchema = zodToJsonSchema(todaySheetOutputSchema, 'todaySheetOutput');
+    this.weeklyReviewOutputJsonSchema = zodToJsonSchema(weeklyReviewOutputSchema, 'weeklyReviewOutput');
+    this.templateSuggestionsOutputJsonSchema = zodToJsonSchema(templateSuggestionsOutputSchema, 'templateSuggestionsOutput');
     
     // Define task extraction schema
     this.taskExtractionJsonSchema = {
@@ -48,6 +55,13 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
     };
   }
 
+  private storeUsage(response: { prompt_eval_count?: number; eval_count?: number }) {
+    this.lastUsage = {
+      inputTokens: response.prompt_eval_count ?? null,
+      outputTokens: response.eval_count ?? null,
+    };
+  }
+
   async organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean, contentLockEnabled?: boolean): Promise<OrganizedOutput> {
     const systemPrompt = this.buildSystemPrompt();
     const userPrompt = this.buildOrganizePrompt(captures, template, tags, includeDescriptions ?? false, contentLockEnabled ?? false);
@@ -65,6 +79,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       },
     });
 
+    this.storeUsage(response);
     return this.parseResponse<OrganizedOutput>(response.message.content, organizedOutputSchema);
   }
 
@@ -80,10 +95,11 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       stream: false,
       format: this.taskExtractionJsonSchema,
       options: {
-        temperature: Math.min(this.temperature, 0.5),
+        temperature: this.temperature,
       },
     });
 
+    this.storeUsage(response);
     const result = this.parseResponse<{ todos: { content: string; dueDate?: string }[] }>(
       response.message.content
     );
@@ -103,10 +119,11 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       stream: false,
       format: this.todaySheetOutputJsonSchema,
       options: {
-        temperature: Math.min(this.temperature, 0.5),
+        temperature: this.temperature,
       },
     });
 
+    this.storeUsage(response);
     return this.parseResponse<TodaySheetOutput>(response.message.content, todaySheetOutputSchema);
   }
 
@@ -129,6 +146,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       },
     });
 
+    this.storeUsage(response);
     return response.message.content.trim();
   }
 
@@ -190,6 +208,7 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
           tools: ollamaTools,
         });
 
+        this.storeUsage(response);
         // Send text content as tokens
         if (response.message.content) {
           callbacks.onToken(response.message.content);
@@ -286,14 +305,55 @@ export class OllamaProvider extends BaseLLMProvider implements LLMProvider {
       stream: false,
       format: refineNoteJsonSchema,
       options: {
-        temperature: Math.min(this.temperature, 0.5),
+        temperature: this.temperature,
       },
     });
 
+    this.storeUsage(response);
     return this.parseResponse<{ title: string; content: string }>(response.message.content);
   }
 
   async transcribe(_audioBuffer: Buffer, _options?: TranscribeOptions): Promise<TranscriptionResult> {
     throw new Error('Transcription is not supported by the Ollama provider. Enable local whisper in settings.');
+  }
+
+  async generateWeeklyReview(input: WeeklyReviewInput): Promise<WeeklyReviewOutput> {
+    const userPrompt = this.buildWeeklyReviewPrompt(input);
+
+    const response = await this.client.chat({
+      model: this.model,
+      messages: [
+        { role: 'system', content: 'You are a productivity coach helping users reflect on their week.' },
+        { role: 'user', content: userPrompt },
+      ],
+      stream: false,
+      format: this.weeklyReviewOutputJsonSchema,
+      options: {
+        temperature: this.temperature,
+      },
+    });
+
+    this.storeUsage(response);
+    return this.parseResponse<WeeklyReviewOutput>(response.message.content, weeklyReviewOutputSchema);
+  }
+
+  async generateTemplateSuggestions(template: Template, weeklyReview?: WeeklyReviewOutput): Promise<TemplateSuggestionsOutput> {
+    const userPrompt = this.buildTemplateSuggestionsPrompt(template, weeklyReview);
+
+    const response = await this.client.chat({
+      model: this.model,
+      messages: [
+        { role: 'system', content: 'You are a productivity coach helping users improve their organization templates.' },
+        { role: 'user', content: userPrompt },
+      ],
+      stream: false,
+      format: this.templateSuggestionsOutputJsonSchema,
+      options: {
+        temperature: this.temperature,
+      },
+    });
+
+    this.storeUsage(response);
+    return this.parseResponse<TemplateSuggestionsOutput>(response.message.content, templateSuggestionsOutputSchema);
   }
 }

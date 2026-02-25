@@ -1,6 +1,6 @@
 {
-  "id": "1a7a1aa4-aff0-40c3-bdeb-8bcd04027fea",
-  "prevId": "f0b7f5ee-7eaf-4953-8a02-dc863df3f772",
+  "id": "6990a973-bf04-4c7a-9bc5-d999a92452a9",
+  "prevId": "f04ba7d8-7315-44f8-ad79-0be630ab022f",
   "version": "5",
   "dialect": "pg",
   "tables": {
@@ -617,6 +617,13 @@
           "notNull": true,
           "default": false
         },
+        "include_tag_descriptions": {
+          "name": "include_tag_descriptions",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "organize_schedule_enabled": {
           "name": "organize_schedule_enabled",
           "type": "boolean",
@@ -644,60 +651,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'1'"
-        },
-        "notifications_enabled": {
-          "name": "notifications_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "notifications_morning_reminder_enabled": {
-          "name": "notifications_morning_reminder_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "notifications_morning_reminder_time": {
-          "name": "notifications_morning_reminder_time",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'09:00'"
-        },
-        "notifications_afternoon_reminder_enabled": {
-          "name": "notifications_afternoon_reminder_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "notifications_afternoon_reminder_time": {
-          "name": "notifications_afternoon_reminder_time",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'15:00'"
-        },
-        "notifications_show_overdue": {
-          "name": "notifications_show_overdue",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "notifications_quiet_hours_start": {
-          "name": "notifications_quiet_hours_start",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "notifications_quiet_hours_end": {
-          "name": "notifications_quiet_hours_end",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -964,6 +917,166 @@
           "name": "conversations_updated_at_idx",
           "columns": [
             "updated_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "weekly_reviews": {
+      "name": "weekly_reviews",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "week_start_date": {
+          "name": "week_start_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "week_end_date": {
+          "name": "week_end_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "insights": {
+          "name": "insights",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "weekly_reviews_user_id_idx": {
+          "name": "weekly_reviews_user_id_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "weekly_reviews_week_start_date_idx": {
+          "name": "weekly_reviews_week_start_date_idx",
+          "columns": [
+            "week_start_date"
+          ],
+          "isUnique": false
+        },
+        "weekly_reviews_user_week_idx": {
+          "name": "weekly_reviews_user_week_idx",
+          "columns": [
+            "user_id",
+            "week_start_date"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "token_usage": {
+      "name": "token_usage",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "method": {
+          "name": "method",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "input_tokens": {
+          "name": "input_tokens",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "output_tokens": {
+          "name": "output_tokens",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "token_usage_user_id_idx": {
+          "name": "token_usage_user_id_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "token_usage_created_at_idx": {
+          "name": "token_usage_created_at_idx",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "token_usage_user_created_at_idx": {
+          "name": "token_usage_user_created_at_idx",
+          "columns": [
+            "user_id",
+            "created_at"
           ],
           "isUnique": false
         }

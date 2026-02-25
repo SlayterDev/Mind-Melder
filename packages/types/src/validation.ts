@@ -57,6 +57,7 @@ export const updateTodoSchema = z.object({
   dueDate: z.string().datetime().nullable().optional(),
   timeEstimate: timeEstimateSchema.optional(),
   todaySheetSection: todaySheetSectionSchema.optional(),
+  tags: z.array(z.string().max(50)).max(10).optional(),
 });
 
 export type TimeEstimate = z.infer<typeof timeEstimateSchema>;
@@ -103,6 +104,9 @@ export const updateSettingsSchema = z.object({
 
   // Content Lock
   contentLockEnabled: z.boolean().optional(),
+
+  // Include Tag Descriptions in LLM prompts
+  includeTagDescriptions: z.boolean().optional(),
 
   // Legacy CRON-based scheduling (kept for backwards compatibility)
   organizationSchedule: z.string().max(100).optional(),

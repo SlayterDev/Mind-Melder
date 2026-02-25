@@ -49,7 +49,7 @@ export const todosAPI = {
   get: (id: string) => fetchAPI<any>(`/todos/${id}`),
   create: (data: { content: string; dueDate?: string }) =>
     fetchAPI('/todos', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: { content?: string; status?: string; dueDate?: string | null; description?: string; timeEstimate?: TimeEstimate; todaySheetSection?: string }) =>
+  update: (id: string, data: { content?: string; status?: string; dueDate?: string | null; description?: string; timeEstimate?: TimeEstimate; todaySheetSection?: string; tags?: string[] }) =>
     fetchAPI(`/todos/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   markComplete: (id: string) => fetchAPI(`/todos/${id}/complete`, { method: 'PATCH' }),
   submitFeedback: (id: string, data: { vote: 'thumbs_up' | 'thumbs_down' | 'none'; feedbackText?: string }) =>
@@ -123,7 +123,7 @@ export const todaySheetAPI = {
       { method: 'POST', body: JSON.stringify(templateId ? { templateId } : {}) }
     ),
   get: () => fetchAPI<any>('/today-sheet'),
-  updateTodo: (id: string, updates: { content?: string; description?: string; status?: string; dueDate?: string | null; timeEstimate?: TimeEstimate }) =>
+  updateTodo: (id: string, updates: { content?: string; description?: string; status?: string; dueDate?: string | null; timeEstimate?: TimeEstimate; tags?: string[] }) =>
     fetchAPI<any>(`/today-sheet/todos/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
@@ -205,6 +205,9 @@ export interface Settings {
   // Content Lock
   contentLockEnabled: boolean;
 
+  // Include Tag Descriptions in LLM prompts
+  includeTagDescriptions: boolean;
+
   // Legacy CRON-based scheduling (deprecated but kept for compatibility)
   organizationSchedule: string;
   scheduleEnabled: boolean;
@@ -237,6 +240,18 @@ export const settingsAPI = {
     fetchAPI<Settings>('/settings', { method: 'PATCH', body: JSON.stringify(data) }),
 };
 
+// Search
+export interface SearchResults {
+  captures?: any[];
+  todos?: any[];
+  notes?: any[];
+}
+
+export const searchAPI = {
+  search: (query: string, type: 'all' | 'captures' | 'todos' | 'notes' = 'all') =>
+    fetchAPI<SearchResults>(`/search?q=${encodeURIComponent(query)}&type=${type}`),
+};
+
 // Transcription
 export const transcribeAPI = {
   upload: async (blob: Blob): Promise<{ success: boolean; message: string }> => {
@@ -255,4 +270,118 @@ export const transcribeAPI = {
 
     return response.json();
   },
+};
+
+// Token Usage
+export interface AggregatedUsage {
+  provider: string;
+  model: string;
+  method: string;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  count: number;
+}
+
+export interface UsageTotals {
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalRequests: number;
+}
+
+export interface UsageSummary {
+  aggregated: AggregatedUsage[];
+  totals: UsageTotals;
+  periodDays: number;
+}
+
+export interface TokenUsageRecord {
+  id: string;
+  userId: string;
+  provider: string;
+  model: string;
+  method: string;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  createdAt: string;
+}
+
+export interface UsageDetails {
+  records: TokenUsageRecord[];
+  total: number;
+}
+
+export const tokenUsageAPI = {
+  getSummary: (days: number = 30) =>
+    fetchAPI<UsageSummary>(`/token-usage/summary?days=${days}`),
+  getDetails: (params: { start?: string; end?: string; provider?: string; method?: string; page?: number; perPage?: number } = {}) => {
+    const searchParams = new URLSearchParams();
+    if (params.start) searchParams.set('start', params.start);
+    if (params.end) searchParams.set('end', params.end);
+    if (params.provider) searchParams.set('provider', params.provider);
+    if (params.method) searchParams.set('method', params.method);
+    if (params.page) searchParams.set('page', params.page.toString());
+    if (params.perPage) searchParams.set('perPage', params.perPage.toString());
+    return fetchAPI<UsageDetails>(`/token-usage?${searchParams.toString()}`);
+  },
+};
+
+// Weekly Reviews
+export interface WeeklyReviewInsights {
+  accomplishments: string[];
+  patterns: {
+    completionRate: number;
+    topCategories: string[];
+    observations: string[];
+  };
+  carryForward: Array<{
+    todoId: string;
+    content: string;
+    reason: string;
+  }>;
+  recommendations: string[];
+}
+
+export interface WeeklyReview {
+  id: string;
+  userId: string;
+  weekStartDate: string; // ISO date
+  weekEndDate: string; // ISO date
+  summary: string;
+  insights: WeeklyReviewInsights;
+  createdAt: string;
+}
+
+export interface TemplateSuggestion {
+  title: string;
+  description: string;
+  improvedPrompt: string;
+}
+
+export const weeklyReviewAPI = {
+  generate: (weekStartDate?: string, forceRegenerate?: boolean) =>
+    fetchAPI<{ success: boolean; review: WeeklyReview; message: string }>(
+      '/weekly-review/generate',
+      {
+        method: 'POST',
+        body: JSON.stringify({ 
+          ...(weekStartDate && { weekStartDate }),
+          ...(forceRegenerate !== undefined && { forceRegenerate })
+        }),
+      }
+    ),
+  getLatest: () => fetchAPI<WeeklyReview>('/weekly-review/latest'),
+  list: (page: number = 1, perPage: number = 10) =>
+    fetchAPI<{ reviews: WeeklyReview[]; page: number; perPage: number }>(
+      `/weekly-review?page=${page}&perPage=${perPage}`
+    ),
+  get: (id: string) => fetchAPI<WeeklyReview>(`/weekly-review/${id}`),
+  // Note: Tuple type enforces exactly 3 suggestions, matching backend Zod schema
+  getTemplateSuggestions: (templateId: string) =>
+    fetchAPI<{ success: boolean; suggestions: [TemplateSuggestion, TemplateSuggestion, TemplateSuggestion] }>(
+      '/weekly-review/template-suggestions',
+      {
+        method: 'POST',
+        body: JSON.stringify({ templateId }),
+      }
+    ),
 };

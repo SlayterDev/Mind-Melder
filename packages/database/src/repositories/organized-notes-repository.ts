@@ -5,6 +5,7 @@ import {
   type NewOrganizedNote,
 } from '../schema/organized-notes.js';
 import type { Database } from '../client.js';
+import { buildPrefixSearchQuery } from '../utils/search.js';
 
 export class OrganizedNotesRepository {
   constructor(private db: Database) {}
@@ -82,17 +83,23 @@ export class OrganizedNotesRepository {
       return [];
     }
 
+    const prefixQuery = buildPrefixSearchQuery(query);
+    if (!prefixQuery) {
+      // All terms were filtered out (e.g., input contained only special characters)
+      return [];
+    }
+
     return this.db
       .select()
       .from(organizedNotes)
       .where(
         and(
           eq(organizedNotes.userId, userId),
-          sql`${organizedNotes}.search_vector @@ plainto_tsquery('english', ${query})`
+          sql`${organizedNotes}.search_vector @@ to_tsquery('english', ${prefixQuery})`
         )
       )
       .orderBy(
-        sql`ts_rank(${organizedNotes}.search_vector, plainto_tsquery('english', ${query})) DESC`
+        sql`ts_rank(${organizedNotes}.search_vector, to_tsquery('english', ${prefixQuery})) DESC`
       );
   }
 }

@@ -4,9 +4,9 @@ import { BaseLLMProvider } from '../base-provider.js';
 import type {
   LLMProvider, OrganizedOutput, ProviderConfig, TodaySheetInput,
   TodaySheetOutput, ChatMessage, StreamCallbacks, ToolCall, ToolDefinition,
-  TranscribeOptions, TranscriptionResult
+  TranscribeOptions, TranscriptionResult, WeeklyReviewInput, WeeklyReviewOutput, TemplateSuggestionsOutput
 } from '../types.js';
-import { organizedOutputSchema, todaySheetOutputSchema } from '../validation.js';
+import { organizedOutputSchema, todaySheetOutputSchema, weeklyReviewOutputSchema, templateSuggestionsOutputSchema } from '../validation.js';
 
 export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
   private client: Anthropic;
@@ -25,7 +25,21 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     });
 
     this.model = config.model || 'claude-sonnet-4-5';
-    this.temperature = config.temperature ?? 0.7;
+
+    let temp = config.temperature ?? 0.7;
+    temp = Math.max(0.3, Math.min(1, temp)); // Clamp between 0 and 1
+    this.temperature = temp;
+  }
+
+  private storeUsage(response: { usage?: { input_tokens?: number; output_tokens?: number } }) {
+    if (response.usage) {
+      this.lastUsage = {
+        inputTokens: response.usage.input_tokens ?? null,
+        outputTokens: response.usage.output_tokens ?? null,
+      };
+    } else {
+      this.lastUsage = null;
+    }
   }
 
   async organize(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions?: boolean, contentLockEnabled?: boolean): Promise<OrganizedOutput> {
@@ -42,6 +56,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       ],
     });
 
+    this.storeUsage(response);
     const content = response.content[0];
     if (content.type !== 'text') {
       throw new Error('Unexpected response type from Anthropic');
@@ -56,13 +71,14 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 2048,
-      temperature: Math.min(this.temperature, 0.5),
+      temperature: this.temperature,
       system: this.buildSystemPrompt(),
       messages: [
         { role: 'user', content: prompt },
       ],
     });
 
+    this.storeUsage(response);
     const content = response.content[0];
     if (content.type !== 'text') {
       throw new Error('Unexpected response type from Anthropic');
@@ -81,7 +97,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 4096,
-      temperature: Math.min(this.temperature, 0.5),
+      temperature: this.temperature,
       system: systemPrompt,
       messages: [
         {
@@ -91,6 +107,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       ],
     });
 
+    this.storeUsage(response);
     const content = response.content[0];
     if (content.type !== 'text') {
       throw new Error('Unexpected response type from Anthropic');
@@ -118,6 +135,7 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       ],
     });
 
+    this.storeUsage(response);
     const content = response.content[0];
     if (content.type !== 'text') {
       throw new Error('Unexpected response type from Anthropic');
@@ -214,7 +232,8 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
       callbacks.onError?.(error);
     });
 
-    await stream.finalMessage();
+    const finalMsg = await stream.finalMessage();
+    this.storeUsage(finalMsg);
     callbacks.onComplete(fullTextResponse);
   }
 
@@ -225,13 +244,14 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: 4096,
-      temperature: Math.min(this.temperature, 0.5),
+      temperature: this.temperature,
       system: systemPrompt,
       messages: [
         { role: 'user', content: userPrompt },
       ],
     });
 
+    this.storeUsage(response);
     const responseContent = response.content[0];
     if (responseContent.type !== 'text') {
       throw new Error('Unexpected response type from Anthropic');
@@ -242,5 +262,49 @@ export class AnthropicProvider extends BaseLLMProvider implements LLMProvider {
 
   async transcribe(_audioBuffer: Buffer, _options?: TranscribeOptions): Promise<TranscriptionResult> {
     throw new Error('Transcription is not supported by the Anthropic provider.');
+  }
+
+  async generateWeeklyReview(input: WeeklyReviewInput): Promise<WeeklyReviewOutput> {
+    const userPrompt = this.buildWeeklyReviewPrompt(input);
+
+    const response = await this.client.messages.create({
+      model: this.model,
+      max_tokens: 2000,
+      temperature: this.temperature,
+      system: 'You are a productivity coach helping users reflect on their week.',
+      messages: [
+        { role: 'user', content: userPrompt },
+      ],
+    });
+
+    this.storeUsage(response);
+    const responseContent = response.content[0];
+    if (responseContent.type !== 'text') {
+      throw new Error('Unexpected response type from Anthropic');
+    }
+
+    return this.parseResponse<WeeklyReviewOutput>(responseContent.text, weeklyReviewOutputSchema);
+  }
+
+  async generateTemplateSuggestions(template: Template, weeklyReview?: WeeklyReviewOutput): Promise<TemplateSuggestionsOutput> {
+    const userPrompt = this.buildTemplateSuggestionsPrompt(template, weeklyReview);
+
+    const response = await this.client.messages.create({
+      model: this.model,
+      max_tokens: 3000,
+      temperature: this.temperature,
+      system: 'You are a productivity coach helping users improve their organization templates.',
+      messages: [
+        { role: 'user', content: userPrompt },
+      ],
+    });
+
+    this.storeUsage(response);
+    const responseContent = response.content[0];
+    if (responseContent.type !== 'text') {
+      throw new Error('Unexpected response type from Anthropic');
+    }
+
+    return this.parseResponse<TemplateSuggestionsOutput>(responseContent.text, templateSuggestionsOutputSchema);
   }
 }

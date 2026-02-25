@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { Database, OrganizedNotesRepository, SettingsRepository } from 'database';
 import { createOrganizedNoteSchema, updateOrganizedNoteSchema } from 'types';
 import { ProviderFactory } from 'llm';
+import type { TokenTrackingService } from '../services/token-tracking-service.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, ApiError } from '../middleware/index.js';
 import { NotesService } from '../services/notes-service.js';
@@ -17,7 +18,7 @@ const refineNoteSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required').max(2000, 'Prompt too long'),
 });
 
-export function createNotesRouter(db: Database, notesRepo: OrganizedNotesRepository, settingsRepo: SettingsRepository): ExpressRouter {
+export function createNotesRouter(db: Database, notesRepo: OrganizedNotesRepository, settingsRepo: SettingsRepository, tokenTracker?: TokenTrackingService): ExpressRouter {
   const router = Router();
 
   // GET /api/v1/notes - List notes (optional: filter by tag)
@@ -116,6 +117,10 @@ export function createNotesRouter(db: Database, notesRepo: OrganizedNotesReposit
       const llmProvider = ProviderFactory.createFromSettings(settings);
 
       const refined = await llmProvider.refineNote(note.title, note.content, prompt);
+
+      if (tokenTracker && llmProvider.lastUsage) {
+        tokenTracker.trackUsage(userId, settings.llmProvider, settings.llmModel || 'default', 'refine_note', llmProvider.lastUsage);
+      }
 
       res.json(refined);
     })

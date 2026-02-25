@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { settingsAPI, ollamaAPI, type Settings, type OllamaModel } from '../api/client';
+import { useNavigate } from 'react-router-dom';
+import { settingsAPI, ollamaAPI, tokenUsageAPI, type Settings, type OllamaModel, type UsageSummary } from '../api/client';
 import { Cog, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { getServerUrl, setApiUrl, testConnection } from '../api/config';
 import ServerConnection from '../components/ServerConnection';
 import NotificationSettings from '../components/NotificationSettings';
+import TokenUsageCard from '../components/TokenUsageCard';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
@@ -15,11 +17,13 @@ const PROVIDER_MODELS: Record<string, { label: string; models: { value: string; 
   openai: {
     label: 'OpenAI',
     models: [
-      { value: '', label: 'Default (gpt-4o-mini)' },
-      { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-      { value: 'gpt-4o', label: 'GPT-4o' },
-      { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
-      { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
+      { value: '', label: 'Default (gpt-5-mini)' },
+      { value: 'gpt-5-mini', label: 'GPT-5 mini' },
+      { value: 'gpt-5', label: 'GPT-5' },
+      { value: 'gpt-5.2', label: 'GPT-5.2' },
+      { value: 'gpt-5.2-pro', label: 'GPT-5.2 Pro' },
+      { value: 'gpt-4.1', label: 'GPT-4.1' },
+      { value: 'gpt-4o-mini', label: 'GPT-4o mini' },
     ],
   },
   anthropic: {
@@ -28,8 +32,9 @@ const PROVIDER_MODELS: Record<string, { label: string; models: { value: string; 
       { value: '', label: 'Default (claude-sonnet-4-5)' },
       { value: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5' },
       { value: 'claude-opus-4-5', label: 'Claude Opus 4.5' },
-      { value: 'claude-3-5-sonnet-latest', label: 'Claude 3.5 Sonnet' },
-      { value: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku' },
+      { value: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' },
+      { value: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
+      { value: 'claude-opus-4-6', label: 'Claude Opus 4.6' },
     ],
   },
   ollama: {
@@ -39,11 +44,13 @@ const PROVIDER_MODELS: Record<string, { label: string; models: { value: string; 
 };
 
 export default function SettingsPage() {
+  const navigate = useNavigate();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
 
   // Server connection state (Electron only)
   const [serverUrl, setServerUrl] = useState(getServerUrl());
@@ -133,6 +140,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadSettings();
+    tokenUsageAPI.getSummary(30).then(setUsageSummary).catch(() => {});
   }, []);
 
   // Sync local state when settings change (but don't overwrite active edits)
@@ -339,7 +347,7 @@ export default function SettingsPage() {
                 <input
                   type="range"
                   min="0"
-                  max="2"
+                  max="1"
                   step="0.1"
                   value={settings.llmTemperature}
                   onChange={(e) => handleUpdate({ llmTemperature: parseFloat(e.target.value) })}
@@ -435,28 +443,53 @@ export default function SettingsPage() {
         {/* AI Behavior */}
         <div className="sheet-card p-6">
           <h3 className="text-lg font-semibold mb-4">AI Behavior</h3>
-          <div className="flex items-center justify-between">
-            <div>
-              <label className="block text-sm font-medium text-gray-300">
-                Content Lock
-              </label>
-              <p className="text-xs text-gray-500 mt-1">
-                Preserve original capture and todo text. AI will not rewrite titles or existing descriptions.
-              </p>
-            </div>
-            <button
-              onClick={() => handleUpdate({ contentLockEnabled: !settings.contentLockEnabled })}
-              disabled={isSaving}
-              className={`relative w-12 h-6 rounded-full transition-colors ${
-                settings.contentLockEnabled ? 'bg-accent' : 'bg-gray-600'
-              }`}
-            >
-              <div
-                className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                  settings.contentLockEnabled ? 'translate-x-7' : 'translate-x-1'
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-sm font-medium text-gray-300">
+                  Content Lock
+                </label>
+                <p className="text-xs text-gray-500 mt-1">
+                  Preserve original capture and todo text. AI will not rewrite titles or existing descriptions.
+                </p>
+              </div>
+              <button
+                onClick={() => handleUpdate({ contentLockEnabled: !settings.contentLockEnabled })}
+                disabled={isSaving}
+                className={`relative w-12 h-6 rounded-full transition-colors ${
+                  settings.contentLockEnabled ? 'bg-accent' : 'bg-gray-600'
                 }`}
-              />
-            </button>
+              >
+                <div
+                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                    settings.contentLockEnabled ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-sm font-medium text-gray-300">
+                  Include Tag Descriptions
+                </label>
+                <p className="text-xs text-gray-500 mt-1">
+                  Include tag descriptions in AI prompts for better categorization. Disable to save tokens.
+                </p>
+              </div>
+              <button
+                onClick={() => handleUpdate({ includeTagDescriptions: !settings.includeTagDescriptions })}
+                disabled={isSaving}
+                className={`relative w-12 h-6 rounded-full transition-colors ${
+                  settings.includeTagDescriptions ? 'bg-accent' : 'bg-gray-600'
+                }`}
+              >
+                <div
+                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                    settings.includeTagDescriptions ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -606,6 +639,9 @@ export default function SettingsPage() {
             <NotificationSettings />
           </div>
         </div>
+
+        {/* Token Usage */}
+        <TokenUsageCard usageSummary={usageSummary} />
 
         {/* Server Connection (Electron only) */}
         {isElectron && (

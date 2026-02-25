@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { capturesAPI, notesAPI } from '../api/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Check, PenLine } from 'lucide-react';
+import { Check, PenLine, Loader2 } from 'lucide-react';
 
 type Chip = {
   kind: 'trigger';
@@ -26,9 +26,9 @@ export default function QuickCaptureInput({
   onSuccess,
 }: QuickCaptureInputProps) {
   const [content, setContent] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [chip, setChip] = useState<Chip | null>(null);
+  const [showSpinner, setShowSpinner] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
 
   const triggerPattern = useMemo(() => {
@@ -50,12 +50,6 @@ export default function QuickCaptureInput({
       inputRef.current.focus();
     }
   }, [autoFocus]);
-
-  useEffect(() => {
-    if (content === '' && !isSubmitting && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [content, isSubmitting]);
 
   const submitCapture = async (data: { content: string; category?: string }) => {
     if (!chip) {
@@ -94,8 +88,24 @@ export default function QuickCaptureInput({
     },
   });
 
+  useEffect(() => {
+    if (content === '' && !createCapture.isPending && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [content, createCapture.isPending]);
+
+  useEffect(() => {
+    if (!createCapture.isPending) {
+      setShowSpinner(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowSpinner(true), 750);
+    return () => clearTimeout(timer);
+  }, [createCapture.isPending]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage('');
     try {
       await createCapture.mutateAsync({ content: content.trim() });
       setChip(null);
@@ -113,8 +123,6 @@ export default function QuickCaptureInput({
       }
     } catch (error) {
       setMessage(`error:${error instanceof Error ? error.message : 'Failed to capture'}`);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -207,7 +215,7 @@ export default function QuickCaptureInput({
               e.target.style.borderColor = 'rgb(114 97 175 / 0.2)';
             }}
             rows={rows || 6}
-            disabled={isSubmitting}
+            disabled={createCapture.isPending}
             onKeyDown={handleKeyDown}
           />
 
@@ -227,10 +235,11 @@ export default function QuickCaptureInput({
 
             <button
               type="submit"
-              disabled={isSubmitting || !content.trim()}
-              className="btn-accent px-6 py-2"
+              disabled={createCapture.isPending || !content.trim()}
+              className="btn-accent px-6 py-2 flex items-center gap-2"
             >
-              {isSubmitting ? 'Capturing...' : 'Capture'}
+              {showSpinner && <Loader2 className="w-4 h-4 animate-spin" />}
+              {showSpinner ? 'Capturing...' : 'Capture'}
             </button>
           </div>
         </form>
@@ -276,15 +285,15 @@ export default function QuickCaptureInput({
             onKeyDown={handleKeyDown}
             placeholder={`${placeholder} (Press Enter to submit)`}
             className="min-w-0 flex-1 font-mono bg-transparent outline-none"
-            disabled={isSubmitting}
+            disabled={createCapture.isPending}
           />
         </div>
         <button
           type="submit"
-          disabled={isSubmitting || !content.trim()}
+          disabled={createCapture.isPending || !content.trim()}
           className="btn-accent px-5"
         >
-          {isSubmitting ? '...' : <PenLine className="w-5 h-5" />}
+          {showSpinner ? <Loader2 className="w-5 h-5 animate-spin" /> : <PenLine className="w-5 h-5" />}
         </button>
       </form>
       {message && (
