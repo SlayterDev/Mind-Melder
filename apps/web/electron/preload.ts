@@ -19,7 +19,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveRecording: (data: { buffer: Uint8Array; filename: string }) =>
     ipcRenderer.invoke('save-recording', data),
   getRecordingsPath: () => ipcRenderer.invoke('get-recordings-path'),
-  openRecordingsFolder: () => ipcRenderer.invoke('open-recordings-folder'),
   openSystemPreferences: (pane: string) => ipcRenderer.invoke('open-system-preferences', pane),
   openRecordingWindow: () => ipcRenderer.invoke('open-recording-window'),
   closeRecordingWindow: () => ipcRenderer.invoke('close-recording-window'),
