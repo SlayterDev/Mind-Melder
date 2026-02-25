@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { notesAPI, searchAPI } from '../api/client';
-import { FileText, X, Plus, Search } from 'lucide-react';
+import { FileText, X, Plus, Search, FileAudio } from 'lucide-react';
+import AudioUploadModal from '../components/AudioUploadModal';
 
 export default function NotesPage() {
   const [notes, setNotes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTag, setSelectedTag] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   const loadNotes = async (tag?: string) => {
@@ -59,6 +61,13 @@ export default function NotesPage() {
     } catch (error) {
       console.error('Failed to delete note:', error);
     }
+  };
+
+  const handleTranscriptionComplete = () => {
+    setIsUploadModalOpen(false);
+    setSelectedTag('transcription');
+    setSearchQuery('');
+    loadNotes('transcription');
   };
 
   const allTags = Array.from(new Set(notes.flatMap((n) => n.tags || []))).sort();
@@ -113,6 +122,16 @@ export default function NotesPage() {
               ))}
             </select>
           )}
+
+          <button
+            onClick={() => setIsUploadModalOpen(true)}
+            className="btn-accent px-4 p-2 flex items-center gap-2"
+            title="Upload Audio"
+            aria-label="Upload audio for transcription"
+          >
+            <FileAudio className="w-4 h-4" />
+            Transcribe
+          </button>
 
           <Link
             to="/notes/new"
@@ -189,6 +208,12 @@ export default function NotesPage() {
             </div>
           ))}
         </div>
+      )}
+      {isUploadModalOpen && (
+        <AudioUploadModal
+          onClose={() => setIsUploadModalOpen(false)}
+          onTranscriptionComplete={handleTranscriptionComplete}
+        />
       )}
     </div>
   );

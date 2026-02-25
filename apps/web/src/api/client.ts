@@ -270,6 +270,19 @@ export const transcribeAPI = {
 
     return response.json();
   },
+  uploadFile: async (file: File): Promise<{ success: boolean; message: string }> => {
+    const formData = new FormData();
+    formData.append('audio', file, file.name);
+    const response = await fetch(`${getApiUrl()}/transcribe`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+    return response.json();
+  },
 };
 
 // Token Usage
