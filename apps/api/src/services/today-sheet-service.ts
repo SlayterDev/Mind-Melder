@@ -9,6 +9,9 @@ import {
   TagsRepository,
 } from 'database';
 import { templateTools } from '../utils/template-tools.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('TodaySheetService');
 
 export interface TodaySheet {
   summary: string;
@@ -50,28 +53,51 @@ export class TodaySheetService {
     templateId?: string,
     contentLockEnabled: boolean = false
   ): Promise<TodaySheet> {
+    logger.info('Generating today sheet', { userId, templateId, contentLockEnabled });
+
     // 1. Gather inputs
     const captures = await this.capturesRepo.findUnorganized(userId);
     const existingTodos = await this.todosRepo.findByStatus(userId, 'pending');
     const feedbackTodos = await this.todosRepo.findWithFeedback(userId);
+
+    logger.debug('Gathered inputs for today sheet', {
+      userId,
+      captureCount: captures.length,
+      pendingTodoCount: existingTodos.length,
+      feedbackTodoCount: feedbackTodos.length,
+    });
 
     // 2. Get template (use provided ID or active template or default)
     let template;
     if (templateId) {
       template = await this.templatesRepo.findById(templateId);
       if (!template || template.userId !== userId) {
+        logger.warn('Template not found or unauthorized', { userId, templateId });
         throw new Error('Template not found or unauthorized');
       }
+      logger.debug('Using specified template', { userId, templateId, templateName: template.name });
     } else {
       // Use the active template, or fall back to default if no templates exist
       const activeTemplate = await this.templatesRepo.findActiveTemplate(userId);
       template = activeTemplate || templateTools.defaultTemplate;
+      logger.debug('Using template', {
+        userId,
+        templateName: template.name,
+        source: activeTemplate ? 'active' : 'default',
+      });
     }
 
     // 2.5. Fetch user's tags for categorization
     const userTags = await this.tagsRepo.findByUserId(userId);
+    logger.debug('Fetched user tags', { userId, tagCount: userTags.length });
 
     // 3. Call LLM to generate Today Sheet
+    logger.info('Calling LLM for today sheet generation', {
+      userId,
+      captureCount: captures.length,
+      todoCount: existingTodos.length,
+    });
+
     let aiResult;
     try {
       aiResult = await this.llmProvider.generateTodaySheet({
@@ -89,10 +115,20 @@ export class TodaySheetService {
       });
     } catch (error) {
       if (error instanceof Error && error.message.includes('validation failed')) {
+        logger.error('LLM returned invalid response format', { userId, error: error.message });
         throw new Error('AI returned invalid response format. Please try again.');
       }
+      logger.errorWithException('LLM call failed during today sheet generation', error, { userId });
       throw error;
     }
+
+    logger.debug('LLM today sheet response received', {
+      userId,
+      sectionCounts: Object.fromEntries(
+        Object.entries(aiResult.sections).map(([k, v]) => [k, v.length])
+      ),
+      totalEstimatedMinutes: aiResult.totalEstimatedMinutes,
+    });
 
     // 4. Create today_sheets record to persist summary and metadata
     const todaySheet = await this.todaySheetsRepo.create({
@@ -129,23 +165,31 @@ export class TodaySheetService {
     const validCaptureIds = new Set(captures.map(c => c.id));
     const validTodoIds = new Set(existingTodos.map(t => t.id));
 
+    let skippedCount = 0;
+
     for (const [section, items] of Object.entries(aiResult.sections)) {
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
 
         // Validate sourceId exists in our input data
         if (item.sourceType === 'capture' && !validCaptureIds.has(item.sourceId)) {
-          console.warn(
-            `Skipping item "${item.title}": LLM returned invalid capture sourceId "${item.sourceId}" ` +
-            `(not in ${validCaptureIds.size} valid captures)`
-          );
+          logger.warn('Skipping item with invalid capture sourceId', {
+            userId,
+            itemTitle: item.title,
+            sourceId: item.sourceId,
+            validCaptureCount: validCaptureIds.size,
+          });
+          skippedCount++;
           continue;
         }
         if (item.sourceType === 'todo' && !validTodoIds.has(item.sourceId)) {
-          console.warn(
-            `Skipping item "${item.title}": LLM returned invalid todo sourceId "${item.sourceId}" ` +
-            `(not in ${validTodoIds.size} valid todos)`
-          );
+          logger.warn('Skipping item with invalid todo sourceId', {
+            userId,
+            itemTitle: item.title,
+            sourceId: item.sourceId,
+            validTodoCount: validTodoIds.size,
+          });
+          skippedCount++;
           continue;
         }
 
@@ -212,10 +256,28 @@ export class TodaySheetService {
       }
     }
 
+    if (skippedCount > 0) {
+      logger.warn('Some LLM-suggested items were skipped due to invalid source IDs', {
+        userId,
+        skippedCount,
+      });
+    }
+
     // 7. Mark captures as organized
     for (const capture of captures) {
       await this.capturesRepo.markAsOrganized(capture.id);
     }
+
+    const totalCreated = Object.values(createdTodos).reduce((sum, arr) => sum + arr.length, 0);
+
+    logger.info('Today sheet generated successfully', {
+      userId,
+      capturesProcessed: captures.length,
+      todosPlaced: totalCreated,
+      skippedCount,
+      totalEstimatedMinutes: aiResult.totalEstimatedMinutes,
+      sheetId: todaySheet.id,
+    });
 
     return {
       summary: aiResult.summary,
@@ -231,9 +293,12 @@ export class TodaySheetService {
    * Get the current Today Sheet for a user
    */
   async getSheet(userId: string): Promise<TodaySheet | null> {
+    logger.debug('Fetching current today sheet', { userId });
+
     const todos = await this.todosRepo.findInTodaySheet(userId);
 
     if (todos.length === 0) {
+      logger.debug('No today sheet found', { userId });
       return null;
     }
 
@@ -258,6 +323,12 @@ export class TodaySheetService {
     const totalEstimatedMinutes = todos.reduce((sum, t) =>
       sum + (timeEstimateMinutes[t.timeEstimate || 'none'] || 0), 0
     );
+
+    logger.debug('Today sheet retrieved', {
+      userId,
+      todoCount: todos.length,
+      totalEstimatedMinutes,
+    });
 
     return {
       summary: latestSheet?.summary || '',

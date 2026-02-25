@@ -14,7 +14,7 @@ import {
   ConversationsRepository,
   TokenUsageRepository,
 } from 'database';
-import { 
+import {
   createCapturesRouter,
   createTodosRouter,
   createNotesRouter,
@@ -33,6 +33,7 @@ import { createWeeklyReviewRouter } from './routes/weekly-review.js';
 import { errorHandler, requestLogger } from './middleware/index.js';
 import { SchedulerService } from './services/scheduler-service.js';
 import { TokenTrackingService } from './services/token-tracking-service.js';
+import { logger } from './utils/logger.js';
 
 // Load .env from project root
 const __filename = fileURLToPath(import.meta.url);
@@ -45,7 +46,7 @@ const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres
 
 // Initialize database
 const db = createDatabaseClient(DATABASE_URL);
-console.log('Database connected');
+logger.info('Database client initialized', { host: DATABASE_URL.replace(/:[^:@]*@/, ':***@') });
 
 
 // Initialize repositories
@@ -92,8 +93,12 @@ app.use('/api/v1/token-usage', createTokenUsageRouter(tokenTrackingService));
 app.use(errorHandler);
 
 app.listen(PORT, async () => {
-  console.log(`API server running on http://localhost:${PORT}`);
-  
+  logger.info('API server started', {
+    port: PORT,
+    nodeEnv: process.env.NODE_ENV ?? 'development',
+    logLevel: process.env.LOG_LEVEL ?? 'info',
+  });
+
   // Initialize scheduled jobs
   await scheduler.initialize();
 });
