@@ -635,7 +635,7 @@ export default function SettingsPage() {
 
         {/* Desktop Notifications */}
         <div className="sheet-card">
-          <div className="sheet-card-inner p-6">
+          <div className="p-6">
             <NotificationSettings />
           </div>
         </div>

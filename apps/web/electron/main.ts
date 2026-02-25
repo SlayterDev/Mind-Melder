@@ -294,7 +294,7 @@ ipcMain.handle('resize-recording-window', (_event, height: number) => {
 // Notification IPC handlers
 ipcMain.handle('check-notifications', async () => {
   if (notificationService) {
-    await notificationService.checkAndNotify();
+    await notificationService.sendTestNotification();
   }
 });
 

@@ -347,6 +347,23 @@ export class NotificationService {
     }
   }
 
+  async sendTestNotification() {
+    try {
+      const todos = await this.fetchAPI<Todo[]>('/todos?status=pending');
+      const pendingCount = todos.length;
+
+      const title = '🔔 Mind Melder Test';
+      const body = pendingCount > 0
+        ? `Notifications are working! You have ${pendingCount} pending task${pendingCount !== 1 ? 's' : ''}.`
+        : 'Notifications are working! No pending tasks right now.';
+
+      this.sendSummaryNotification(title, body);
+    } catch (error) {
+      // Still send notification even if fetching todos fails
+      this.sendSummaryNotification('🔔 Mind Melder Test', 'Notifications are working!');
+    }
+  }
+
   clearAllState() {
     this.lastMorningCheck = null;
     this.lastAfternoonCheck = null;

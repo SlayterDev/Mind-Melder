@@ -1,6 +1,33 @@
 import { useState, useEffect } from 'react';
 import { settingsAPI, type Settings } from '../api/client';
 
+function Toggle({
+  checked,
+  onChange,
+  disabled,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      disabled={disabled}
+      className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 disabled:opacity-50 ${
+        checked ? 'bg-accent' : 'bg-gray-600'
+      }`}
+    >
+      <div
+        className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+          checked ? 'translate-x-7' : 'translate-x-1'
+        }`}
+      />
+    </button>
+  );
+}
+
 export default function NotificationSettings() {
   const [settings, setSettings] = useState<Partial<Settings>>({
     notificationsEnabled: true,
@@ -15,15 +42,13 @@ export default function NotificationSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [success, setSuccess] = useState<'saved' | 'tested' | null>(null);
   const [isElectron, setIsElectron] = useState(false);
 
   useEffect(() => {
-    // Check if running in Electron
     setIsElectron(
       typeof window !== 'undefined' && window.electronAPI?.isElectron === true
     );
-
     loadSettings();
   }, []);
 
@@ -31,10 +56,7 @@ export default function NotificationSettings() {
     try {
       setLoading(true);
       setError(null);
-
       const allSettings = await settingsAPI.get();
-      
-      // Extract notification settings
       setSettings({
         notificationsEnabled: allSettings.notificationsEnabled ?? true,
         notificationsMorningReminderEnabled: allSettings.notificationsMorningReminderEnabled ?? true,
@@ -58,8 +80,6 @@ export default function NotificationSettings() {
       setSaving(true);
       setError(null);
       setSuccess(false);
-
-      // Save settings via the settings API
       await settingsAPI.update({
         notificationsEnabled: settings.notificationsEnabled,
         notificationsMorningReminderEnabled: settings.notificationsMorningReminderEnabled,
@@ -70,14 +90,11 @@ export default function NotificationSettings() {
         notificationsQuietHoursStart: settings.notificationsQuietHoursStart || null,
         notificationsQuietHoursEnd: settings.notificationsQuietHoursEnd || null,
       });
-
-      // Restart notification service if in Electron
       if (isElectron && window.electronAPI?.restartNotificationService) {
         await window.electronAPI.restartNotificationService();
       }
-
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      setSuccess('saved');
+      setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
       console.error('Failed to save notification settings:', err);
       setError('Failed to save settings');
@@ -90,20 +107,22 @@ export default function NotificationSettings() {
     if (isElectron && window.electronAPI?.checkNotifications) {
       try {
         await window.electronAPI.checkNotifications();
-        alert('Notification check triggered manually.');
+        setSuccess('tested');
+        setTimeout(() => setSuccess(null), 3000);
       } catch (err) {
         console.error('Failed to check notifications:', err);
-        alert('Failed to trigger notification check');
+        setError('Failed to trigger notification check');
       }
     }
   };
 
   if (!isElectron) {
     return (
-      <div className="rounded-lg bg-gray-100 dark:bg-gray-800 p-6">
-        <div className="flex items-start gap-3">
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Desktop Notifications</h3>
+        <div className="flex items-start gap-3 p-4 rounded-lg bg-gray-800/50 border border-gray-700">
           <svg
-            className="w-6 h-6 text-blue-500 flex-shrink-0 mt-0.5"
+            className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -116,10 +135,8 @@ export default function NotificationSettings() {
             />
           </svg>
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
-              Desktop App Required
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
+            <p className="text-sm font-medium text-gray-300 mb-1">Desktop App Required</p>
+            <p className="text-xs text-gray-500">
               Notifications are only available in the desktop app. Download it from the releases page
               to receive desktop notifications for your todos.
             </p>
@@ -130,192 +147,156 @@ export default function NotificationSettings() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-gray-500 dark:text-gray-400">Loading notification settings...</div>
-      </div>
-    );
+    return <div className="text-gray-400 text-center py-8">Loading notification settings...</div>;
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          Desktop Notifications
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <h3 className="text-lg font-semibold mb-1">Desktop Notifications</h3>
+        <p className="text-sm text-gray-500">
           Receive daily summaries of your todos with due dates at scheduled times.
         </p>
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4">
-          <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
+        <div className="p-4 bg-red-900/30 border border-red-700 rounded-lg text-red-300 text-sm">
+          {error}
         </div>
       )}
 
       {success && (
-        <div className="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4">
-          <p className="text-green-800 dark:text-green-200 text-sm">Settings saved successfully!</p>
+        <div className="p-4 bg-green-900/30 border border-green-700 rounded-lg text-green-300 text-sm">
+          {success === 'tested' ? 'Test notification sent!' : 'Settings saved successfully!'}
         </div>
       )}
 
-      <div className="space-y-4">
-        {/* Master toggle */}
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={settings.notificationsEnabled}
-            onChange={(e) => setSettings({ ...settings, notificationsEnabled: e.target.checked })}
-            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-          />
-          <span className="text-gray-900 dark:text-gray-100 font-medium">
-            Enable desktop notifications
-          </span>
-        </label>
-
-        {/* Settings only shown when enabled */}
-        {settings.notificationsEnabled && (
-          <div className="ml-7 space-y-6 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
-            {/* Morning reminder */}
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.notificationsMorningReminderEnabled}
-                  onChange={(e) =>
-                    setSettings({ ...settings, notificationsMorningReminderEnabled: e.target.checked })
-                  }
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <span className="text-gray-900 dark:text-gray-100 font-medium">
-                  Morning reminder
-                </span>
-              </label>
-              {settings.notificationsMorningReminderEnabled && (
-                <div className="ml-7">
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
-                    Time
-                  </label>
-                  <input
-                    type="time"
-                    value={settings.notificationsMorningReminderTime}
-                    onChange={(e) =>
-                      setSettings({ ...settings, notificationsMorningReminderTime: e.target.value })
-                    }
-                    className="block w-32 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Receive a summary of todos due today and overdue tasks
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Afternoon reminder */}
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={settings.notificationsAfternoonReminderEnabled}
-                  onChange={(e) =>
-                    setSettings({ ...settings, notificationsAfternoonReminderEnabled: e.target.checked })
-                  }
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                />
-                <span className="text-gray-900 dark:text-gray-100 font-medium">
-                  Afternoon reminder
-                </span>
-              </label>
-              {settings.notificationsAfternoonReminderEnabled && (
-                <div className="ml-7">
-                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
-                    Time
-                  </label>
-                  <input
-                    type="time"
-                    value={settings.notificationsAfternoonReminderTime}
-                    onChange={(e) =>
-                      setSettings({ ...settings, notificationsAfternoonReminderTime: e.target.value })
-                    }
-                    className="block w-32 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                    Receive a preview of todos due tomorrow
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Show overdue */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.notificationsShowOverdue}
-                onChange={(e) => setSettings({ ...settings, notificationsShowOverdue: e.target.checked })}
-                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                Include overdue tasks in morning reminder
-              </span>
-            </label>
-
-            {/* Quiet hours */}
-            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Quiet hours (optional):
-              </label>
-              <div className="flex items-center gap-4">
-                <div>
-                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    Start
-                  </label>
-                  <input
-                    type="time"
-                    value={settings.notificationsQuietHoursStart || ''}
-                    onChange={(e) =>
-                      setSettings({ ...settings, notificationsQuietHoursStart: e.target.value || null })
-                    }
-                    className="block w-32 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                  />
-                </div>
-                <div className="text-gray-500 dark:text-gray-400 pt-5">to</div>
-                <div>
-                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    End
-                  </label>
-                  <input
-                    type="time"
-                    value={settings.notificationsQuietHoursEnd || ''}
-                    onChange={(e) =>
-                      setSettings({ ...settings, notificationsQuietHoursEnd: e.target.value || null })
-                    }
-                    className="block w-32 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                No notifications will be sent during quiet hours
-              </p>
-            </div>
-          </div>
-        )}
+      {/* Master toggle */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium text-gray-300">Enable desktop notifications</p>
+        <Toggle
+          checked={!!settings.notificationsEnabled}
+          onChange={(v) => setSettings({ ...settings, notificationsEnabled: v })}
+          disabled={saving}
+        />
       </div>
 
-      {/* Action buttons */}
-      <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-md font-medium transition-colors"
-        >
+      {/* Sub-settings — only shown when enabled */}
+      {settings.notificationsEnabled && (
+        <div className="space-y-6 border-t border-gray-800 pt-5">
+          {/* Morning reminder */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-300">Morning reminder</p>
+                <p className="text-xs text-gray-500 mt-0.5">Today's tasks and overdue items</p>
+              </div>
+              <Toggle
+                checked={!!settings.notificationsMorningReminderEnabled}
+                onChange={(v) => setSettings({ ...settings, notificationsMorningReminderEnabled: v })}
+                disabled={saving}
+              />
+            </div>
+            {settings.notificationsMorningReminderEnabled && (
+              <div className="ml-4 pl-4 border-l border-gray-700">
+                <label className="block text-xs font-medium text-gray-400 mb-1.5">Time</label>
+                <input
+                  type="time"
+                  value={settings.notificationsMorningReminderTime}
+                  onChange={(e) =>
+                    setSettings({ ...settings, notificationsMorningReminderTime: e.target.value })
+                  }
+                  className="input-accent w-36"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Afternoon reminder */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-300">Afternoon reminder</p>
+                <p className="text-xs text-gray-500 mt-0.5">Preview of tomorrow's tasks</p>
+              </div>
+              <Toggle
+                checked={!!settings.notificationsAfternoonReminderEnabled}
+                onChange={(v) => setSettings({ ...settings, notificationsAfternoonReminderEnabled: v })}
+                disabled={saving}
+              />
+            </div>
+            {settings.notificationsAfternoonReminderEnabled && (
+              <div className="ml-4 pl-4 border-l border-gray-700">
+                <label className="block text-xs font-medium text-gray-400 mb-1.5">Time</label>
+                <input
+                  type="time"
+                  value={settings.notificationsAfternoonReminderTime}
+                  onChange={(e) =>
+                    setSettings({ ...settings, notificationsAfternoonReminderTime: e.target.value })
+                  }
+                  className="input-accent w-36"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Show overdue */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-300">Include overdue tasks</p>
+              <p className="text-xs text-gray-500 mt-0.5">Show overdue items in morning reminder</p>
+            </div>
+            <Toggle
+              checked={!!settings.notificationsShowOverdue}
+              onChange={(v) => setSettings({ ...settings, notificationsShowOverdue: v })}
+              disabled={saving}
+            />
+          </div>
+
+          {/* Quiet hours */}
+          <div className="border-t border-gray-800 pt-5 space-y-3">
+            <div>
+              <p className="text-sm font-medium text-gray-300">Quiet hours</p>
+              <p className="text-xs text-gray-500 mt-0.5">No notifications will be sent during this window</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1.5">Start</label>
+                <input
+                  type="time"
+                  value={settings.notificationsQuietHoursStart || ''}
+                  onChange={(e) =>
+                    setSettings({ ...settings, notificationsQuietHoursStart: e.target.value || null })
+                  }
+                  className="input-accent w-36"
+                />
+              </div>
+              <span className="text-gray-600 mt-5">—</span>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1.5">End</label>
+                <input
+                  type="time"
+                  value={settings.notificationsQuietHoursEnd || ''}
+                  onChange={(e) =>
+                    setSettings({ ...settings, notificationsQuietHoursEnd: e.target.value || null })
+                  }
+                  className="input-accent w-36"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex gap-3 pt-4 border-t border-gray-800">
+        <button onClick={handleSave} disabled={saving} className="btn-accent">
           {saving ? 'Saving...' : 'Save Settings'}
         </button>
-
         {settings.notificationsEnabled && (
           <button
             onClick={handleCheckNow}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-md font-medium transition-colors"
+            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg font-medium transition-colors"
           >
             Test Notifications
           </button>
