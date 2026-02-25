@@ -229,9 +229,9 @@ export class NotificationService {
       tomorrow.setDate(tomorrow.getDate() + 1);
       const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-      let todayTodos: Todo[] = [];
-      let tomorrowTodos: Todo[] = [];
-      let overdueTodos: Todo[] = [];
+      const todayTodos: Todo[] = [];
+      const tomorrowTodos: Todo[] = [];
+      const overdueTodos: Todo[] = [];
 
       // Categorize todos by date
       for (const todo of todosWithDates) {
@@ -266,7 +266,7 @@ export class NotificationService {
       return;
     }
 
-    let title = '☀️ Good Morning';
+    const title = '☀️ Good Morning';
     let body = '';
 
     if (totalToday > 0 && totalOverdue > 0) {
