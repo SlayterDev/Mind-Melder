@@ -8,3 +8,4 @@ export * from './tags-repository.js';
 export * from './conversations-repository.js';
 export * from './weekly-reviews-repository.js';
 export * from './token-usage-repository.js';
+export * from './agent-actions-repository.js';
