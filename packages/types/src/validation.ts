@@ -121,6 +121,16 @@ export const updateSettingsSchema = z.object({
   organizeScheduleFrequency: scheduleFrequencySchema.optional(),
   organizeScheduleTime: timeStringSchema.optional(),
   organizeScheduleWeekday: z.string().regex(/^[0-6]$/, 'Weekday must be 0-6 (Sunday-Saturday)').optional(),
+
+  // Desktop notifications
+  notificationsEnabled: z.boolean().optional(),
+  notificationsMorningReminderEnabled: z.boolean().optional(),
+  notificationsMorningReminderTime: timeStringSchema.optional(),
+  notificationsAfternoonReminderEnabled: z.boolean().optional(),
+  notificationsAfternoonReminderTime: timeStringSchema.optional(),
+  notificationsShowOverdue: z.boolean().optional(),
+  notificationsQuietHoursStart: timeStringSchema.nullable().optional(),
+  notificationsQuietHoursEnd: timeStringSchema.nullable().optional(),
 });
 
 export type LLMProvider = z.infer<typeof llmProviderSchema>;

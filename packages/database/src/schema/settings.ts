@@ -37,6 +37,16 @@ export const settings = pgTable(
     organizeScheduleTime: text('organize_schedule_time').notNull().default('17:00'), // HH:MM format
     organizeScheduleWeekday: text('organize_schedule_weekday').notNull().default('1'), // 0-6 (Sunday-Saturday)
     
+    // Desktop Notifications
+    notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
+    notificationsMorningReminderEnabled: boolean('notifications_morning_reminder_enabled').notNull().default(true),
+    notificationsMorningReminderTime: text('notifications_morning_reminder_time').notNull().default('09:00'), // HH:MM format
+    notificationsAfternoonReminderEnabled: boolean('notifications_afternoon_reminder_enabled').notNull().default(false),
+    notificationsAfternoonReminderTime: text('notifications_afternoon_reminder_time').notNull().default('15:00'), // HH:MM format
+    notificationsShowOverdue: boolean('notifications_show_overdue').notNull().default(true),
+    notificationsQuietHoursStart: text('notifications_quiet_hours_start'), // HH:MM format or null
+    notificationsQuietHoursEnd: text('notifications_quiet_hours_end'), // HH:MM format or null
+    
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

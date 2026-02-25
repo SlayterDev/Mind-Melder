@@ -220,6 +220,16 @@ export interface Settings {
   organizeScheduleTime: string; // HH:MM format
   organizeScheduleWeekday: string; // 0-6 (Sunday-Saturday)
   
+  // Desktop Notifications
+  notificationsEnabled: boolean;
+  notificationsMorningReminderEnabled: boolean;
+  notificationsMorningReminderTime: string; // HH:MM format
+  notificationsAfternoonReminderEnabled: boolean;
+  notificationsAfternoonReminderTime: string; // HH:MM format
+  notificationsShowOverdue: boolean;
+  notificationsQuietHoursStart: string | null;
+  notificationsQuietHoursEnd: string | null;
+  
   createdAt: string;
   updatedAt: string;
 }

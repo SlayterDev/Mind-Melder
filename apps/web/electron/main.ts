@@ -13,6 +13,7 @@ import * as fs from 'fs/promises';
 import * as fsSync from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { NotificationService } from './notification-service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,6 +21,7 @@ const __dirname = path.dirname(__filename);
 let mainWindow: BrowserWindow | null = null;
 let quickCaptureWindow: BrowserWindow | null = null;
 let recordingWindow: BrowserWindow | null = null;
+let notificationService: NotificationService | null = null;
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -289,6 +291,53 @@ ipcMain.handle('resize-recording-window', (_event, height: number) => {
   recordingWindow.setSize(width, clampedHeight);
 });
 
+// Notification IPC handlers
+ipcMain.handle('check-notifications', async () => {
+  if (notificationService) {
+    await notificationService.sendTestNotification();
+  }
+});
+
+ipcMain.handle('restart-notification-service', async () => {
+  if (notificationService) {
+    await notificationService.restart();
+  }
+});
+
+ipcMain.handle('get-notification-state', () => {
+  if (notificationService) {
+    return notificationService.getState();
+  }
+  return null;
+});
+
+// Helper to get API URL from config file
+function getApiUrl(): string {
+  // Check for configured API URL in config file (same location as web config)
+  const configPath = path.join(app.getPath('userData'), 'config.json');
+  try {
+    if (fsSync.existsSync(configPath)) {
+      const config = JSON.parse(fsSync.readFileSync(configPath, 'utf-8'));
+      if (config.apiUrl) {
+        // Ensure it ends with /api/v1
+        let url = config.apiUrl.trim();
+        if (url.endsWith('/')) {
+          url = url.slice(0, -1);
+        }
+        if (!url.endsWith('/api/v1')) {
+          url = url + '/api/v1';
+        }
+        return url;
+      }
+    }
+  } catch (error) {
+    console.error('[Config] Failed to read config:', error);
+  }
+  
+  // Default to localhost (works for both dev and prod if API is local)
+  return 'http://localhost:3000/api/v1';
+}
+
 // App lifecycle
 app.whenReady().then(() => {
   // Handle getDisplayMedia requests — provides screen source + system audio loopback
@@ -317,9 +366,27 @@ app.whenReady().then(() => {
   createMainWindow();
   registerGlobalShortcuts();
 
+  // Initialize notification service
+  const apiUrl = getApiUrl();
+  notificationService = new NotificationService(apiUrl, mainWindow);
+  
+  // Start notification service after a delay to allow:
+  // 1. API server to be ready and accepting connections
+  // 2. Settings to be initialized in the database
+  // 3. Main window to complete initial render
+  // This prevents spurious errors on first launch
+  setTimeout(() => {
+    if (notificationService) {
+      notificationService.start();
+    }
+  }, 3000);
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createMainWindow();
+      if (notificationService) {
+        notificationService.setMainWindow(mainWindow);
+      }
     }
   });
 });
@@ -332,4 +399,9 @@ app.on('window-all-closed', () => {
 
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
+  
+  // Stop notification service
+  if (notificationService) {
+    notificationService.stop();
+  }
 });

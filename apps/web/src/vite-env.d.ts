@@ -37,6 +37,16 @@ interface ElectronAPI {
   openRecordingWindow: () => Promise<void>;
   closeRecordingWindow: () => Promise<void>;
   resizeRecordingWindow: (height: number) => Promise<void>;
+
+  // Desktop Notifications
+  checkNotifications: () => Promise<void>;
+  restartNotificationService: () => Promise<void>;
+  getNotificationState: () => Promise<{
+    lastMorningCheck: string | null;
+    lastAfternoonCheck: string | null;
+    isRunning: boolean;
+  } | null>;
+  onNavigateToTodos: (callback: () => void) => () => void;
 }
 
 interface Window {

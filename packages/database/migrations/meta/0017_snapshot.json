@@ -1,6 +1,6 @@
 {
-  "id": "488fb575-3bfa-4a9b-a5c5-665179180c12",
-  "prevId": "ee762836-9906-441b-bc3d-6830e91e3b80",
+  "id": "408c73f1-b12b-46bf-a894-5f0021c033e7",
+  "prevId": "6990a973-bf04-4c7a-9bc5-d999a92452a9",
   "version": "5",
   "dialect": "pg",
   "tables": {
@@ -617,6 +617,13 @@
           "notNull": true,
           "default": false
         },
+        "include_tag_descriptions": {
+          "name": "include_tag_descriptions",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "organize_schedule_enabled": {
           "name": "organize_schedule_enabled",
           "type": "boolean",
@@ -644,6 +651,60 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'1'"
+        },
+        "notifications_enabled": {
+          "name": "notifications_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "notifications_morning_reminder_enabled": {
+          "name": "notifications_morning_reminder_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "notifications_morning_reminder_time": {
+          "name": "notifications_morning_reminder_time",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'09:00'"
+        },
+        "notifications_afternoon_reminder_enabled": {
+          "name": "notifications_afternoon_reminder_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "notifications_afternoon_reminder_time": {
+          "name": "notifications_afternoon_reminder_time",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'15:00'"
+        },
+        "notifications_show_overdue": {
+          "name": "notifications_show_overdue",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "notifications_quiet_hours_start": {
+          "name": "notifications_quiet_hours_start",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notifications_quiet_hours_end": {
+          "name": "notifications_quiet_hours_end",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -1044,7 +1105,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"

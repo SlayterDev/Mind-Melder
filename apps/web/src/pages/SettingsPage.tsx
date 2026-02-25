@@ -4,6 +4,7 @@ import { settingsAPI, ollamaAPI, tokenUsageAPI, type Settings, type OllamaModel,
 import { Cog, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { getServerUrl, setApiUrl, testConnection } from '../api/config';
 import ServerConnection from '../components/ServerConnection';
+import NotificationSettings from '../components/NotificationSettings';
 import TokenUsageCard from '../components/TokenUsageCard';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
@@ -629,6 +630,13 @@ export default function SettingsPage() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Desktop Notifications */}
+        <div className="sheet-card">
+          <div className="p-6">
+            <NotificationSettings />
           </div>
         </div>
 

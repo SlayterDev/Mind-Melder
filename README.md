@@ -15,6 +15,7 @@ A self-hosted productivity tool that captures quick notes throughout the day and
 - Global tag management for AI-guided categorization
 - User-defined templates for personalized structure
 - Feedback system for AI-generated todos
+- Desktop notifications for due and overdue todos (desktop app)
 - Record and transcribe system audio (OpenAI or local whisper)
 - Desktop app via Electron (macOS, Windows, Linux)
 - Self-hosted via Docker Compose
@@ -110,6 +111,7 @@ This project follows strict scope boundaries defined in [PROJECT_SPEC.md](./docs
 - [TECH_STACK.md](./docs/TECH_STACK.md) — Technology choices
 - [TODAY_SHEET.md](./docs/TODAY_SHEET.md) — AI daily planning feature
 - [ELECTRON_DESKTOP.md](./docs/ELECTRON_DESKTOP.md) — Desktop app
+- [NOTIFICATIONS.md](./docs/NOTIFICATIONS.md) — Desktop notifications
 - [PROJECT_SPEC.md](./docs/PROJECT_SPEC.md) — Feature specification
 
 ## License

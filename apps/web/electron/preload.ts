@@ -25,4 +25,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   closeRecordingWindow: () => ipcRenderer.invoke('close-recording-window'),
   resizeRecordingWindow: (height: number) =>
     ipcRenderer.invoke('resize-recording-window', height),
+
+  // Notifications
+  checkNotifications: () => ipcRenderer.invoke('check-notifications'),
+  restartNotificationService: () => ipcRenderer.invoke('restart-notification-service'),
+  getNotificationState: () => ipcRenderer.invoke('get-notification-state'),
+  onNavigateToTodos: (callback: () => void) => {
+    const subscription = (_event: any) => callback();
+    ipcRenderer.on('navigate-to-todos', subscription);
+    return () => ipcRenderer.removeListener('navigate-to-todos', subscription);
+  },
 });
+
