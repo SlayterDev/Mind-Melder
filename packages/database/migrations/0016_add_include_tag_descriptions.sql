@@ -1,1 +1,0 @@
-ALTER TABLE "settings" ADD COLUMN "include_tag_descriptions" boolean DEFAULT false NOT NULL;
