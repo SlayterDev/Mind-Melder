@@ -32,6 +32,7 @@ interface ElectronAPI {
   requestMicrophonePermission: () => Promise<boolean>;
   saveRecording: (data: { buffer: Uint8Array; filename: string }) => Promise<SaveRecordingResult>;
   getRecordingsPath: () => Promise<string>;
+  openRecordingsFolder: () => Promise<void>;
   openSystemPreferences: (pane: string) => Promise<void>;
   openRecordingWindow: () => Promise<void>;
   closeRecordingWindow: () => Promise<void>;

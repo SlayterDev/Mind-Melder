@@ -250,6 +250,16 @@ ipcMain.handle('get-recordings-path', () => {
   return path.join(app.getPath('userData'), 'recordings');
 });
 
+ipcMain.handle('open-recordings-folder', async () => {
+  const recordingsDir = path.join(app.getPath('userData'), 'recordings');
+  try {
+    await fs.access(recordingsDir);
+  } catch {
+    await fs.mkdir(recordingsDir, { recursive: true });
+  }
+  await shell.openPath(recordingsDir);
+});
+
 ipcMain.handle('open-system-preferences', (_event, pane: string) => {
   if (process.platform === 'darwin') {
     const paneMap: Record<string, string> = {
