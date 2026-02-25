@@ -51,7 +51,8 @@ export class TodaySheetService {
   async generateSheet(
     userId: string,
     templateId?: string,
-    contentLockEnabled: boolean = false
+    contentLockEnabled: boolean = false,
+    includeTagDescriptions: boolean = false
   ): Promise<TodaySheet> {
     logger.info('Generating today sheet', { userId, templateId, contentLockEnabled });
 
@@ -96,6 +97,7 @@ export class TodaySheetService {
       userId,
       captureCount: captures.length,
       todoCount: existingTodos.length,
+      includeTagDescriptions
     });
 
     let aiResult;
@@ -106,6 +108,7 @@ export class TodaySheetService {
         feedbackTodos,
         template,
         tags: userTags,
+        includeDescriptions: includeTagDescriptions,
         contentLockEnabled,
         context: {
           currentTimeOfDay: new Date().getHours(),

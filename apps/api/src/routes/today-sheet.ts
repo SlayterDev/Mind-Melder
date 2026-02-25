@@ -48,7 +48,7 @@ export function createTodaySheetRouter(db: Database, settingsRepo: SettingsRepos
         const settings = await settingsRepo.getOrCreate(userId);
         const llmProvider = ProviderFactory.createFromSettings(settings);
         const todaySheetService = new TodaySheetService(db, llmProvider);
-        const sheet = await todaySheetService.generateSheet(userId, templateId, settings.contentLockEnabled);
+        const sheet = await todaySheetService.generateSheet(userId, templateId, settings.contentLockEnabled, settings.includeTagDescriptions);
 
         if (tokenTracker && llmProvider.lastUsage) {
           tokenTracker.trackUsage(userId, settings.llmProvider, settings.llmModel || 'default', 'today_sheet', llmProvider.lastUsage);

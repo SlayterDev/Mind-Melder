@@ -105,6 +105,9 @@ export const updateSettingsSchema = z.object({
   // Content Lock
   contentLockEnabled: z.boolean().optional(),
 
+  // Include Tag Descriptions in LLM prompts
+  includeTagDescriptions: z.boolean().optional(),
+
   // Legacy CRON-based scheduling (kept for backwards compatibility)
   organizationSchedule: z.string().max(100).optional(),
   scheduleEnabled: z.boolean().optional(),

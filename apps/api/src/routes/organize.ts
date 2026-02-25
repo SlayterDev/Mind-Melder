@@ -38,7 +38,7 @@ export function createOrganizeRouter(db: Database, settingsRepo: SettingsReposit
         const llmProvider = ProviderFactory.createFromSettings(settings);
         const organizationService = new OrganizationService(db, llmProvider);
 
-        const result = await organizationService.organizeCaptures(userId, templateId, settings.contentLockEnabled);
+        const result = await organizationService.organizeCaptures(userId, templateId, settings.contentLockEnabled, settings.includeTagDescriptions);
 
         if (tokenTracker && llmProvider.lastUsage) {
           tokenTracker.trackUsage(userId, settings.llmProvider, settings.llmModel || 'default', 'organize', llmProvider.lastUsage);

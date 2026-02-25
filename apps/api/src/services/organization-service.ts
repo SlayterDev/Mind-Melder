@@ -34,7 +34,8 @@ export class OrganizationService {
   async organizeCaptures(
     userId: string,
     templateId?: string,
-    contentLockEnabled: boolean = false
+    contentLockEnabled: boolean = false,
+    includeTagDescriptions: boolean = false
   ): Promise<OrganizationResult> {
     logger.info('Starting capture organization', { userId, templateId, contentLockEnabled });
 
@@ -76,8 +77,8 @@ export class OrganizationService {
     logger.debug('Fetched user tags', { userId, tagCount: userTags.length });
 
     // Use LLM to extract todos
-    logger.info('Calling LLM for organization', { userId, captureCount: captures.length });
-    const organized = await this.llmProvider.organize(captures, template, userTags, false, contentLockEnabled);
+    logger.info('Calling LLM for organization', { userId, captureCount: captures.length, includeTagDescriptions });
+    const organized = await this.llmProvider.organize(captures, template, userTags, includeTagDescriptions, contentLockEnabled);
 
     // Create todos - handle case where todos might be undefined or missing
     const todos = organized.todos || [];
