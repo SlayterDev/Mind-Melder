@@ -97,6 +97,7 @@ export class TodaySheetService {
       userId,
       captureCount: captures.length,
       todoCount: existingTodos.length,
+      includeTagDescriptions
     });
 
     let aiResult;
