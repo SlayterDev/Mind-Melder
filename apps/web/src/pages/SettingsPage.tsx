@@ -6,6 +6,7 @@ import { getServerUrl, setApiUrl, testConnection } from '../api/config';
 import ServerConnection from '../components/ServerConnection';
 import NotificationSettings from '../components/NotificationSettings';
 import TokenUsageCard from '../components/TokenUsageCard';
+import { Switch } from '../components/Switch';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectron;
 
@@ -397,19 +398,11 @@ export default function SettingsPage() {
                       Use a local whisper.cpp server for audio transcription
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleUpdate({ whisperEnabled: !settings.whisperEnabled })}
+                  <Switch
+                    checked={!!settings.whisperEnabled}
+                    onChange={(v) => handleUpdate({ whisperEnabled: v })}
                     disabled={isSaving}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${
-                      settings.whisperEnabled ? 'bg-accent' : 'bg-gray-600'
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                        settings.whisperEnabled ? 'translate-x-7' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
+                  />
                 </div>
 
                 {settings.whisperEnabled && (
@@ -453,19 +446,11 @@ export default function SettingsPage() {
                   Preserve original capture and todo text. AI will not rewrite titles or existing descriptions.
                 </p>
               </div>
-              <button
-                onClick={() => handleUpdate({ contentLockEnabled: !settings.contentLockEnabled })}
+              <Switch
+                checked={!!settings.contentLockEnabled}
+                onChange={(v) => handleUpdate({ contentLockEnabled: v })}
                 disabled={isSaving}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  settings.contentLockEnabled ? 'bg-accent' : 'bg-gray-600'
-                }`}
-              >
-                <div
-                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                    settings.contentLockEnabled ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+              />
             </div>
             <div className="flex items-center justify-between">
               <div>
@@ -476,19 +461,11 @@ export default function SettingsPage() {
                   Include tag descriptions in AI prompts for better categorization. Disable to save tokens.
                 </p>
               </div>
-              <button
-                onClick={() => handleUpdate({ includeTagDescriptions: !settings.includeTagDescriptions })}
+              <Switch
+                checked={!!settings.includeTagDescriptions}
+                onChange={(v) => handleUpdate({ includeTagDescriptions: v })}
                 disabled={isSaving}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  settings.includeTagDescriptions ? 'bg-accent' : 'bg-gray-600'
-                }`}
-              >
-                <div
-                  className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                    settings.includeTagDescriptions ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
-              </button>
+              />
             </div>
           </div>
         </div>
@@ -502,19 +479,11 @@ export default function SettingsPage() {
             <h4 className="text-md font-medium text-gray-300">Today Sheet Generation</h4>
             
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => handleUpdate({ todaySheetScheduleEnabled: !settings.todaySheetScheduleEnabled })}
+              <Switch
+                checked={!!settings.todaySheetScheduleEnabled}
+                onChange={(v) => handleUpdate({ todaySheetScheduleEnabled: v })}
                 disabled={isSaving}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  settings.todaySheetScheduleEnabled ? 'bg-accent' : 'bg-gray-700'
-                }`}
-              >
-                <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                    settings.todaySheetScheduleEnabled ? 'left-7' : 'left-1'
-                  }`}
-                />
-              </button>
+              />
               <span className="text-gray-300">
                 {settings.todaySheetScheduleEnabled ? 'Enabled' : 'Disabled'}
               </span>
@@ -550,19 +519,11 @@ export default function SettingsPage() {
             <h4 className="text-md font-medium text-gray-300">Organization Flow</h4>
             
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => handleUpdate({ organizeScheduleEnabled: !settings.organizeScheduleEnabled })}
+              <Switch
+                checked={!!settings.organizeScheduleEnabled}
+                onChange={(v) => handleUpdate({ organizeScheduleEnabled: v })}
                 disabled={isSaving}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  settings.organizeScheduleEnabled ? 'bg-accent' : 'bg-gray-700'
-                }`}
-              >
-                <span
-                  className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                    settings.organizeScheduleEnabled ? 'left-7' : 'left-1'
-                  }`}
-                />
-              </button>
+              />
               <span className="text-gray-300">
                 {settings.organizeScheduleEnabled ? 'Enabled' : 'Disabled'}
               </span>

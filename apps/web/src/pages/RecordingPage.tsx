@@ -3,6 +3,7 @@ import { X, Mic, Monitor, Pause, Play, Square, Loader2, Headphones, Check, Alert
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import RecordingPermissionPrompt from '../components/RecordingPermissionPrompt';
 import { transcribeAPI } from '../api/client';
+import { Switch } from '../components/Switch';
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -169,22 +170,11 @@ export default function RecordingPage() {
                     <Monitor className="w-4 h-4 text-gray-400" />
                     <span className="text-gray-300">System Audio</span>
                   </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={systemAudioEnabled}
-                    aria-label="Toggle system audio"
-                    onClick={() => setSystemAudioEnabled(!systemAudioEnabled)}
-                    className={`w-9 h-5 rounded-full relative transition-colors cursor-pointer ${
-                      systemAudioEnabled ? 'bg-accent' : 'bg-gray-600'
-                    }`}
-                  >
-                    <div
-                      className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform ${
-                        systemAudioEnabled ? 'translate-x-4' : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
+                  <Switch
+                    checked={systemAudioEnabled}
+                    onChange={setSystemAudioEnabled}
+                    size="sm"
+                  />
                 </div>
 
                 <div className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2">
@@ -192,22 +182,11 @@ export default function RecordingPage() {
                     <Mic className="w-4 h-4 text-gray-400" />
                     <span className="text-gray-300">Microphone</span>
                   </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={micEnabled}
-                    aria-label="Toggle microphone"
-                    onClick={() => setMicEnabled(!micEnabled)}
-                    className={`w-9 h-5 rounded-full relative transition-colors cursor-pointer ${
-                      micEnabled ? 'bg-accent' : 'bg-gray-600'
-                    }`}
-                  >
-                    <div
-                      className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-transform ${
-                        micEnabled ? 'translate-x-4' : 'translate-x-0.5'
-                      }`}
-                    />
-                  </button>
+                  <Switch
+                    checked={micEnabled}
+                    onChange={setMicEnabled}
+                    size="sm"
+                  />
                 </div>
               </div>
             )}
