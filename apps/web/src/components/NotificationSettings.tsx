@@ -79,7 +79,7 @@ export default function NotificationSettings() {
     try {
       setSaving(true);
       setError(null);
-      setSuccess(false);
+      setSuccess(null);
       await settingsAPI.update({
         notificationsEnabled: settings.notificationsEnabled,
         notificationsMorningReminderEnabled: settings.notificationsMorningReminderEnabled,
