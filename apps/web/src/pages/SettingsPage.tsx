@@ -48,7 +48,6 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
@@ -165,16 +164,16 @@ export default function SettingsPage() {
   const handleUpdate = async (updates: Partial<Settings>) => {
     if (!settings) return;
 
-    setIsSaving(true);
+    const previous = settings;
+    setSettings({ ...settings, ...updates });
     setError(null);
     try {
       const updated = await settingsAPI.update(updates);
       setSettings(updated);
     } catch (err) {
+      setSettings(previous);
       setError('Failed to save settings');
       console.error('Failed to update settings:', err);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -251,7 +250,7 @@ export default function SettingsPage() {
                   <button
                     key={key}
                     onClick={() => handleUpdate({ llmProvider: key as Settings['llmProvider'], llmModel: null })}
-                    disabled={isSaving}
+                    disabled={false}
                     className={`px-4 py-2 rounded-lg font-medium transition-all ${
                       settings.llmProvider === key
                         ? 'bg-accent text-white'
@@ -275,7 +274,7 @@ export default function SettingsPage() {
                     <select
                       value={settings.llmModel || ''}
                       onChange={(e) => handleUpdate({ llmModel: e.target.value || null })}
-                      disabled={isSaving || isLoadingOllamaModels}
+                      disabled={isLoadingOllamaModels}
                       className="input-accent w-full max-w-md"
                     >
                       {ollamaModels.length === 0 && (
@@ -310,7 +309,7 @@ export default function SettingsPage() {
                 <select
                   value={settings.llmModel || ''}
                   onChange={(e) => handleUpdate({ llmModel: e.target.value || null })}
-                  disabled={isSaving}
+                  disabled={false}
                   className="input-accent w-full max-w-md"
                 >
                   {currentProvider.models.map((model) => (
@@ -352,7 +351,7 @@ export default function SettingsPage() {
                   step="0.1"
                   value={settings.llmTemperature}
                   onChange={(e) => handleUpdate({ llmTemperature: parseFloat(e.target.value) })}
-                  disabled={isSaving}
+                  disabled={false}
                   className="w-full max-w-md accent-accent"
                 />
                 <p className="text-xs text-gray-500 mt-1">
@@ -380,7 +379,7 @@ export default function SettingsPage() {
                         fetchOllamaModels();
                       }
                     }}
-                    disabled={isSaving}
+                    disabled={false}
                     placeholder={DEFAULT_OLLAMA_URL}
                     className="input-accent w-full max-w-md"
                   />
@@ -401,7 +400,7 @@ export default function SettingsPage() {
                   <Switch
                     checked={!!settings.whisperEnabled}
                     onChange={(v) => handleUpdate({ whisperEnabled: v })}
-                    disabled={isSaving}
+                    disabled={false}
                   />
                 </div>
 
@@ -422,7 +421,7 @@ export default function SettingsPage() {
                           await handleUpdate({ whisperUrl: localWhisperUrl });
                         }
                       }}
-                      disabled={isSaving}
+                      disabled={false}
                       placeholder="http://127.0.0.1:3005"
                       className="input-accent w-full max-w-md"
                     />
@@ -449,7 +448,7 @@ export default function SettingsPage() {
               <Switch
                 checked={!!settings.contentLockEnabled}
                 onChange={(v) => handleUpdate({ contentLockEnabled: v })}
-                disabled={isSaving}
+                disabled={false}
               />
             </div>
             <div className="flex items-center justify-between">
@@ -464,7 +463,7 @@ export default function SettingsPage() {
               <Switch
                 checked={!!settings.includeTagDescriptions}
                 onChange={(v) => handleUpdate({ includeTagDescriptions: v })}
-                disabled={isSaving}
+                disabled={false}
               />
             </div>
           </div>
@@ -482,7 +481,7 @@ export default function SettingsPage() {
               <Switch
                 checked={!!settings.todaySheetScheduleEnabled}
                 onChange={(v) => handleUpdate({ todaySheetScheduleEnabled: v })}
-                disabled={isSaving}
+                disabled={false}
               />
               <span className="text-gray-300">
                 {settings.todaySheetScheduleEnabled ? 'Enabled' : 'Disabled'}
@@ -505,7 +504,7 @@ export default function SettingsPage() {
                     handleUpdate({ todaySheetTime: localTodaySheetTime });
                   }
                 }}
-                disabled={isSaving || !settings.todaySheetScheduleEnabled}
+                disabled={!settings.todaySheetScheduleEnabled}
                 className="input-accent w-48"
               />
               <p className="text-xs text-gray-500 mt-1">
@@ -522,7 +521,7 @@ export default function SettingsPage() {
               <Switch
                 checked={!!settings.organizeScheduleEnabled}
                 onChange={(v) => handleUpdate({ organizeScheduleEnabled: v })}
-                disabled={isSaving}
+                disabled={false}
               />
               <span className="text-gray-300">
                 {settings.organizeScheduleEnabled ? 'Enabled' : 'Disabled'}
@@ -537,7 +536,7 @@ export default function SettingsPage() {
                 <select
                   value={settings.organizeScheduleFrequency}
                   onChange={(e) => handleUpdate({ organizeScheduleFrequency: e.target.value as 'daily' | 'weekly' })}
-                  disabled={isSaving || !settings.organizeScheduleEnabled}
+                  disabled={!settings.organizeScheduleEnabled}
                   className="input-accent w-48"
                 >
                   <option value="daily">Daily</option>
@@ -553,7 +552,7 @@ export default function SettingsPage() {
                   <select
                     value={settings.organizeScheduleWeekday}
                     onChange={(e) => handleUpdate({ organizeScheduleWeekday: e.target.value })}
-                    disabled={isSaving || !settings.organizeScheduleEnabled}
+                    disabled={!settings.organizeScheduleEnabled}
                     className="input-accent w-48"
                   >
                     <option value="0">Sunday</option>
@@ -583,7 +582,7 @@ export default function SettingsPage() {
                       handleUpdate({ organizeScheduleTime: localOrganizeTime });
                     }
                   }}
-                  disabled={isSaving || !settings.organizeScheduleEnabled}
+                  disabled={!settings.organizeScheduleEnabled}
                   className="input-accent w-48"
                 />
                 <p className="text-xs text-gray-500 mt-1">
