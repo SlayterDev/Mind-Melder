@@ -134,13 +134,17 @@ export default function QuickCaptureInput({
 
   const submitCapture = async (data: { content: string; category?: string }) => {
     if (!chip) {
-      await capturesAPI.create(data);
+      const { tags } = parseInlineTags(data.content);
+      await capturesAPI.create({
+        content: data.content,
+        metadata: tags.length > 0 ? { tags } : undefined,
+      });
       return;
     }
 
     if (isTodoChip(chip)) {
-      const { text, tags } = parseInlineTags(data.content);
-      await todosAPI.create({ content: text, tags: tags.length > 0 ? tags : undefined });
+      const { tags } = parseInlineTags(data.content);
+      await todosAPI.create({ content: data.content, tags: tags.length > 0 ? tags : undefined });
       return;
     }
 

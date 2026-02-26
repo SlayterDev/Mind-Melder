@@ -29,9 +29,17 @@ Your job is to:
   /**
    * Build the user prompt with captures and template
    */
+  private formatCapture(c: Capture, i: number): string {
+    const meta = c.metadata as Record<string, unknown> | null | undefined;
+    const tags = Array.isArray(meta?.tags) && (meta.tags as unknown[]).length > 0
+      ? ` [user-tags: ${(meta.tags as string[]).join(', ')}]`
+      : '';
+    return `${i + 1}. ID: ${c.id} | [${new Date(c.timestamp).toLocaleString()}] ${c.content}${tags}`;
+  }
+
   protected buildOrganizePrompt(captures: Capture[], template: Template, tags?: Tag[], includeDescriptions: boolean = false, contentLockEnabled: boolean = false): string {
     const captureList = captures
-      .map((c, i) => `${i + 1}. ID: ${c.id} | [${new Date(c.timestamp).toLocaleString()}] ${c.content}`)
+      .map((c, i) => this.formatCapture(c, i))
       .join('\n');
 
     let tagsInstruction = '';
@@ -43,9 +51,10 @@ Your job is to:
 - Use the following tags to categorize tasks: ${tagsList}.
 - Assign appropriate tags to each task in the "tags" array field using only this list. Do not create new tags.
 - If no relevant tag exists, leave the "tags" array empty for that task.
+- Inline #hashtags in capture content and [user-tags: ...] annotations are user-specified hints — treat them as strong signals when assigning the output "tags" array.
 `;
     } else {
-      tagsInstruction = '\nCATEGORIZATION: Use your best judgment to categorize todos with relevant tags.';
+      tagsInstruction = '\nCATEGORIZATION: Use your best judgment to categorize todos with relevant tags.\n- Inline #hashtags in capture content and [user-tags: ...] annotations are user-specified hints — treat them as strong signals when assigning tags.';
     }
 
     return `You are extracting actionable todos from a batch of unorganized captures.
@@ -194,7 +203,7 @@ Format:
     const remainingHours = Math.max(0, 17 - input.context.currentTimeOfDay); // 9-5 workday
 
     // Build tags instruction if tags are provided
-    let tagsInstruction = 'Use your best judgment to assign tags to tasks.';
+    let tagsInstruction = 'Use your best judgment to assign tags to tasks.\n- Inline #hashtags in capture content and [user-tags: ...] annotations are user-specified hints — treat them as strong signals when assigning tags.';
     if (input.tags && input.tags.length > 0) {
       const includeDescriptions = input.includeDescriptions ?? false;
       const tagsList = input.tags
@@ -204,6 +213,7 @@ Format:
 - Use the following tags to categorize tasks: ${tagsList}.
 - Assign appropriate tags to each task in the "tags" array field using only this list. Do not create new tags.
 - If no relevant tag exists, leave the "tags" array empty for that task.
+- Inline #hashtags in capture content and [user-tags: ...] annotations are user-specified hints — treat them as strong signals when assigning the output "tags" array.
 `;
     }
 
@@ -216,9 +226,7 @@ CONTEXT:
 - Date: ${input.context.currentDate}
 
 UNORGANIZED CAPTURES (${captures.length}${input.captures.length > MAX_CAPTURES ? `, showing first ${MAX_CAPTURES}` : ''}):
-${captures.map((c, i) =>
-  `${i + 1}. ID: ${c.id} | [${new Date(c.timestamp).toLocaleString()}] ${c.content}`
-).join('\n')}
+${captures.map((c, i) => this.formatCapture(c, i)).join('\n')}
 
 EXISTING TODOS (${existingTodos.length}${input.existingTodos.length > MAX_TODOS ? `, showing first ${MAX_TODOS}` : ''}):
 ${existingTodos.map((t, i) =>
