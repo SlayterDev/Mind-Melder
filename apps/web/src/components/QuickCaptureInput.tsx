@@ -3,6 +3,7 @@ import { capturesAPI, notesAPI, todosAPI } from '../api/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, PenLine, Loader2 } from 'lucide-react';
 
+const NOTE_TRIGGER = 'n:';
 const TODO_TRIGGER = 't:';
 
 type Chip = {
@@ -22,6 +23,16 @@ function parseInlineTags(text: string): { text: string; tags: string[] } {
   return { text: cleanedText, tags: [...new Set(tags)] };
 }
 
+function renderHighlightedContent(text: string): React.ReactNode {
+  if (!text) return null;
+  const parts = text.split(/(#[a-zA-Z0-9_-]+)/g);
+  return parts.map((part, i) =>
+    /^#[a-zA-Z0-9_-]+$/.test(part)
+      ? <span key={i} className="font-semibold">{part}</span>
+      : <span key={i}>{part}</span>
+  );
+}
+
 interface QuickCaptureInputProps {
   variant?: 'textarea' | 'input';
   placeholder?: string;
@@ -36,7 +47,7 @@ export default function QuickCaptureInput({
   placeholder = 'Type anything...',
   autoFocus = false,
   rows,
-  trigger = 'n:',
+  trigger = NOTE_TRIGGER,
   onSuccess,
 }: QuickCaptureInputProps) {
   const [content, setContent] = useState('');
@@ -305,16 +316,26 @@ export default function QuickCaptureInput({
             </span>
           )}
 
-          <input
-            ref={inputRef as React.RefObject<HTMLInputElement>}
-            type="text"
-            value={content}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            placeholder={`${placeholder} (Press Enter to submit)`}
-            className="min-w-0 flex-1 font-mono bg-transparent outline-none"
-            disabled={createCapture.isPending}
-          />
+          <div className="min-w-0 flex-1 relative">
+            <input
+              ref={inputRef as React.RefObject<HTMLInputElement>}
+              type="text"
+              value={content}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              placeholder={`${placeholder} (Press Enter to submit)`}
+              className="w-full font-mono bg-transparent outline-none text-transparent caret-gray-100 placeholder:text-gray-500"
+              disabled={createCapture.isPending}
+            />
+            {content && (
+              <div
+                className="absolute inset-0 flex items-center font-mono pointer-events-none overflow-hidden whitespace-nowrap text-gray-100"
+                aria-hidden="true"
+              >
+                {renderHighlightedContent(content)}
+              </div>
+            )}
+          </div>
         </div>
         <button
           type="submit"
