@@ -37,6 +37,7 @@ export type UpdateOrganizedNoteInput = z.infer<typeof updateOrganizedNoteSchema>
 export const createTodoSchema = z.object({
   content: z.string().min(1, 'Content is required').max(1000, 'Content too long'),
   dueDate: z.string().datetime().optional(),
+  tags: z.array(z.string().max(50)).max(10).optional(),
 });
 
 export const timeEstimateSchema = z.enum(['quick', 'medium', 'long', 'none']);
