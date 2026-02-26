@@ -12,12 +12,13 @@ export function createTodosRouter(todosRepo: TodosRepository): ExpressRouter {
     '/',
     validateBody(createTodoSchema),
     asyncHandler(async (req, res) => {
-      const { content, dueDate } = req.body;
+      const { content, dueDate, tags } = req.body;
       const userId = 'test-user-1'; // TODO: Get from auth context
 
       const todo = await todosRepo.create({
         content,
         dueDate: dueDate ? new Date(dueDate) : undefined,
+        tags,
         userId,
       });
 

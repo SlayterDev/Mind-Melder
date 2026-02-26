@@ -207,6 +207,43 @@ describe('Validation Schemas', () => {
       });
       expect(result.success).toBe(false);
     });
+
+    it('should accept todo with tags', () => {
+      const result = createTodoSchema.safeParse({
+        content: 'Buy groceries',
+        tags: ['shopping', 'errands'],
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.tags).toEqual(['shopping', 'errands']);
+      }
+    });
+
+    it('should accept todo without tags', () => {
+      const result = createTodoSchema.safeParse({
+        content: 'Simple todo',
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.tags).toBeUndefined();
+      }
+    });
+
+    it('should reject tags exceeding max count on create', () => {
+      const result = createTodoSchema.safeParse({
+        content: 'Valid content',
+        tags: Array(11).fill('tag'),
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject tag exceeding max length on create', () => {
+      const result = createTodoSchema.safeParse({
+        content: 'Valid content',
+        tags: ['a'.repeat(51)],
+      });
+      expect(result.success).toBe(false);
+    });
   });
 
   describe('updateTodoSchema', () => {

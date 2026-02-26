@@ -1,12 +1,26 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { capturesAPI, notesAPI } from '../api/client';
+import { capturesAPI, notesAPI, todosAPI } from '../api/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, PenLine, Loader2 } from 'lucide-react';
+
+const TODO_TRIGGER = 't:';
 
 type Chip = {
   kind: 'trigger';
   label: string;
 };
+
+function parseInlineTags(text: string): { text: string; tags: string[] } {
+  const tags: string[] = [];
+  const cleanedText = text
+    .replace(/(^|\s)#([a-zA-Z0-9_-]+)/g, (_match, _prefix, tag) => {
+      tags.push(tag);
+      return '';
+    })
+    .replace(/\s+/g, ' ')
+    .trim();
+  return { text: cleanedText, tags: [...new Set(tags)] };
+}
 
 interface QuickCaptureInputProps {
   variant?: 'textarea' | 'input';
@@ -33,7 +47,8 @@ export default function QuickCaptureInput({
 
   const triggerPattern = useMemo(() => {
     const escapedTrigger = trigger.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
-    return new RegExp(`^${escapedTrigger}\\s`, 'i');
+    const escapedTodoTrigger = TODO_TRIGGER.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+    return new RegExp(`^(?:${escapedTrigger}|${escapedTodoTrigger})\\s`, 'i');
   }, [trigger]);
 
   const argumentPattern = useMemo(() => {
@@ -51,9 +66,18 @@ export default function QuickCaptureInput({
     }
   }, [autoFocus]);
 
+  const isTodoChip = (c: Chip | null) =>
+    c !== null && c.label.split(':')[0].toLowerCase() + ':' === TODO_TRIGGER;
+
   const submitCapture = async (data: { content: string; category?: string }) => {
     if (!chip) {
       await capturesAPI.create(data);
+      return;
+    }
+
+    if (isTodoChip(chip)) {
+      const { text, tags } = parseInlineTags(data.content);
+      await todosAPI.create({ content: text, tags: tags.length > 0 ? tags : undefined });
       return;
     }
 
@@ -73,6 +97,7 @@ export default function QuickCaptureInput({
   const createCapture = useMutation({
     mutationFn: (data: { content: string; category?: string }) => submitCapture(data),
     onMutate: async () => {
+      if (isTodoChip(chip)) return {};
       await queryClient.cancelQueries({ queryKey: ['inboxCount'] });
       const previous = queryClient.getQueryData<number>(['inboxCount']);
       queryClient.setQueryData<number>(['inboxCount'], (old = 0) => old + 1);
@@ -85,6 +110,7 @@ export default function QuickCaptureInput({
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['inboxCount'] });
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
     },
   });
 
@@ -107,10 +133,11 @@ export default function QuickCaptureInput({
     e.preventDefault();
     setMessage('');
     try {
+      const wasTodo = isTodoChip(chip);
       await createCapture.mutateAsync({ content: content.trim() });
       setChip(null);
       setContent('');
-      setMessage('success:Captured!');
+      setMessage(wasTodo ? 'success:Todo created!' : 'success:Captured!');
       setTimeout(() => setMessage(''), 2000);
 
       // Notify Electron main window if running in Electron
@@ -168,8 +195,9 @@ export default function QuickCaptureInput({
       // New trigger detected
       const match = raw.match(triggerPattern);
       const consumed = match?.[0]?.length || 0;
+      const matchedTrigger = match?.[0]?.trim() || trigger.trim();
 
-      const nextChip: Chip = { kind: 'trigger', label: trigger.trim() };
+      const nextChip: Chip = { kind: 'trigger', label: matchedTrigger };
       const nextText = raw.slice(consumed);
 
       setChip(nextChip);
