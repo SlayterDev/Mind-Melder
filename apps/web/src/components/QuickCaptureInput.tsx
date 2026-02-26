@@ -9,10 +9,20 @@ const TODO_TRIGGER = 't:';
 /** Matches #tag tokens preceded by whitespace or at start of string. */
 const TAG_PATTERN = /(^|\s)(#[a-zA-Z0-9_-]+)/g;
 
+/**
+ * Matches any `word:` prefix that could be an argument (e.g. `title:my-note `).
+ * Static — does not depend on the active trigger.
+ */
+const ARGUMENT_PATTERN = /^[a-zA-Z0-9-]+:\s/i;
+
 type Chip = {
   kind: 'trigger';
   label: string;
 };
+
+function isTodoChip(c: Chip | null): boolean {
+  return c !== null && c.label.toLowerCase().startsWith(TODO_TRIGGER);
+}
 
 function parseInlineTags(text: string): { text: string; tags: string[] } {
   const tags: string[] = [];
@@ -28,12 +38,37 @@ function parseInlineTags(text: string): { text: string; tags: string[] } {
 
 function renderHighlightedContent(text: string): React.ReactNode {
   if (!text) return null;
-  const parts = text.split(/((?:^|\s)#[a-zA-Z0-9_-]+)/g);
-  return parts.map((part, i) =>
-    /(?:^|\s)#[a-zA-Z0-9_-]+/.test(part)
-      ? <span key={i}><span>{part.match(/^\s/)?.[0] ?? ''}</span><span className="font-semibold">{part.trimStart()}</span></span>
-      : <span key={i}>{part}</span>
-  );
+  const nodes: React.ReactNode[] = [];
+  // Create a fresh regex instance — TAG_PATTERN is a /g regex and its lastIndex
+  // must not be shared across calls (especially in React concurrent renders).
+  const regex = new RegExp(TAG_PATTERN.source, TAG_PATTERN.flags);
+  let lastIndex = 0;
+  let keyIdx = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    const [, prefix, tag] = match;
+    const tagStart = match.index + prefix.length;
+    // Plain text up to (and including) the space before the tag.
+    if (tagStart > lastIndex) {
+      nodes.push(<span key={keyIdx++}>{text.slice(lastIndex, tagStart)}</span>);
+    }
+    nodes.push(
+      <span
+        key={keyIdx++}
+        className="font-semibold bg-gray-100/15 rounded-md [box-shadow:0_0_0_4px_rgba(243,244,246,0.15)]"
+      >
+        {tag}
+      </span>
+    );
+    lastIndex = tagStart + tag.length;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(<span key={keyIdx++}>{text.slice(lastIndex)}</span>);
+  }
+
+  return nodes.length > 0 ? nodes : null;
 }
 
 interface QuickCaptureInputProps {
@@ -65,14 +100,10 @@ export default function QuickCaptureInput({
     return new RegExp(`^(?:${escapedTrigger}|${escapedTodoTrigger})\\s`, 'i');
   }, [trigger]);
 
-  const argumentPattern = useMemo(() => {
-    return new RegExp(`^[a-zA-Z0-9-]+:\\s`, 'i');
-  }, [trigger]);
-
-  const removeChip = () => {
+  const removeChip = useCallback(() => {
     setChip(null);
     queueMicrotask(() => inputRef.current?.focus());
-  }
+  }, []);
 
   useEffect(() => {
     if (autoFocus && inputRef.current) {
@@ -80,8 +111,26 @@ export default function QuickCaptureInput({
     }
   }, [autoFocus]);
 
-  const isTodoChip = (c: Chip | null) =>
-    c !== null && c.label.toLowerCase().startsWith(TODO_TRIGGER);
+  const queryClient = useQueryClient();
+  const createCapture = useMutation({
+    mutationFn: (data: { content: string; category?: string }) => submitCapture(data),
+    onMutate: async () => {
+      if (isTodoChip(chip)) return {};
+      await queryClient.cancelQueries({ queryKey: ['inboxCount'] });
+      const previous = queryClient.getQueryData<number>(['inboxCount']);
+      queryClient.setQueryData<number>(['inboxCount'], (old = 0) => old + 1);
+      return { previous };
+    },
+    onError: (_err, _newItem, context: any) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(['inboxCount'], context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['inboxCount'] });
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+    },
+  });
 
   const submitCapture = async (data: { content: string; category?: string }) => {
     if (!chip) {
@@ -105,28 +154,7 @@ export default function QuickCaptureInput({
     }
 
     await notesAPI.append({ title, contentToAppend: data.content });
-  }
-
-  const queryClient = useQueryClient();
-  const createCapture = useMutation({
-    mutationFn: (data: { content: string; category?: string }) => submitCapture(data),
-    onMutate: async () => {
-      if (isTodoChip(chip)) return {};
-      await queryClient.cancelQueries({ queryKey: ['inboxCount'] });
-      const previous = queryClient.getQueryData<number>(['inboxCount']);
-      queryClient.setQueryData<number>(['inboxCount'], (old = 0) => old + 1);
-      return { previous };
-    },
-    onError: (_err, _newItem, context: any) => {
-      if (context?.previous !== undefined) {
-        queryClient.setQueryData(['inboxCount'], context.previous);
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['inboxCount'] });
-      queryClient.invalidateQueries({ queryKey: ['todos'] });
-    },
-  });
+  };
 
   useEffect(() => {
     if (content === '' && !createCapture.isPending && inputRef.current) {
@@ -143,7 +171,7 @@ export default function QuickCaptureInput({
     return () => clearTimeout(timer);
   }, [createCapture.isPending]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
     try {
@@ -165,11 +193,11 @@ export default function QuickCaptureInput({
     } catch (error) {
       setMessage(`error:${error instanceof Error ? error.message : 'Failed to capture'}`);
     }
-  };
+  }, [chip, content, createCapture, onSuccess]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (variant === 'textarea' && (e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-      handleSubmit(e);
+      handleSubmit(e as unknown as React.FormEvent);
       return;
     }
 
@@ -200,7 +228,7 @@ export default function QuickCaptureInput({
         });
       }
     }
-  }, [chip, content, variant, handleSubmit, inputRef]);
+  }, [chip, variant, handleSubmit]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
     const raw = e.target.value;
@@ -217,9 +245,9 @@ export default function QuickCaptureInput({
       setChip(nextChip);
       setContent(nextText);
       return;
-    } else if (chip && argumentPattern.test(raw)) {
+    } else if (chip && ARGUMENT_PATTERN.test(raw)) {
       // Argument detected
-      const match = raw.match(argumentPattern);
+      const match = raw.match(ARGUMENT_PATTERN);
       const consumed = match?.[0]?.length || 0;
 
       const updatedChip: Chip = { kind: 'trigger', label: chip.label + match?.[0].trim() };
@@ -231,7 +259,7 @@ export default function QuickCaptureInput({
     }
 
     setContent(raw);
-  }, [chip, trigger, triggerPattern, argumentPattern]);
+  }, [chip, trigger, triggerPattern]);
 
   if (variant === 'textarea') {
     return (
@@ -335,7 +363,7 @@ export default function QuickCaptureInput({
                 className="absolute inset-0 flex items-center font-mono pointer-events-none overflow-hidden whitespace-nowrap text-gray-100"
                 aria-hidden="true"
               >
-                {renderHighlightedContent(content)}
+                <span>{renderHighlightedContent(content)}</span>
               </div>
             )}
           </div>
