@@ -6,6 +6,9 @@ import { Check, PenLine, Loader2 } from 'lucide-react';
 const NOTE_TRIGGER = 'n:';
 const TODO_TRIGGER = 't:';
 
+/** Matches #tag tokens preceded by whitespace or at start of string. */
+const TAG_PATTERN = /(^|\s)(#[a-zA-Z0-9_-]+)/g;
+
 type Chip = {
   kind: 'trigger';
   label: string;
@@ -14,8 +17,8 @@ type Chip = {
 function parseInlineTags(text: string): { text: string; tags: string[] } {
   const tags: string[] = [];
   const cleanedText = text
-    .replace(/(^|\s)#([a-zA-Z0-9_-]+)/g, (_match, _prefix, tag) => {
-      tags.push(tag);
+    .replace(TAG_PATTERN, (_match, _prefix, tag) => {
+      tags.push(tag.slice(1)); // remove leading #
       return '';
     })
     .replace(/\s+/g, ' ')
@@ -25,10 +28,10 @@ function parseInlineTags(text: string): { text: string; tags: string[] } {
 
 function renderHighlightedContent(text: string): React.ReactNode {
   if (!text) return null;
-  const parts = text.split(/(#[a-zA-Z0-9_-]+)/g);
+  const parts = text.split(/((?:^|\s)#[a-zA-Z0-9_-]+)/g);
   return parts.map((part, i) =>
-    /^#[a-zA-Z0-9_-]+$/.test(part)
-      ? <span key={i} className="font-semibold">{part}</span>
+    /(?:^|\s)#[a-zA-Z0-9_-]+/.test(part)
+      ? <span key={i}><span>{part.match(/^\s/)?.[0] ?? ''}</span><span className="font-semibold">{part.trimStart()}</span></span>
       : <span key={i}>{part}</span>
   );
 }
