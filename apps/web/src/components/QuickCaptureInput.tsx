@@ -76,7 +76,6 @@ interface QuickCaptureInputProps {
   placeholder?: string;
   autoFocus?: boolean;
   rows?: number;
-  trigger?: string;
   onSuccess?: () => void;
 }
 
@@ -85,7 +84,6 @@ export default function QuickCaptureInput({
   placeholder = 'Type anything...',
   autoFocus = false,
   rows,
-  trigger = NOTE_TRIGGER,
   onSuccess,
 }: QuickCaptureInputProps) {
   const [content, setContent] = useState('');
@@ -95,10 +93,10 @@ export default function QuickCaptureInput({
   const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
 
   const triggerPattern = useMemo(() => {
-    const escapedTrigger = trigger.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const escapedTrigger = NOTE_TRIGGER.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
     const escapedTodoTrigger = TODO_TRIGGER.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
     return new RegExp(`^(?:${escapedTrigger}|${escapedTodoTrigger})\\s`, 'i');
-  }, [trigger]);
+  }, []);
 
   const removeChip = useCallback(() => {
     setChip(null);
@@ -241,7 +239,7 @@ export default function QuickCaptureInput({
       // New trigger detected
       const match = raw.match(triggerPattern);
       const consumed = match?.[0]?.length || 0;
-      const matchedTrigger = match?.[0]?.trim() || trigger.trim();
+      const matchedTrigger = match?.[0]?.trim() || NOTE_TRIGGER.trim();
 
       const nextChip: Chip = { kind: 'trigger', label: matchedTrigger };
       const nextText = raw.slice(consumed);
@@ -263,7 +261,7 @@ export default function QuickCaptureInput({
     }
 
     setContent(raw);
-  }, [chip, trigger, triggerPattern]);
+  }, [chip, triggerPattern]);
 
   if (variant === 'textarea') {
     return (
