@@ -67,7 +67,7 @@ export default function QuickCaptureInput({
   }, [autoFocus]);
 
   const isTodoChip = (c: Chip | null) =>
-    c !== null && c.label.split(':')[0].toLowerCase() + ':' === TODO_TRIGGER;
+    c !== null && c.label.toLowerCase().startsWith(TODO_TRIGGER);
 
   const submitCapture = async (data: { content: string; category?: string }) => {
     if (!chip) {
