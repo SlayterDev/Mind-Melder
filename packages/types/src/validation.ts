@@ -46,6 +46,26 @@ export const todaySheetSectionSchema = z.enum(['must_do_today', 'likely_today', 
 
 export const feedbackVoteSchema = z.enum(['thumbs_up', 'thumbs_down', 'none']);
 
+export const microTodaySheetTaskSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string(),
+  section: z.enum(['must_do_today', 'likely_today']),
+  timeEstimate: timeEstimateSchema,
+});
+
+export const microTodaySheetSchema = z.object({
+  tasks: z.array(microTodaySheetTaskSchema),
+  generatedAt: z.string().datetime(),
+});
+
+export const todaySheetMetadataSchema = z.object({
+  microSheet: microTodaySheetSchema,
+});
+
+export type MicroTodaySheetTask = z.infer<typeof microTodaySheetTaskSchema>;
+export type MicroTodaySheet = z.infer<typeof microTodaySheetSchema>;
+export type TodaySheetMetadata = z.infer<typeof todaySheetMetadataSchema>;
+
 export const submitFeedbackSchema = z.object({
   vote: feedbackVoteSchema,
   feedbackText: z.string().max(100, 'Feedback text must be 100 characters or less').optional(),

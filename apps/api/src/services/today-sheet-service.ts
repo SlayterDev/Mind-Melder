@@ -8,6 +8,7 @@ import {
   TodaySheetsRepository,
   TagsRepository,
 } from 'database';
+import { MicroTodaySheetTask, MicroTodaySheet } from 'types';
 import { templateTools } from '../utils/template-tools.js';
 import { createLogger } from '../utils/logger.js';
 
@@ -266,6 +267,10 @@ export class TodaySheetService {
       });
     }
 
+    const microSheet = this.buildMicroSheet(createdTodos);
+    await this.todaySheetsRepo.updateMetadata(todaySheet.id, { microSheet });
+    logger.debug('Micro today sheet metadata saved', { userId, sheetId: todaySheet.id, taskCount: microSheet.tasks.length });
+
     // 7. Mark captures as organized
     for (const capture of captures) {
       await this.capturesRepo.markAsOrganized(capture.id);
@@ -341,5 +346,38 @@ export class TodaySheetService {
       todosIncluded: todos.length,
       generatedAt: latestSheet?.generatedAt.toISOString(),
     };
+  }
+
+  private buildMicroSheet(createdTodos: {
+    must_do_today: Todo[];
+    likely_today: Todo[];
+    opportunistic: Todo[];
+    overflow: Todo[];
+  }): MicroTodaySheet {
+    const mustDo = [...createdTodos.must_do_today]
+      .sort((a, b) => (a.todaySheetOrder || 0) - (b.todaySheetOrder || 0))
+      .slice(0, 3)
+      .map((todo): MicroTodaySheetTask => ({
+        id: todo.id,
+        title: todo.content,
+        section: 'must_do_today',
+        timeEstimate: (todo.timeEstimate ?? 'none') as MicroTodaySheetTask['timeEstimate'],
+      }));
+
+    const likely = [...createdTodos.likely_today]
+      .sort((a, b) => (a.todaySheetOrder || 0) - (b.todaySheetOrder || 0))
+      .slice(0, 3)
+      .map((todo): MicroTodaySheetTask => ({
+        id: todo.id,
+        title: todo.content,
+        section: 'likely_today',
+        timeEstimate: (todo.timeEstimate ?? 'none') as MicroTodaySheetTask['timeEstimate'],
+      }));
+
+    return {
+      tasks: [...mustDo, ...likely],
+      generatedAt: new Date().toISOString(),
+    };
+
   }
 }

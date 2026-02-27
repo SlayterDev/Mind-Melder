@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import type { Database, SettingsRepository } from 'database';
+import { MicroTodaySheet } from 'types';
 import { ProviderFactory } from 'llm';
 import type { TokenTrackingService } from '../services/token-tracking-service.js';
-import { TodosRepository } from 'database';
+import { TodaySheetsRepository, TodosRepository } from 'database';
 import { TodaySheetService } from '../services/today-sheet-service.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, ApiError } from '../middleware/index.js';
@@ -82,6 +83,26 @@ export function createTodaySheetRouter(db: Database, settingsRepo: SettingsRepos
       }
 
       res.json(sheet);
+    })
+  );
+
+  router.get(
+    '/micro',
+    asyncHandler(async (req, res) => {
+      const userId = 'test-user-1'; // TODO: Get from auth context
+
+      const latestSheet = await new TodaySheetsRepository(db).findLatest(userId);
+      if (!latestSheet) {
+        throw new ApiError(404, 'No today sheet found');
+      }
+
+      const metadata = latestSheet.metadata as { microSheet?: MicroTodaySheet } | null;
+      const microSheet = metadata?.microSheet;
+      if (!microSheet) {
+        throw new ApiError(404, 'No micro today sheet metadata found');
+      }
+
+      res.json(microSheet);
     })
   );
 

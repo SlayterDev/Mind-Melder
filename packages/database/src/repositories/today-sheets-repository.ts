@@ -39,4 +39,13 @@ export class TodaySheetsRepository {
   async delete(id: string): Promise<void> {
     await this.db.delete(todaySheets).where(eq(todaySheets.id, id));
   }
+
+  async updateMetadata(id: string, metadata: object): Promise<TodaySheet | undefined> {
+    const [sheet] = await this.db
+      .update(todaySheets)
+      .set({ metadata, updatedAt: new Date() })
+      .where(eq(todaySheets.id, id))
+      .returning();
+    return sheet;
+  }
 }
