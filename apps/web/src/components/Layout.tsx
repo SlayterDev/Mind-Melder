@@ -185,6 +185,14 @@ export default function Layout({ children }: LayoutProps) {
         </nav>
       </div>
 
+      {/* Draggable title bar overlay for Electron - always on top, even above modals */}
+      {isElectron && (
+        <div
+          className="hidden md:block fixed top-0 left-0 right-0 h-8 z-[60]"
+          style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+        />
+      )}
+
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden pt-14 md:pt-0">
         {/* Draggable title bar region for Electron - main content area */}
