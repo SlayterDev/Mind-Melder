@@ -169,7 +169,9 @@ export default function SettingsPage() {
     setError(null);
     try {
       const updated = await settingsAPI.update(updates);
-      setSettings(updated);
+      if (updated) {
+        setSettings({ ...updated, ...updates });
+      }
     } catch (err) {
       setSettings(previous);
       setError('Failed to save settings');
