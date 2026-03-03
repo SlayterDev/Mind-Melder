@@ -92,6 +92,12 @@ export default function QuickCaptureInput({
   const [showSpinner, setShowSpinner] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
 
+  // Autocomplete state
+  const [noteTitles, setNoteTitles] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+  const [isLoadingTitles, setIsLoadingTitles] = useState(false);
+
   const triggerPattern = useMemo(() => {
     const escapedTrigger = NOTE_TRIGGER.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
     const escapedTodoTrigger = TODO_TRIGGER.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -100,6 +106,17 @@ export default function QuickCaptureInput({
 
   const removeChip = useCallback(() => {
     setChip(null);
+    setShowSuggestions(false);
+    setNoteTitles([]);
+    setSelectedSuggestionIndex(-1);
+    queueMicrotask(() => inputRef.current?.focus());
+  }, []);
+
+  const selectSuggestion = useCallback((title: string) => {
+    const titleArg = title.replace(/\s+/g, '-');
+    setChip({ kind: 'trigger', label: `${NOTE_TRIGGER}${titleArg}:` });
+    setShowSuggestions(false);
+    setSelectedSuggestionIndex(-1);
     queueMicrotask(() => inputRef.current?.focus());
   }, []);
 
@@ -108,6 +125,43 @@ export default function QuickCaptureInput({
       inputRef.current.focus();
     }
   }, [autoFocus]);
+
+  // Fetch note titles when note trigger is active
+  useEffect(() => {
+    // Check if chip is a note trigger (not a todo trigger)
+    const isNoteTrigger = chip !== null && chip.label.toLowerCase().startsWith(NOTE_TRIGGER);
+
+    if (!isNoteTrigger) {
+      setShowSuggestions(false);
+      setNoteTitles([]);
+      return;
+    }
+
+    // Extract the argument part from the chip label (e.g., "n:my-title" -> "my-title")
+    const args = chip.label.split(':').slice(1).filter((s) => s !== '');
+    const searchQuery = args.length ? args[0].trim().replace(/-+/g, ' ') : '';
+
+    // Fetch note titles
+    const fetchTitles = async () => {
+      setIsLoadingTitles(true);
+      try {
+        const response = await notesAPI.getTitles(searchQuery || undefined);
+        setNoteTitles(response.titles);
+        setShowSuggestions(response.titles.length > 0);
+        setSelectedSuggestionIndex(-1);
+      } catch (error) {
+        console.error('Failed to fetch note titles:', error);
+        setNoteTitles([]);
+        setShowSuggestions(false);
+      } finally {
+        setIsLoadingTitles(false);
+      }
+    };
+
+    // Debounce the fetch to avoid too many requests
+    const timeoutId = setTimeout(fetchTitles, 300);
+    return () => clearTimeout(timeoutId);
+  }, [chip]);
 
   const queryClient = useQueryClient();
   const createCapture = useMutation({
@@ -203,6 +257,37 @@ export default function QuickCaptureInput({
       return;
     }
 
+    // Handle autocomplete navigation
+    if (showSuggestions && noteTitles.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) =>
+          prev < noteTitles.length - 1 ? prev + 1 : prev
+        );
+        return;
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        return;
+      }
+
+      if (e.key === 'Enter' && selectedSuggestionIndex >= 0) {
+        e.preventDefault();
+        const selectedTitle = noteTitles[selectedSuggestionIndex];
+        selectSuggestion(selectedTitle);
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowSuggestions(false);
+        setSelectedSuggestionIndex(-1);
+        return;
+      }
+    }
+
     if (!chip) {
       return;
     }
@@ -220,6 +305,8 @@ export default function QuickCaptureInput({
           setChip({ kind: 'trigger', label: remainingText + ':' });
         } else {
           setChip(null);
+          setShowSuggestions(false);
+          setNoteTitles([]);
         }
 
         queueMicrotask(() => {
@@ -230,7 +317,7 @@ export default function QuickCaptureInput({
         });
       }
     }
-  }, [chip, variant, handleSubmit]);
+  }, [chip, variant, handleSubmit, showSuggestions, noteTitles, selectedSuggestionIndex, selectSuggestion]);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
     const raw = e.target.value;
@@ -324,7 +411,7 @@ export default function QuickCaptureInput({
     <div className="sheet-card p-5">
       <form onSubmit={handleSubmit} className="flex gap-3">
         <div
-          className="flex-1 flex items-center input-accent"
+          className="flex-1 flex items-center input-accent relative"
           onMouseDown={(e) => {
             // Clicking empty space focuses input (but don't steal clicks from chip button).
             if (e.target === e.currentTarget) {
@@ -366,6 +453,32 @@ export default function QuickCaptureInput({
                 aria-hidden="true"
               >
                 <span>{renderHighlightedContent(content)}</span>
+              </div>
+            )}
+
+            {/* Autocomplete dropdown */}
+            {showSuggestions && noteTitles.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
+                {noteTitles.map((title, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => selectSuggestion(title)}
+                    className={`w-full text-left px-4 py-2 font-mono text-sm hover:bg-gray-700 ${
+                      index === selectedSuggestionIndex ? 'bg-gray-700' : ''
+                    }`}
+                  >
+                    {title}
+                  </button>
+                ))}
+              </div>
+            )}
+            {isLoadingTitles && chip && chip.label.toLowerCase().startsWith(NOTE_TRIGGER) && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-3 z-50">
+                <div className="flex items-center gap-2 text-gray-400 text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Loading note titles...</span>
+                </div>
               </div>
             )}
           </div>

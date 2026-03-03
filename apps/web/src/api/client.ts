@@ -61,6 +61,8 @@ export const todosAPI = {
 export const notesAPI = {
   list: (tag?: string) =>
     fetchAPI<any[]>(`/notes${tag ? `?tag=${tag}` : ''}`),
+  getTitles: (query?: string) =>
+    fetchAPI<{ titles: string[] }>(`/notes/titles${query ? `?q=${encodeURIComponent(query)}` : ''}`),
   get: (id: string) => fetchAPI<any>(`/notes/${id}`),
   create: (data: { title: string; content: string; tags?: string[] }) =>
     fetchAPI('/notes', { method: 'POST', body: JSON.stringify(data) }),

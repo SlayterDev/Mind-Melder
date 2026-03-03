@@ -24,6 +24,28 @@ const refineNoteSchema = z.object({
 export function createNotesRouter(db: Database, notesRepo: OrganizedNotesRepository, settingsRepo: SettingsRepository, tokenTracker?: TokenTrackingService): ExpressRouter {
   const router = Router();
 
+  // GET /api/v1/notes/titles - Get note titles (optional: filter by search query)
+  router.get(
+    '/titles',
+    asyncHandler(async (req, res) => {
+      const userId = 'test-user-1'; // TODO: Get from auth context
+      const { q } = req.query;
+
+      let notes;
+      if (q && typeof q === 'string') {
+        // Search for matching titles
+        notes = await notesRepo.search(userId, q);
+      } else {
+        // Return all notes
+        notes = await notesRepo.findByUserId(userId);
+      }
+
+      // Extract unique titles only
+      const titles = [...new Set(notes.map(note => note.title))];
+      res.json({ titles });
+    })
+  );
+
   // GET /api/v1/notes - List notes (optional: filter by tag)
   router.get(
     '/',
