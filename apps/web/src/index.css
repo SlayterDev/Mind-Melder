@@ -3,74 +3,118 @@
 @tailwind utilities;
 
 @layer base {
-  /* Ensure safe area insets use the theme background color */
   html, body, #root {
     height: 100%;
-    background-color: #030712; /* gray-950 */
+    background-color: #070b0f;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Apply JetBrains Mono to all mono/input contexts */
+  textarea,
+  input[type="text"],
+  input[type="url"],
+  input[type="date"],
+  input[type="time"],
+  select,
+  pre,
+  code,
+  kbd,
+  .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
   }
 }
 
 @layer components {
-  /* Today Sheet Card Styles */
+  /* ─── Card Styles ─────────────────────────────────────────── */
+
   .sheet-card {
-    @apply rounded-lg shadow-lg;
-    background: linear-gradient(to bottom right, rgb(17 24 39), rgb(17 24 39 / 0.95));
-    border: 1px solid rgb(114 97 175 / 0.3);
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    @apply rounded-xl;
+    background: linear-gradient(145deg, #111923, #0f1620);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 
   .sheet-card-inner {
-    @apply rounded-lg;
-    background: rgb(31 41 55 / 0.5);
-    border: 1px solid rgb(114 97 175 / 0.2);
+    @apply rounded-xl;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
 
-  /* Task Card Styles */
+  /* ─── Task Card Styles ────────────────────────────────────── */
+
   .task-card {
-    @apply rounded-lg p-4 transition-all relative;
-    background: linear-gradient(to bottom right, rgb(17 24 39), rgb(17 24 39 / 0.95));
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2);
+    @apply rounded-xl p-4 transition-all duration-150 relative;
+    background: linear-gradient(145deg, #111923, #0f1620);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
   }
 
   .task-card:hover {
-    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    background: linear-gradient(145deg, #151f2d, #111923);
+    border-color: rgba(255, 255, 255, 0.09);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
   }
 
   .task-card-active {
-    border: 1px solid rgb(114 97 175 / 0.3);
+    border-color: rgba(114, 97, 175, 0.22);
+  }
+
+  .task-card-active:hover {
+    border-color: rgba(114, 97, 175, 0.35);
   }
 
   .task-card-completed {
-    @apply opacity-60 border-gray-800;
+    opacity: 0.5;
+    border-color: rgba(255, 255, 255, 0.04);
   }
 
-  /* Button Styles */
+  .task-card-completed:hover {
+    transform: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  /* ─── Button Styles ───────────────────────────────────────── */
+
   .btn-accent {
-    @apply px-4 py-2 text-gray-100 font-medium rounded-lg transition-colors shadow-md;
-    background-color: rgb(114 97 175 / 0.4);
-    border: 1px solid rgb(114 97 175 / 0.3);
+    @apply px-4 py-2 text-gray-100 font-medium rounded-lg transition-all duration-150 shadow-md;
+    background-color: rgba(114, 97, 175, 0.55);
+    border: 1px solid rgba(114, 97, 175, 0.4);
   }
 
   .btn-accent:hover:not(:disabled) {
-    background-color: rgb(114 97 175 / 0.6);
+    background-color: rgba(114, 97, 175, 0.75);
+    box-shadow: 0 4px 12px rgba(114, 97, 175, 0.25);
+    transform: translateY(-1px);
+  }
+
+  .btn-accent:active:not(:disabled) {
+    transform: translateY(0);
   }
 
   .btn-accent-lg {
-    @apply px-6 py-3 text-gray-100 font-medium rounded-lg transition-colors shadow-lg;
-    background-color: rgb(114 97 175 / 0.4);
-    border: 1px solid rgb(114 97 175 / 0.3);
+    @apply px-6 py-2.5 text-gray-100 font-medium rounded-lg transition-all duration-150 shadow-lg;
+    background-color: rgba(114, 97, 175, 0.55);
+    border: 1px solid rgba(114, 97, 175, 0.4);
   }
 
   .btn-accent-lg:hover:not(:disabled) {
-    background-color: rgb(114 97 175 / 0.6);
+    background-color: rgba(114, 97, 175, 0.75);
+    box-shadow: 0 4px 16px rgba(114, 97, 175, 0.3);
+    transform: translateY(-1px);
   }
 
-  .btn-accent:disabled {
-    @apply bg-gray-800 text-gray-600 border-gray-700;
+  .btn-accent-lg:active:not(:disabled) {
+    transform: translateY(0);
   }
 
+  .btn-accent:disabled,
   .btn-accent-lg:disabled {
-    @apply bg-gray-800 text-gray-600 border-gray-700;
+    @apply text-gray-600;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.06);
   }
 
   /* Button animations */
@@ -84,94 +128,115 @@
 
   @keyframes button-pulse {
     0%, 100% {
-      box-shadow: 0 0 10px -1px rgb(114 97 175 / 0.2);
+      box-shadow: 0 0 10px -1px rgba(114, 97, 175, 0.2);
     }
     50% {
-      box-shadow: 0 0 10px -1px rgb(114 97 175 / 0.4), 0 0 20px rgb(114 97 175 / 0.3);
+      box-shadow: 0 0 16px rgba(114, 97, 175, 0.5), 0 0 32px rgba(114, 97, 175, 0.2);
     }
   }
 
   @keyframes success-flash {
     0% {
-      background-color: rgb(114 97 175 / 0.4);
-      box-shadow: 0 0 10px -1px rgb(0 0 0 / 0.2);
+      background-color: rgba(114, 97, 175, 0.55);
     }
     50% {
-      background-color: rgb(34 197 94 / 0.6);
-      box-shadow: 0 0 30px rgb(34 197 94 / 0.6);
+      background-color: rgba(34, 197, 94, 0.6);
+      box-shadow: 0 0 24px rgba(34, 197, 94, 0.5);
     }
     100% {
-      background-color: rgb(114 97 175 / 0.4);
-      box-shadow: 0 0 10px -1px rgb(0 0 0 / 0.2);
+      background-color: rgba(114, 97, 175, 0.55);
     }
   }
 
-  /* Input Styles */
+  /* ─── Input Styles ────────────────────────────────────────── */
+
   .input-accent {
-    @apply rounded-lg px-4 py-2.5 text-gray-100 placeholder-gray-500;
-    background-color: rgb(31 41 55 / 0.8);
-    border: 1px solid rgb(114 97 175 / 0.2);
+    @apply rounded-lg px-4 py-2.5 text-gray-100 placeholder-gray-600 transition-all duration-150;
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
+  .input-accent:focus,
   .input-accent:focus-within {
-    @apply outline-none border-transparent;
-    box-shadow: 0 0 0 2px rgb(114 97 175 / 0.5);
+    @apply outline-none;
+    border-color: transparent;
+    background-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 0 2px rgba(114, 97, 175, 0.45);
   }
 
-  /* Drag Handle */
+  /* ─── Drag Handle ─────────────────────────────────────────── */
+
   .drag-handle {
-    @apply mt-1 cursor-grab active:cursor-grabbing transition-colors text-lg leading-none select-none;
-    color: rgb(114 97 175 / 0.5);
+    @apply mt-1 cursor-grab active:cursor-grabbing transition-colors select-none;
+    color: rgba(114, 97, 175, 0.4);
   }
 
   .drag-handle:hover {
-    color: rgb(114 97 175 / 0.7);
+    color: rgba(114, 97, 175, 0.7);
   }
 
-  /* Checkbox */
+  /* ─── Checkbox ────────────────────────────────────────────── */
+
   .checkbox-accent {
-    @apply mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0;
+    @apply mt-0.5 w-[18px] h-[18px] rounded-md border-2 flex items-center justify-center transition-all flex-shrink-0;
   }
 
   .checkbox-accent-unchecked {
-    border-color: rgb(114 97 175 / 0.5);
+    border-color: rgba(114, 97, 175, 0.4);
   }
 
   .checkbox-accent-unchecked:hover {
-    border-color: rgb(114 97 175 / 0.7);
-    background-color: rgb(114 97 175 / 0.1);
+    border-color: rgba(114, 97, 175, 0.7);
+    background-color: rgba(114, 97, 175, 0.08);
   }
 
   .checkbox-accent-checked {
-    @apply bg-green-600 border-green-500 shadow-inner;
+    @apply bg-green-600 border-green-500;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 
   .checkbox-setting-accent-checked {
-    @apply shadow-inner;
-    background-color: rgb(114 97 175 / 0.2);
-    border: 1px solid rgb(114 97 175 / 0.3);
+    background-color: rgba(114, 97, 175, 0.2);
+    border: 1px solid rgba(114, 97, 175, 0.35);
   }
 
-  /* Badge Styles */
+  /* ─── Badge Styles ────────────────────────────────────────── */
+
   .badge-accent {
-    @apply px-2.5 py-0.5 rounded-full text-sm text-gray-300;
-    background-color: rgb(114 97 175 / 0.2);
-    border: 1px solid rgb(114 97 175 / 0.3);
+    @apply px-2 py-0.5 rounded-full text-xs font-semibold text-gray-300;
+    background-color: rgba(114, 97, 175, 0.18);
+    border: 1px solid rgba(114, 97, 175, 0.28);
   }
 
   .badge-chip {
-    @apply px-2 py-0.5 rounded text-xs text-gray-300;
-    background-color: rgb(31 41 55 / 0.8);
-    border: 1px solid rgb(114 97 175 / 0.3);
+    @apply px-2 py-0.5 rounded-md text-xs text-gray-400;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  /* Section Styles */
+  /* ─── Page Header ─────────────────────────────────────────── */
+
+  .page-header {
+    @apply flex items-start justify-between mb-8 pb-6;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .page-title {
+    @apply text-2xl font-semibold text-white tracking-tight;
+  }
+
+  .page-subtitle {
+    @apply text-sm text-gray-500 mt-1;
+  }
+
+  /* ─── Section Styles ──────────────────────────────────────── */
+
   .section-header {
-    @apply text-xl font-semibold text-gray-100 group-hover:text-white transition-colors;
+    @apply text-lg font-semibold text-gray-100 group-hover:text-white transition-colors;
   }
 
   .section-divider {
-    border-bottom: 2px solid rgb(114 97 175 / 0.2);
+    border-bottom: 1px solid rgba(114, 97, 175, 0.18);
     position: relative;
     overflow: hidden;
   }
@@ -182,11 +247,11 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 2px;
+    height: 1px;
     background: linear-gradient(
       90deg,
       transparent,
-      rgb(114 97 175 / 0.8),
+      rgba(114, 97, 175, 0.9),
       transparent
     );
     animation: pulse-sweep 2s ease-in-out infinite;
@@ -207,24 +272,26 @@
   }
 
   .section-border {
-    border-left: 2px solid rgb(114 97 175 / 0.2);
+    border-left: 2px solid rgba(114, 97, 175, 0.2);
   }
 
-  /* Summary Box */
+  /* ─── Summary Box ─────────────────────────────────────────── */
+
   .summary-box {
-    @apply rounded-lg p-4 shadow-md;
-    background-color: rgb(114 97 175 / 0.1);
-    border: 1px solid rgb(114 97 175 / 0.3);
+    @apply rounded-xl p-4;
+    background-color: rgba(114, 97, 175, 0.08);
+    border: 1px solid rgba(114, 97, 175, 0.25);
   }
 
-  /* Accent Text */
+  /* ─── Accent Utilities ────────────────────────────────────── */
+
   .text-accent-highlight {
     @apply font-semibold;
-    color: #7261af;
+    color: #9b8dd4;
   }
 
   .text-accent-arrow {
-    color: rgb(114 97 175 / 0.5);
+    color: rgba(114, 97, 175, 0.5);
   }
 
   .text-accent {
@@ -239,26 +306,28 @@
     background-color: #7261af;
   }
 
-  /* Recording dot pulse */
+  /* ─── Recording ───────────────────────────────────────────── */
+
   .recording-dot-pulse {
     animation: pulse-red 1.5s ease-in-out infinite;
   }
 
   @keyframes pulse-red {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+    50% { opacity: 0.35; }
   }
 
-  /* Fade-in animation for sections */
+  /* ─── Animations ──────────────────────────────────────────── */
+
   .animate-fade-in {
-    animation: fade-in 0.5s ease-out forwards;
+    animation: fade-in 0.4s ease-out forwards;
     opacity: 0;
   }
 
   @keyframes fade-in {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(8px);
     }
     to {
       opacity: 1;
@@ -266,18 +335,19 @@
     }
   }
 
-  /* Chat Styles */
+  /* ─── Chat Styles ─────────────────────────────────────────── */
+
   .chat-bubble-user {
-    @apply px-4 py-2 max-w-[80%] rounded-2xl rounded-br-sm;
-    background-color: rgb(114 97 175 / 0.2);
-    border: 1px solid rgb(114 97 175 / 0.3);
+    @apply px-4 py-2.5 max-w-[80%] rounded-2xl rounded-br-sm;
+    background-color: rgba(114, 97, 175, 0.22);
+    border: 1px solid rgba(114, 97, 175, 0.28);
   }
 
   .chat-message-assistant {
-    @apply max-w-none text-gray-200 px-4 py-3 rounded-lg;
-     background-color: rgb(17 24 39 / 0.6);
-     border: 1px solid rgb(114 97 175 / 0.15);
-     margin-right: 50pt;
+    @apply max-w-none text-gray-200 px-4 py-3 rounded-xl;
+    background-color: rgba(17, 25, 35, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    margin-right: 50pt;
   }
 
   .chat-message-assistant p {
@@ -294,18 +364,20 @@
   }
 
   .chat-message-assistant code {
-    @apply px-1.5 py-0.5 rounded text-sm font-mono;
-    background-color: rgb(31 41 55 / 0.8);
+    @apply px-1.5 py-0.5 rounded text-sm;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    background-color: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .chat-message-assistant pre {
-    @apply p-4 rounded-lg mb-3 overflow-x-auto;
-    background-color: rgb(17 24 39);
-    border: 1px solid rgb(114 97 175 / 0.2);
+    @apply p-4 rounded-xl mb-3 overflow-x-auto;
+    background-color: rgba(12, 17, 23, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.07);
   }
 
   .chat-message-assistant pre code {
-    @apply p-0 bg-transparent;
+    @apply p-0 bg-transparent border-0;
   }
 
   .chat-message-assistant h1,
@@ -319,30 +391,32 @@
   .chat-message-assistant h3 { @apply text-base; }
 
   .chat-message-assistant a {
-    @apply text-accent hover:underline;
+    color: #9b8dd4;
+    @apply hover:underline;
   }
 
   .chat-message-assistant blockquote {
-    @apply border-l-2 border-accent/50 pl-4 italic text-gray-400 my-3;
+    @apply border-l-2 pl-4 italic text-gray-400 my-3;
+    border-color: rgba(114, 97, 175, 0.5);
   }
 
-  /* Scrollbar Styles - dark theme */
+  /* ─── Scrollbar ───────────────────────────────────────────── */
+
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
     background: transparent;
-    margin-block: 20px;
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: rgb(107 114 128 / 0.6);
-    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: rgb(107 114 128 / 0.8);
+    background-color: rgba(255, 255, 255, 0.18);
   }
 }

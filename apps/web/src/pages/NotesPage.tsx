@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { notesAPI, searchAPI } from '../api/client';
 import { FileText, X, Plus, Search, FileAudio } from 'lucide-react';
+
 import AudioUploadModal from '../components/AudioUploadModal';
 
 export default function NotesPage() {
@@ -78,10 +79,13 @@ export default function NotesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="page-header">
         <div>
-          <h2 className="text-3xl font-bold mb-2">Notes</h2>
-          <p className="text-gray-400">
+          <div className="flex items-center gap-2.5 mb-1">
+            <FileText className="w-5 h-5" style={{ color: '#9b8dd4' }} />
+            <h2 className="page-title">Notes</h2>
+          </div>
+          <p className="page-subtitle">
             {searchQuery ? `${notes.length} result${notes.length !== 1 ? 's' : ''}` : `${notes.length} notes`}
           </p>
         </div>

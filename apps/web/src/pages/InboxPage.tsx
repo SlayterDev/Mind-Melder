@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { capturesAPI, organizeAPI } from '../api/client';
-import { Zap, MailOpen } from 'lucide-react';
+import { Zap, MailOpen, Inbox } from 'lucide-react';
 import TemplateSelector from '../components/TemplateSelector';
 import CaptureCard from '../components/CaptureCard';
 
@@ -95,10 +95,13 @@ export default function InboxPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="page-header">
         <div>
-          <h2 className="text-3xl font-bold mb-2">Inbox</h2>
-          <p className="text-gray-400">{captures.length} unorganized captures</p>
+          <div className="flex items-center gap-2.5 mb-1">
+            <Inbox className="w-5 h-5" style={{ color: '#9b8dd4' }} />
+            <h2 className="page-title">Inbox</h2>
+          </div>
+          <p className="page-subtitle">{captures.length} unorganized captures</p>
         </div>
 
         {captures.length > 0 && (
@@ -108,7 +111,7 @@ export default function InboxPage() {
               disabled={isOrganizing}
               className="btn-accent-lg flex items-center gap-2"
             >
-              <Zap className="w-5 h-5" />
+              <Zap className="w-4 h-4" />
               {isOrganizing ? 'Organizing...' : 'Organize Now'}
             </button>
             <TemplateSelector
