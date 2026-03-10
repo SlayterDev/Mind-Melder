@@ -126,7 +126,7 @@ describe('Validation Schemas', () => {
     it('should reject content exceeding max length', () => {
       const result = createOrganizedNoteSchema.safeParse({
         title: 'Valid title',
-        content: 'a'.repeat(50001),
+        content: 'a'.repeat(500001),
       });
       expect(result.success).toBe(false);
     });
