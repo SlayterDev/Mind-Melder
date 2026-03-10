@@ -6,7 +6,7 @@ import NoteForm from '../components/NoteForm';
 export default function NewNotePage() {
   const navigate = useNavigate();
 
-  const handleSubmit = async (data: { title: string; content: string; tags?: string[] }) => {
+  const handleSubmit = async (data: { title: string; content: string; contentFormat: 'markdown' | 'slate_json'; tags?: string[] }) => {
     await notesAPI.create(data);
     navigate('/notes');
   };

@@ -62,11 +62,11 @@ export const notesAPI = {
   list: (tag?: string) =>
     fetchAPI<any[]>(`/notes${tag ? `?tag=${tag}` : ''}`),
   get: (id: string) => fetchAPI<any>(`/notes/${id}`),
-  create: (data: { title: string; content: string; tags?: string[] }) =>
+  create: (data: { title: string; content: string; contentFormat?: 'markdown' | 'slate_json'; tags?: string[] }) =>
     fetchAPI('/notes', { method: 'POST', body: JSON.stringify(data) }),
   append: (data: {title: string, contentToAppend: string}) =>
     fetchAPI('/notes/append', { method: 'POST', body: JSON.stringify(data) }),
-  update: (id: string, data: { title?: string; content?: string; tags?: string[] }) =>
+  update: (id: string, data: { title?: string; content?: string; contentFormat?: 'markdown' | 'slate_json'; tags?: string[] }) =>
     fetchAPI(`/notes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id: string) => fetchAPI(`/notes/${id}`, { method: 'DELETE' }),
   refine: (id: string, prompt: string) =>

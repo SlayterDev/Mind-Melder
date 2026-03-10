@@ -17,16 +17,22 @@ export type CreateCaptureInput = z.infer<typeof createCaptureSchema>;
 export type UpdateCaptureInput = z.infer<typeof updateCaptureSchema>;
 
 // Organized Note validation schemas
+export const contentFormatSchema = z.enum(['markdown', 'slate_json']);
+export type ContentFormat = z.infer<typeof contentFormatSchema>;
+
 export const createOrganizedNoteSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
-  content: z.string().min(1, 'Content is required').max(50000, 'Content too long'),
+  // Raised from 50k to 500k: Slate JSON serializes verbosely
+  content: z.string().min(1, 'Content is required').max(500000, 'Content too long'),
+  contentFormat: contentFormatSchema.default('markdown'),
   tags: z.array(z.string().max(50)).max(10).optional().default([]),
   date: z.date().optional(),
 });
 
 export const updateOrganizedNoteSchema = z.object({
   title: z.string().min(1).max(200).optional(),
-  content: z.string().min(1).max(50000).optional(),
+  content: z.string().min(1).max(500000).optional(),
+  contentFormat: contentFormatSchema.optional(),
   tags: z.array(z.string().max(50)).max(10).optional(),
 });
 

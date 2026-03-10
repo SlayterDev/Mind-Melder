@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { notesAPI, searchAPI } from '../api/client';
 import { FileText, X, Plus, Search, FileAudio } from 'lucide-react';
 import AudioUploadModal from '../components/AudioUploadModal';
+import { deserializeFromString, slateToPlainText } from '../components/editor/slateSerializer';
 
 export default function NotesPage() {
   const [notes, setNotes] = useState<any[]>([]);
@@ -188,7 +189,9 @@ export default function NotesPage() {
                   </Link>
 
                   <p className="text-gray-400 leading-relaxed whitespace-pre-wrap line-clamp-3">
-                    {note.content}
+                    {note.contentFormat === 'slate_json'
+                      ? slateToPlainText(deserializeFromString(note.content))
+                      : note.content}
                   </p>
 
                   <p className="text-gray-500 text-xs mt-3">

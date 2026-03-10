@@ -6,6 +6,7 @@ import { ProviderFactory } from 'llm';
 import type { TokenTrackingService } from '../services/token-tracking-service.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { validateBody, ApiError } from '../middleware/index.js';
+import { slateJsonToPlainText } from '../utils/slateUtils.js';
 import { NotesService } from '../services/notes-service.js';
 import { createLogger } from '../utils/logger.js';
 
@@ -48,9 +49,10 @@ export function createNotesRouter(db: Database, notesRepo: OrganizedNotesReposit
     validateBody(createOrganizedNoteSchema),
     asyncHandler(async (req, res) => {
       const userId = 'test-user-1'; // TODO: Get from auth context
-      const { title, content, tags, date } = req.body;
+      const { title, content, contentFormat, tags, date } = req.body;
+      const contentPlain = contentFormat === 'slate_json' ? slateJsonToPlainText(content) : null;
 
-      const note = await notesRepo.create({ userId, title, content, tags, date });
+      const note = await notesRepo.create({ userId, title, content, contentFormat, contentPlain, tags, date });
       res.status(201).json(note);
     })
   );
@@ -91,9 +93,15 @@ export function createNotesRouter(db: Database, notesRepo: OrganizedNotesReposit
     validateBody(updateOrganizedNoteSchema),
     asyncHandler(async (req, res) => {
       const { id } = req.params;
-      const { title, content, tags } = req.body;
+      const { title, content, contentFormat, tags } = req.body;
+      const contentPlain =
+        content !== undefined
+          ? contentFormat === 'slate_json'
+            ? slateJsonToPlainText(content)
+            : null
+          : undefined;
 
-      const note = await notesRepo.update(id, { title, content, tags });
+      const note = await notesRepo.update(id, { title, content, contentFormat, contentPlain, tags });
       if (!note) {
         throw new ApiError(404, 'Note not found');
       }

@@ -6,6 +6,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import NoteForm from '../components/NoteForm';
 import RefineNoteModal from '../components/RefineNoteModal';
+import { SlateEditor } from '../components/editor/SlateEditor';
+import { deserializeFromString } from '../components/editor/slateSerializer';
 
 export default function NoteDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,10 +24,10 @@ export default function NoteDetailPage() {
 
   const loadNote = async () => {
     if (!id) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const note = await notesAPI.get(id);
       setNote(note);
@@ -37,9 +39,14 @@ export default function NoteDetailPage() {
     }
   };
 
-  const handleUpdate = async (data: { title: string; content: string; tags?: string[] }) => {
+  const handleUpdate = async (data: {
+    title: string;
+    content: string;
+    contentFormat: 'markdown' | 'slate_json';
+    tags?: string[];
+  }) => {
     if (!id) return;
-    
+
     await notesAPI.update(id, data);
     setNote({ ...note, ...data });
     setIsEditing(false);
@@ -49,8 +56,9 @@ export default function NoteDetailPage() {
     if (!id) return;
 
     try {
-      await notesAPI.update(id, data);
-      setNote({ ...note, ...data });
+      // LLM always returns markdown
+      await notesAPI.update(id, { ...data, contentFormat: 'markdown' });
+      setNote({ ...note, ...data, contentFormat: 'markdown' });
       setShowRefineModal(false);
     } catch (err) {
       console.error('Failed to update note:', err);
@@ -105,6 +113,7 @@ export default function NoteDetailPage() {
         <NoteForm
           initialTitle={note.title}
           initialContent={note.content}
+          initialContentFormat={note.contentFormat ?? 'markdown'}
           initialTags={note.tags || []}
           onSubmit={handleUpdate}
           onCancel={() => setIsEditing(false)}
@@ -176,11 +185,19 @@ export default function NoteDetailPage() {
           })}
         </p>
 
-        <div className="prose prose-invert prose-lg max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {note.content}
-          </ReactMarkdown>
-        </div>
+        {note.contentFormat === 'slate_json' ? (
+          <SlateEditor
+            value={deserializeFromString(note.content)}
+            onChange={() => {}}
+            readOnly
+          />
+        ) : (
+          <div className="prose prose-invert prose-lg max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {note.content}
+            </ReactMarkdown>
+          </div>
+        )}
       </div>
 
       {showRefineModal && (
