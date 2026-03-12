@@ -151,6 +151,24 @@ export const ollamaAPI = {
   listModels: () => fetchAPI<OllamaModelsResponse>('/ollama/models'),
 };
 
+// LM Studio
+export interface LMStudioModel {
+  id: string;
+  object: string;
+  created?: number;
+  owned_by?: string;
+}
+
+export interface LMStudioModelsResponse {
+  models: LMStudioModel[];
+  error?: string;
+}
+
+export const lmstudioAPI = {
+  listModels: () => fetchAPI<LMStudioModelsResponse>('/lmstudio/models'),
+  health: () => fetchAPI<{ connected: boolean; baseURL: string; error?: string }>('/lmstudio/health'),
+};
+
 // Conversations
 export interface Conversation {
   id: string;
@@ -193,10 +211,11 @@ export const conversationsAPI = {
 export interface Settings {
   id: string;
   userId: string;
-  llmProvider: 'openai' | 'anthropic' | 'ollama';
+  llmProvider: 'openai' | 'anthropic' | 'ollama' | 'lmstudio';
   llmModel: string | null;
   llmTemperature: number;
   ollamaBaseUrl: string;
+  lmstudioBaseUrl: string;
 
   // Local Whisper
   whisperEnabled: boolean;

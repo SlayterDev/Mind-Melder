@@ -23,6 +23,7 @@ import {
   createTagsRouter,
   createSearchRouter,
   createOllamaRouter,
+  createLMStudioRouter,
   createConversationsRouter,
   createTranscribeRouter,
   createTokenUsageRouter
@@ -85,6 +86,7 @@ app.use('/api/v1/organize', createOrganizeRouter(db, settingsRepo, tokenTracking
 app.use('/api/v1/today-sheet', createTodaySheetRouter(db, settingsRepo, tokenTrackingService));
 app.use('/api/v1/weekly-review', createWeeklyReviewRouter(db, settingsRepo, templatesRepo, tokenTrackingService));
 app.use('/api/v1/ollama', createOllamaRouter(settingsRepo));
+app.use('/api/v1/lmstudio', createLMStudioRouter(settingsRepo));
 app.use('/api/v1/conversations', createConversationsRouter(db, conversationsRepo, settingsRepo, tokenTrackingService));
 app.use('/api/v1/transcribe', createTranscribeRouter(db, settingsRepo, notesRepo, tokenTrackingService));
 app.use('/api/v1/token-usage', createTokenUsageRouter(tokenTrackingService));
