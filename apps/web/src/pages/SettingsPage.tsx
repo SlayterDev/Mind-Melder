@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { settingsAPI, ollamaAPI, tokenUsageAPI, type Settings, type OllamaModel, type UsageSummary } from '../api/client';
 import { Cog, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+
 import { getServerUrl, setApiUrl, testConnection } from '../api/config';
 import ServerConnection from '../components/ServerConnection';
 import NotificationSettings from '../components/NotificationSettings';
@@ -186,10 +187,13 @@ export default function SettingsPage() {
   if (!settings) {
     return (
       <div>
-        <div className="flex items-center justify-between mb-8">
+        <div className="page-header">
           <div>
-            <h2 className="text-3xl font-bold mb-2">Settings</h2>
-            <p className="text-gray-400">Configure your LLM provider and preferences</p>
+            <div className="flex items-center gap-2.5 mb-1">
+              <Cog className="w-5 h-5" style={{ color: '#9b8dd4' }} />
+              <h2 className="page-title">Settings</h2>
+            </div>
+            <p className="page-subtitle">Configure your LLM provider and preferences</p>
           </div>
         </div>
 
@@ -223,10 +227,13 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="page-header">
         <div>
-          <h2 className="text-3xl font-bold mb-2">Settings</h2>
-          <p className="text-gray-400">Configure your LLM provider and preferences</p>
+          <div className="flex items-center gap-2.5 mb-1">
+            <Cog className="w-5 h-5" style={{ color: '#9b8dd4' }} />
+            <h2 className="page-title">Settings</h2>
+          </div>
+          <p className="page-subtitle">Configure your LLM provider and preferences</p>
         </div>
       </div>
 
