@@ -24,7 +24,7 @@ export default function CapturePage() {
           Pro Tips
         </h3>
         <ul className="text-sm text-gray-500 space-y-1.5">
-          <li>• Press <kbd className="px-2 py-0.5 rounded text-xs" style={{ backgroundColor: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.08)' }}>Cmd/Ctrl+Enter</kbd> to submit</li>
+          <li>• Press <kbd className="kbd">Cmd/Ctrl+Enter</kbd> to submit</li>
           <li>• No need to organize — AI will do it for you</li>
           <li>• Check <span className="text-gray-300 font-medium">Inbox</span> to see unorganized captures</li>
           <li>• Click <span className="text-gray-300 font-medium">"Organize Now"</span> in Inbox to process them</li>

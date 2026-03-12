@@ -168,7 +168,7 @@ export default function NotesPage() {
           {notes.map((note) => (
             <div
               key={note.id}
-              className="task-card task-card-active group p-5"
+              className="task-card task-card-active group"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
@@ -203,7 +203,7 @@ export default function NotesPage() {
                 <button
                   onClick={() => handleDelete(note.id)}
                   className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400
-                           transition-all text-sm px-3 py-1 rounded hover:bg-gray-800"
+                           transition-all text-sm px-3 py-1 rounded hover:bg-white/[0.06]"
                   title="Delete"
                 >
                   <X className="w-4 h-4" />
