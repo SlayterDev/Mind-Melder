@@ -1,10 +1,8 @@
 import { Router, type Router as ExpressRouter } from 'express';
-import OpenAI from 'openai';
 import { SettingsRepository } from 'database';
 import { asyncHandler } from '../utils/async-handler.js';
 
 const DEFAULT_BASE_URL = 'http://localhost:1234/v1';
-const PLACEHOLDER_API_KEY = 'lm-studio';
 
 export interface LMStudioModel {
   id: string;
@@ -26,10 +24,17 @@ export function createLMStudioRouter(settingsRepo: SettingsRepository): ExpressR
       const baseURL = settings.lmstudioBaseUrl || DEFAULT_BASE_URL;
 
       try {
-        const client = new OpenAI({ apiKey: PLACEHOLDER_API_KEY, baseURL });
-        const response = await client.models.list();
+        const response = await fetch(`${baseURL}/models`, {
+          headers: { Authorization: 'Bearer lm-studio' },
+        });
 
-        const models: LMStudioModel[] = response.data.map((m) => ({
+        if (!response.ok) {
+          throw new Error(`LM Studio returned ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json() as { data: LMStudioModel[] };
+
+        const models: LMStudioModel[] = (data.data ?? []).map((m: LMStudioModel) => ({
           id: m.id,
           object: m.object,
           created: m.created,
@@ -54,8 +59,14 @@ export function createLMStudioRouter(settingsRepo: SettingsRepository): ExpressR
       const baseURL = settings.lmstudioBaseUrl || DEFAULT_BASE_URL;
 
       try {
-        const client = new OpenAI({ apiKey: PLACEHOLDER_API_KEY, baseURL });
-        await client.models.list();
+        const response = await fetch(`${baseURL}/models`, {
+          headers: { Authorization: 'Bearer lm-studio' },
+        });
+
+        if (!response.ok) {
+          throw new Error(`LM Studio returned ${response.status}: ${response.statusText}`);
+        }
+
         res.json({ connected: true, baseURL });
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to connect to LM Studio';
