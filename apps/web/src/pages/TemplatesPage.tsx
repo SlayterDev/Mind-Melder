@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { templatesAPI, tagsAPI, Tag } from '../api/client';
-import { Settings, Pencil, X, Tag as TagIcon, Plus } from 'lucide-react';
+import { Settings, Pencil, X, Tag as TagIcon, Plus, Layers } from 'lucide-react';
 
 export default function TemplatesPage() {
   // Templates state
@@ -160,6 +160,16 @@ export default function TemplatesPage() {
 
   return (
     <div className="space-y-10">
+      <div className="page-header">
+        <div>
+          <div className="flex items-center gap-2.5 mb-1">
+            <Layers className="w-5 h-5" style={{ color: '#9b8dd4' }} />
+            <h2 className="page-title">Templates & Tags</h2>
+          </div>
+          <p className="page-subtitle">Define how AI organizes your captures and manage global tags</p>
+        </div>
+      </div>
+
       {/* Tags Section */}
       <section>
         <div className="flex items-center justify-between mb-4">
@@ -275,10 +285,10 @@ export default function TemplatesPage() {
 
       {/* Templates Section */}
       <section>
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-3xl font-bold mb-2">Templates</h2>
-            <p className="text-gray-400">{templates.length} templates</p>
+            <h3 className="text-lg font-semibold text-gray-100">Templates</h3>
+            <p className="text-sm text-gray-500 mt-0.5">{templates.length} templates</p>
           </div>
 
           {!isCreating && !editingId && (
