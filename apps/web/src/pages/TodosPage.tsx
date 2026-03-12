@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { todosAPI, searchAPI, type TimeEstimate } from '../api/client';
-import { CheckCircle, Search, X } from 'lucide-react';
+import { CheckCircle, Search, X, ListChecks } from 'lucide-react';
 import TodoCard from '../components/TodoCard';
 
 export default function TodosPage() {
@@ -187,10 +187,13 @@ export default function TodosPage() {
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+      <div className="page-header flex-col md:flex-row gap-4">
         <div>
-          <h2 className="text-3xl font-bold mb-2">Todos</h2>
-          <p className="text-gray-400">
+          <div className="flex items-center gap-2.5 mb-1">
+            <ListChecks className="w-5 h-5" style={{ color: '#9b8dd4' }} />
+            <h2 className="page-title">Todos</h2>
+          </div>
+          <p className="page-subtitle">
             {pendingCount} pending · {completedCount} completed
           </p>
         </div>

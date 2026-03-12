@@ -176,7 +176,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                   type="text"
                   value={editedContent}
                   onChange={(e) => setEditedContent(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-gray-200 focus:outline-none focus:border-accent-highlight"
+                  className="input-edit"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
@@ -198,7 +198,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                       }
                       setIsEditingContent(false);
                     }}
-                    className="flex items-center gap-1 px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
+                    className="btn-save"
                   >
                     <Save className="w-3 h-3" />
                     Save
@@ -208,7 +208,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                       setEditedContent(todo.content);
                       setIsEditingContent(false);
                     }}
-                    className="flex items-center gap-1 px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs rounded transition-colors"
+                    className="btn-cancel"
                   >
                     <X className="w-3 h-3" />
                     Cancel
@@ -226,7 +226,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                 </p>
                 <button
                   onClick={() => setIsEditingContent(true)}
-                  className="absolute top-0 right-0 opacity-0 group-hover/content:opacity-100 transition-opacity p-1 hover:bg-gray-700 rounded"
+                  className="absolute top-0 right-0 opacity-0 group-hover/content:opacity-100 transition-opacity icon-btn"
                   title="Edit title"
                 >
                   <Pencil className="w-3 h-3 text-gray-400" />
@@ -285,7 +285,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                 </button>
                 {/* Tooltip for feedback text */}
                 {todo.feedbackVote === 'thumbs_down' && todo.feedbackText && !showFeedbackInput && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs text-gray-300 whitespace-nowrap opacity-0 group-hover/feedback:opacity-100 transition-opacity pointer-events-none z-10 max-w-xs">
+                  <div className="tooltip-card bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover/feedback:opacity-100 transition-opacity max-w-xs">
                     {todo.feedbackText}
                   </div>
                 )}
@@ -311,7 +311,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                 onChange={(e) => setFeedbackText(e.target.value.slice(0, 100))}
                 placeholder="What went wrong? (optional, ESC to cancel)"
                 maxLength={100}
-                className="flex-1 px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm text-gray-200 focus:outline-none focus:border-red-500 placeholder-gray-500"
+                className="feedback-input"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -333,7 +333,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                   }
                   setShowFeedbackInput(false);
                 }}
-                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors"
+                className="btn-feedback-submit"
               >
                 Submit
               </button>
@@ -351,7 +351,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
 
           {/* Expanded original capture */}
           {showOriginal && todo.captureId && (
-            <div className="mt-3 px-3 py-2 bg-gray-900/40 border border-gray-700/50 rounded text-sm text-gray-400 italic">
+            <div className="source-block">
               {isLoadingCapture ? (
                 <span>Loading original capture...</span>
               ) : (
@@ -371,7 +371,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
 
           {/* Description section */}
           {todo.description && (
-            <div className="mt-3 border-l-2 border-gray-700 pl-3 group/description">
+            <div className="mt-3 description-block group/description">
               <button
                 onClick={() => setShowDescription(!showDescription)}
                 className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-300"
@@ -386,7 +386,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                       <textarea
                         value={editedDescription}
                         onChange={(e) => setEditedDescription(e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm text-gray-200 focus:outline-none focus:border-accent-highlight resize-none"
+                        className="input-edit resize-none"
                         rows={3}
                         autoFocus
                       />
@@ -398,7 +398,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                             }
                             setIsEditingDescription(false);
                           }}
-                          className="flex items-center gap-1 px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded transition-colors"
+                          className="btn-save"
                         >
                           <Save className="w-3 h-3" />
                           Save
@@ -408,7 +408,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                             setEditedDescription(todo.description || '');
                             setIsEditingDescription(false);
                           }}
-                          className="flex items-center gap-1 px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs rounded transition-colors"
+                          className="btn-cancel"
                         >
                           <X className="w-3 h-3" />
                           Cancel
@@ -420,7 +420,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                       <p className="text-sm text-gray-300 leading-relaxed pr-8">{todo.description}</p>
                       <button
                         onClick={() => setIsEditingDescription(true)}
-                        className="absolute top-0 right-0 opacity-0 group-hover/edit:opacity-100 transition-opacity p-1 hover:bg-gray-700 rounded"
+                        className="absolute top-0 right-0 opacity-0 group-hover/edit:opacity-100 transition-opacity icon-btn"
                         title="Edit description"
                       >
                         <Pencil className="w-3 h-3 text-gray-400" />
@@ -472,11 +472,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                         }
                         setShowTimePicker(false);
                       }}
-                      className={`px-2 py-1 rounded text-xs flex items-center gap-1 transition-colors ${
-                        isSelected
-                          ? 'bg-accent text-white'
-                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                      }`}
+                      className={`picker-btn ${isSelected ? 'picker-btn-active' : 'picker-btn-inactive'}`}
                     >
                       <Icon className="w-3 h-3" />
                       {option.label}
@@ -485,7 +481,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                 })}
                 <button
                   onClick={() => setShowTimePicker(false)}
-                  className="px-2 py-1 bg-gray-700 text-gray-400 rounded text-xs hover:bg-gray-600"
+                  className="btn-cancel"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -523,7 +519,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
                   onChange={handleDateChange}
                   onBlur={handleDateBlur}
                   autoFocus
-                  className="px-2 py-1 bg-gray-800 border border-gray-600 rounded text-xs text-gray-200 focus:outline-none focus:border-accent-highlight"
+                  className="input-edit text-xs py-1"
                 />
               </div>
             )}
@@ -541,16 +537,13 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
             {!showTagEditor && todo.tags && todo.tags.length > 0 && (
               <>
                 {todo.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-2 py-0.5 bg-blue-900/20 border border-blue-700/40 rounded text-xs text-blue-300/90"
-                  >
+                  <span key={tag} className="tag-chip">
                     {tag}
                   </span>
                 ))}
                 <button
                   onClick={() => setShowTagEditor(true)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity px-1 py-0.5 hover:bg-gray-700 rounded"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity icon-btn"
                   title="Edit tags"
                 >
                   <Pencil className="w-3 h-3 text-gray-400" />
@@ -572,7 +565,7 @@ export default function TaskCard({ todo, showDragHandle = true, onToggleComplete
               />
               <button
                 onClick={() => setShowTagEditor(false)}
-                className="px-2 py-1 bg-gray-700 text-gray-400 rounded text-xs hover:bg-gray-600 flex-shrink-0"
+                className="btn-cancel flex-shrink-0"
               >
                 <Check className="w-3 h-3" />
               </button>
