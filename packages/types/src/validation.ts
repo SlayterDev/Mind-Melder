@@ -92,7 +92,7 @@ export type CreateTemplateInput = z.infer<typeof createTemplateSchema>;
 export type UpdateTemplateInput = z.infer<typeof updateTemplateSchema>;
 
 // Settings validation schemas
-export const llmProviderSchema = z.enum(['openai', 'anthropic', 'ollama']);
+export const llmProviderSchema = z.enum(['openai', 'anthropic', 'ollama', 'lmstudio']);
 export const scheduleFrequencySchema = z.enum(['daily', 'weekly']);
 
 // Time format validation (HH:MM in 24-hour format)
@@ -104,6 +104,7 @@ export const updateSettingsSchema = z.object({
   llmModel: z.string().max(100).nullable().optional(),
   llmTemperature: z.number().min(0).max(2).optional(),
   ollamaBaseUrl: z.string().url().max(500).optional(),
+  lmstudioBaseUrl: z.string().url().max(500).optional(),
 
   // Local Whisper (whisper.cpp server)
   whisperEnabled: z.boolean().optional(),
