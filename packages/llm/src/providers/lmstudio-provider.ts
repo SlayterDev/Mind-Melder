@@ -1,4 +1,6 @@
 import OpenAI from 'openai';
+import { zodToJsonSchema } from 'zod-to-json-schema';
+import type { ZodType } from 'zod';
 import type { Capture, Template, Tag } from 'types';
 import { BaseLLMProvider } from '../base-provider.js';
 import type {
@@ -63,11 +65,18 @@ export class LMStudioProvider extends BaseLLMProvider implements LLMProvider {
   }
 
   /**
-   * LM Studio supports json_object mode but not OpenAI's json_schema Structured Outputs.
-   * We always use json_object and rely on our Zod-based parseResponse for validation.
+   * Build a json_schema response_format from a Zod schema.
+   * LM Studio uses grammar-based sampling to guarantee the output matches the schema,
+   * which prevents reasoning tokens (<think> tags) from leaking into the response.
    */
-  private get jsonResponseFormat(): OpenAI.ResponseFormatJSONObject {
-    return { type: 'json_object' };
+  private structuredFormat(schema: ZodType, name: string): OpenAI.ResponseFormatJSONSchema {
+    const jsonSchema = zodToJsonSchema(schema, { $refStrategy: 'none', target: 'openApi3' });
+    // Strip the top-level $schema field — LM Studio doesn't need it
+    const { $schema: _unused, ...cleanSchema } = jsonSchema as Record<string, unknown>;
+    return {
+      type: 'json_schema',
+      json_schema: { name, strict: true, schema: cleanSchema },
+    };
   }
 
   async organize(
@@ -93,7 +102,7 @@ export class LMStudioProvider extends BaseLLMProvider implements LLMProvider {
         { role: 'user', content: userPrompt },
       ],
       temperature: this.temperature,
-      response_format: this.jsonResponseFormat,
+      response_format: this.structuredFormat(organizedOutputSchema, 'organized_output'),
     });
 
     this.storeUsage(response);
@@ -113,7 +122,7 @@ export class LMStudioProvider extends BaseLLMProvider implements LLMProvider {
         { role: 'user', content: prompt },
       ],
       temperature: this.temperature,
-      response_format: this.jsonResponseFormat,
+      response_format: this.structuredFormat(extractTasksOutputSchema, 'extract_tasks_output'),
     });
 
     this.storeUsage(response);
@@ -138,7 +147,7 @@ export class LMStudioProvider extends BaseLLMProvider implements LLMProvider {
         { role: 'user', content: userPrompt },
       ],
       temperature: this.temperature,
-      response_format: this.jsonResponseFormat,
+      response_format: this.structuredFormat(todaySheetOutputSchema, 'today_sheet_output'),
     });
 
     this.storeUsage(response);
@@ -337,7 +346,7 @@ export class LMStudioProvider extends BaseLLMProvider implements LLMProvider {
         { role: 'user', content: userPrompt },
       ],
       temperature: this.temperature,
-      response_format: this.jsonResponseFormat,
+      response_format: this.structuredFormat(refineNoteOutputSchema, 'refine_note_output'),
     });
 
     this.storeUsage(response);
@@ -366,7 +375,7 @@ export class LMStudioProvider extends BaseLLMProvider implements LLMProvider {
         { role: 'user', content: userPrompt },
       ],
       temperature: this.temperature,
-      response_format: this.jsonResponseFormat,
+      response_format: this.structuredFormat(weeklyReviewOutputSchema, 'weekly_review_output'),
     });
 
     this.storeUsage(response);
@@ -392,7 +401,7 @@ export class LMStudioProvider extends BaseLLMProvider implements LLMProvider {
         { role: 'user', content: userPrompt },
       ],
       temperature: this.temperature,
-      response_format: this.jsonResponseFormat,
+      response_format: this.structuredFormat(templateSuggestionsOutputSchema, 'template_suggestions_output'),
     });
 
     this.storeUsage(response);
