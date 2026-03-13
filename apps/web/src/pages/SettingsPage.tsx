@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { settingsAPI, ollamaAPI, tokenUsageAPI, type Settings, type OllamaModel, type UsageSummary } from '../api/client';
+import { settingsAPI, ollamaAPI, lmstudioAPI, tokenUsageAPI, type Settings, type OllamaModel, type LMStudioModel, type UsageSummary } from '../api/client';
 import { Cog, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 
 import { getServerUrl, setApiUrl, testConnection } from '../api/config';
@@ -13,6 +13,7 @@ const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectr
 
 // Default values for settings fields
 const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
+const DEFAULT_LM_STUDIO_URL = 'http://localhost:1234';
 const DEFAULT_SCHEDULE = '0 17 * * *';
 
 const PROVIDER_MODELS: Record<string, { label: string; models: { value: string; label: string }[] }> = {
@@ -43,6 +44,10 @@ const PROVIDER_MODELS: Record<string, { label: string; models: { value: string; 
     label: 'Ollama (Local)',
     models: [], // Populated dynamically
   },
+  lmstudio: {
+    label: 'LM Studio',
+    models: [], // Populated dynamically
+  },
 };
 
 export default function SettingsPage() {
@@ -60,12 +65,14 @@ export default function SettingsPage() {
 
   // Local state for text inputs to prevent defocus on keystroke
   const [localOllamaUrl, setLocalOllamaUrl] = useState('');
+  const [localLMStudioUrl, setLocalLMStudioUrl] = useState('');
   const [localWhisperUrl, setLocalWhisperUrl] = useState('');
   const [localTodaySheetTime, setLocalTodaySheetTime] = useState('');
   const [localOrganizeTime, setLocalOrganizeTime] = useState('');
 
   // Track which fields are currently being edited to avoid overwriting user input
   const [isEditingOllamaUrl, setIsEditingOllamaUrl] = useState(false);
+  const [isEditingLMStudioUrl, setIsEditingLMStudioUrl] = useState(false);
   const [isEditingWhisperUrl, setIsEditingWhisperUrl] = useState(false);
   const [isEditingTodaySheetTime, setIsEditingTodaySheetTime] = useState(false);
   const [isEditingOrganizeTime, setIsEditingOrganizeTime] = useState(false);
@@ -74,6 +81,11 @@ export default function SettingsPage() {
   const [ollamaModels, setOllamaModels] = useState<OllamaModel[]>([]);
   const [isLoadingOllamaModels, setIsLoadingOllamaModels] = useState(false);
   const [ollamaModelsError, setOllamaModelsError] = useState<string | null>(null);
+
+  // LM Studio models state
+  const [lmstudioModels, setLMStudioModels] = useState<LMStudioModel[]>([]);
+  const [isLoadingLMStudioModels, setIsLoadingLMStudioModels] = useState(false);
+  const [lmstudioModelsError, setLMStudioModelsError] = useState<string | null>(null);
 
   const fetchOllamaModels = useCallback(async (autoSelectFirst = false) => {
     setIsLoadingOllamaModels(true);
@@ -96,12 +108,40 @@ export default function SettingsPage() {
     }
   }, [settings?.llmModel]);
 
+  const fetchLMStudioModels = useCallback(async (autoSelectFirst = false) => {
+    setIsLoadingLMStudioModels(true);
+    setLMStudioModelsError(null);
+    try {
+      const response = await lmstudioAPI.listModels();
+      setLMStudioModels(response.models);
+      if (response.error) {
+        setLMStudioModelsError(response.error);
+      }
+      // Auto-select first model if none selected and models available
+      if (autoSelectFirst && response.models.length > 0 && !settings?.llmModel) {
+        handleUpdate({ llmModel: response.models[0].id });
+      }
+    } catch (err) {
+      setLMStudioModelsError('Failed to fetch LM Studio models');
+      console.error('Failed to fetch LM Studio models:', err);
+    } finally {
+      setIsLoadingLMStudioModels(false);
+    }
+  }, [settings?.llmModel]);
+
   // Fetch Ollama models when provider is ollama
   useEffect(() => {
     if (settings?.llmProvider === 'ollama') {
       fetchOllamaModels(true); // Auto-select first model if none selected
     }
   }, [settings?.llmProvider, fetchOllamaModels]);
+
+  // Fetch LM Studio models when provider is lmstudio
+  useEffect(() => {
+    if (settings?.llmProvider === 'lmstudio') {
+      fetchLMStudioModels(true);
+    }
+  }, [settings?.llmProvider, fetchLMStudioModels]);
 
   const handleTestConnection = async () => {
     setIsTesting(true);
@@ -128,6 +168,7 @@ export default function SettingsPage() {
       setSettings(data);
       // Initialize local state from loaded settings
       setLocalOllamaUrl(data.ollamaBaseUrl ?? DEFAULT_OLLAMA_URL);
+      setLocalLMStudioUrl(data.lmstudioBaseUrl ?? DEFAULT_LM_STUDIO_URL);
       setLocalWhisperUrl(data.whisperUrl ?? 'http://127.0.0.1:3005');
       setLocalTodaySheetTime(data.todaySheetTime ?? '08:00');
       setLocalOrganizeTime(data.organizeScheduleTime ?? '17:00');
@@ -150,6 +191,9 @@ export default function SettingsPage() {
       if (!isEditingOllamaUrl) {
         setLocalOllamaUrl(settings.ollamaBaseUrl ?? DEFAULT_OLLAMA_URL);
       }
+      if (!isEditingLMStudioUrl) {
+        setLocalLMStudioUrl(settings.lmstudioBaseUrl ?? DEFAULT_LM_STUDIO_URL);
+      }
       if (!isEditingWhisperUrl) {
         setLocalWhisperUrl(settings.whisperUrl ?? 'http://127.0.0.1:3005');
       }
@@ -160,7 +204,7 @@ export default function SettingsPage() {
         setLocalOrganizeTime(settings.organizeScheduleTime ?? '17:00');
       }
     }
-  }, [settings, isEditingOllamaUrl, isEditingWhisperUrl, isEditingTodaySheetTime, isEditingOrganizeTime]);
+  }, [settings, isEditingOllamaUrl, isEditingLMStudioUrl, isEditingWhisperUrl, isEditingTodaySheetTime, isEditingOrganizeTime]);
 
   const handleUpdate = async (updates: Partial<Settings>) => {
     if (!settings) return;
@@ -312,6 +356,41 @@ export default function SettingsPage() {
                     <p className="text-xs text-gray-500">No models found. Pull a model with: ollama pull llama3.1</p>
                   )}
                 </div>
+              ) : settings.llmProvider === 'lmstudio' ? (
+                <div className="space-y-2">
+                  <div className="flex gap-2 items-center">
+                    <select
+                      value={settings.llmModel || ''}
+                      onChange={(e) => handleUpdate({ llmModel: e.target.value || null })}
+                      disabled={isLoadingLMStudioModels}
+                      className="input-accent w-full max-w-md"
+                    >
+                      <option value="">Use currently loaded model</option>
+                      {lmstudioModels.map((model) => (
+                        <option key={model.id} value={model.id}>
+                          {model.display_name || model.id}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => fetchLMStudioModels()}
+                      disabled={isLoadingLMStudioModels}
+                      className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+                      title="Refresh models"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isLoadingLMStudioModels ? 'animate-spin' : ''}`} />
+                    </button>
+                  </div>
+                  {isLoadingLMStudioModels && (
+                    <p className="text-xs text-gray-500">Loading models from LM Studio...</p>
+                  )}
+                  {lmstudioModelsError && (
+                    <p className="text-xs text-amber-400">{lmstudioModelsError} — is LM Studio running?</p>
+                  )}
+                  {!isLoadingLMStudioModels && !lmstudioModelsError && lmstudioModels.length === 0 && (
+                    <p className="text-xs text-gray-500">No models found. Load a model in LM Studio first.</p>
+                  )}
+                </div>
               ) : (
                 <select
                   value={settings.llmModel || ''}
@@ -390,6 +469,35 @@ export default function SettingsPage() {
                     placeholder={DEFAULT_OLLAMA_URL}
                     className="input-accent w-full max-w-md"
                   />
+                </div>
+              )}
+
+              {/* LM Studio Base URL (conditional) */}
+              {settings.llmProvider === 'lmstudio' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    LM Studio Server URL
+                  </label>
+                  <input
+                    type="url"
+                    value={localLMStudioUrl}
+                    onChange={(e) => setLocalLMStudioUrl(e.target.value)}
+                    onFocus={() => setIsEditingLMStudioUrl(true)}
+                    onBlur={async () => {
+                      setIsEditingLMStudioUrl(false);
+                      const currentValue = settings.lmstudioBaseUrl ?? DEFAULT_LM_STUDIO_URL;
+                      if (localLMStudioUrl !== currentValue) {
+                        await handleUpdate({ lmstudioBaseUrl: localLMStudioUrl });
+                        fetchLMStudioModels();
+                      }
+                    }}
+                    disabled={false}
+                    placeholder={DEFAULT_LM_STUDIO_URL}
+                    className="input-accent w-full max-w-md"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enable the local server in LM Studio → Developer → Local Server
+                  </p>
                 </div>
               )}
 
