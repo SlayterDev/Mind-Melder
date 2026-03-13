@@ -1,6 +1,6 @@
 import { pgTable, uuid, text, timestamp, real, boolean, index, pgEnum } from 'drizzle-orm/pg-core';
 
-export const llmProviderEnum = pgEnum('llm_provider', ['openai', 'anthropic', 'ollama']);
+export const llmProviderEnum = pgEnum('llm_provider', ['openai', 'anthropic', 'ollama', 'lmstudio']);
 export const scheduleFrequencyEnum = pgEnum('schedule_frequency', ['daily', 'weekly']);
 
 export const settings = pgTable(
@@ -12,6 +12,7 @@ export const settings = pgTable(
     llmModel: text('llm_model'),
     llmTemperature: real('llm_temperature').notNull().default(0.7),
     ollamaBaseUrl: text('ollama_base_url').notNull().default('http://localhost:11434'),
+    lmstudioBaseUrl: text('lmstudio_base_url').notNull().default('http://localhost:1234'),
     
     // Today Sheet scheduling
     todaySheetScheduleEnabled: boolean('today_sheet_schedule_enabled').notNull().default(false),

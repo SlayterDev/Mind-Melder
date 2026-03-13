@@ -213,8 +213,9 @@ export interface ProviderConfig {
 
 // Settings-based configuration (from database)
 export interface SettingsConfig {
-  llmProvider: 'openai' | 'anthropic' | 'ollama';
+  llmProvider: 'openai' | 'anthropic' | 'ollama' | 'lmstudio';
   llmModel: string | null;
   llmTemperature: number;
   ollamaBaseUrl: string;
+  lmstudioBaseUrl: string;
 }

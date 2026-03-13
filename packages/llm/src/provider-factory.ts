@@ -2,8 +2,9 @@ import type { LLMProvider, SettingsConfig } from './types.js';
 import { OpenAIProvider } from './providers/openai-provider.js';
 import { AnthropicProvider } from './providers/anthropic-provider.js';
 import { OllamaProvider } from './providers/ollama-provider.js';
+import { LMStudioProvider } from './providers/lmstudio-provider.js';
 
-export type ProviderType = 'openai' | 'anthropic' | 'ollama';
+export type ProviderType = 'openai' | 'anthropic' | 'ollama' | 'lmstudio';
 
 export class ProviderFactory {
   static createProvider(
@@ -37,6 +38,13 @@ export class ProviderFactory {
           temperature: config.temperature,
         });
 
+      case 'lmstudio':
+        return new LMStudioProvider({
+          baseURL: config.baseURL || process.env.LM_STUDIO_BASE_URL,
+          model: config.model,
+          temperature: config.temperature,
+        });
+
       default:
         throw new Error(`Unknown LLM provider: ${type}`);
     }
@@ -45,9 +53,9 @@ export class ProviderFactory {
   static createFromEnv(): LLMProvider {
     const providerType = (process.env.LLM_PROVIDER || 'openai').toLowerCase() as ProviderType;
 
-    if (!['openai', 'anthropic', 'ollama'].includes(providerType)) {
+    if (!['openai', 'anthropic', 'ollama', 'lmstudio'].includes(providerType)) {
       throw new Error(
-        `Invalid LLM_PROVIDER: ${providerType}. Must be one of: openai, anthropic, ollama`
+        `Invalid LLM_PROVIDER: ${providerType}. Must be one of: openai, anthropic, ollama, lmstudio`
       );
     }
 
@@ -57,10 +65,14 @@ export class ProviderFactory {
   static createFromSettings(settings: SettingsConfig): LLMProvider {
     const providerType = settings.llmProvider;
 
+    let baseURL: string | undefined;
+    if (providerType === 'ollama') baseURL = settings.ollamaBaseUrl;
+    if (providerType === 'lmstudio') baseURL = settings.lmstudioBaseUrl;
+
     return this.createProvider(providerType, {
       model: settings.llmModel || undefined,
       temperature: settings.llmTemperature,
-      baseURL: providerType === 'ollama' ? settings.ollamaBaseUrl : undefined,
+      baseURL,
     });
   }
 }
