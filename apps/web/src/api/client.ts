@@ -155,6 +155,7 @@ export const ollamaAPI = {
 export interface LMStudioModel {
   id: string;
   object: string;
+  display_name?: string;
   created?: number;
   owned_by?: string;
 }

@@ -12,7 +12,7 @@ export const settings = pgTable(
     llmModel: text('llm_model'),
     llmTemperature: real('llm_temperature').notNull().default(0.7),
     ollamaBaseUrl: text('ollama_base_url').notNull().default('http://localhost:11434'),
-    lmstudioBaseUrl: text('lmstudio_base_url').notNull().default('http://localhost:1234/v1'),
+    lmstudioBaseUrl: text('lmstudio_base_url').notNull().default('http://localhost:1234'),
     
     // Today Sheet scheduling
     todaySheetScheduleEnabled: boolean('today_sheet_schedule_enabled').notNull().default(false),

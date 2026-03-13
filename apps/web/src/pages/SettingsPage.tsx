@@ -13,7 +13,7 @@ const isElectron = typeof window !== 'undefined' && window.electronAPI?.isElectr
 
 // Default values for settings fields
 const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
-const DEFAULT_LM_STUDIO_URL = 'http://localhost:1234/v1';
+const DEFAULT_LM_STUDIO_URL = 'http://localhost:1234';
 const DEFAULT_SCHEDULE = '0 17 * * *';
 
 const PROVIDER_MODELS: Record<string, { label: string; models: { value: string; label: string }[] }> = {
@@ -368,7 +368,7 @@ export default function SettingsPage() {
                       <option value="">Use currently loaded model</option>
                       {lmstudioModels.map((model) => (
                         <option key={model.id} value={model.id}>
-                          {model.id}
+                          {model.display_name || model.id}
                         </option>
                       ))}
                     </select>

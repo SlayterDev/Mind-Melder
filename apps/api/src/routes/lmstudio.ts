@@ -2,13 +2,20 @@ import { Router, type Router as ExpressRouter } from 'express';
 import { SettingsRepository } from 'database';
 import { asyncHandler } from '../utils/async-handler.js';
 
-const DEFAULT_BASE_URL = 'http://localhost:1234/v1';
+const DEFAULT_HOST = 'http://localhost:1234';
 
 export interface LMStudioModel {
   id: string;
   object: string;
+  display_name?: string;
   created?: number;
   owned_by?: string;
+}
+
+/** Normalise a stored host value (host:port) to a full /v1 base URL */
+function toBaseURL(host: string): string {
+  const trimmed = host.replace(/\/+$/, '');
+  return trimmed.endsWith('/v1') ? trimmed : `${trimmed}/v1`;
 }
 
 export function createLMStudioRouter(settingsRepo: SettingsRepository): ExpressRouter {
@@ -21,7 +28,7 @@ export function createLMStudioRouter(settingsRepo: SettingsRepository): ExpressR
       const userId = 'test-user-1'; // TODO: Get from auth context
 
       const settings = await settingsRepo.getOrCreate(userId);
-      const baseURL = settings.lmstudioBaseUrl || DEFAULT_BASE_URL;
+      const baseURL = toBaseURL(settings.lmstudioBaseUrl || DEFAULT_HOST);
 
       try {
         const response = await fetch(`${baseURL}/models`, {
@@ -37,6 +44,7 @@ export function createLMStudioRouter(settingsRepo: SettingsRepository): ExpressR
         const models: LMStudioModel[] = (data.data ?? []).map((m: LMStudioModel) => ({
           id: m.id,
           object: m.object,
+          display_name: m.display_name,
           created: m.created,
           owned_by: m.owned_by,
         }));
@@ -56,7 +64,7 @@ export function createLMStudioRouter(settingsRepo: SettingsRepository): ExpressR
       const userId = 'test-user-1'; // TODO: Get from auth context
 
       const settings = await settingsRepo.getOrCreate(userId);
-      const baseURL = settings.lmstudioBaseUrl || DEFAULT_BASE_URL;
+      const baseURL = toBaseURL(settings.lmstudioBaseUrl || DEFAULT_HOST);
 
       try {
         const response = await fetch(`${baseURL}/models`, {

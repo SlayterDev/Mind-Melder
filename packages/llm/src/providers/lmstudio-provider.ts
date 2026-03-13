@@ -26,7 +26,7 @@ import {
   refineNoteOutputSchema,
 } from '../validation.js';
 
-const DEFAULT_BASE_URL = 'http://localhost:1234/v1';
+const DEFAULT_HOST = 'http://localhost:1234';
 // LM Studio requires a non-empty API key field but does not validate it
 const PLACEHOLDER_API_KEY = 'lm-studio';
 
@@ -38,7 +38,9 @@ export class LMStudioProvider extends BaseLLMProvider implements LLMProvider {
   constructor(config: ProviderConfig) {
     super();
 
-    const baseURL = config.baseURL || DEFAULT_BASE_URL;
+    // Accept host:port (e.g. http://localhost:1234) and always append /v1
+    const host = (config.baseURL || DEFAULT_HOST).replace(/\/+$/, '');
+    const baseURL = host.endsWith('/v1') ? host : `${host}/v1`;
     this.client = new OpenAI({ apiKey: PLACEHOLDER_API_KEY, baseURL });
 
     // Empty string means "use whatever model is currently loaded in LM Studio"
