@@ -36,6 +36,9 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.13.0",
     "remark-gfm": "^4.0.1",
+    "slate": "^0.123.0",
+    "slate-history": "^0.113.1",
+    "slate-react": "^0.123.0",
     "types": "workspace:*"
   },
   "devDependencies": {

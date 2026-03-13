@@ -1,11 +1,26 @@
 import { useState } from 'react';
+import type { Descendant } from 'slate';
 import TagEditor from './TagEditor';
+import { SlateEditor } from './editor/SlateEditor';
+import {
+  EMPTY_SLATE_DOCUMENT,
+  deserializeFromString,
+  serializeToString,
+  slateToPlainText,
+} from './editor/slateSerializer';
 
 interface NoteFormProps {
   initialTitle?: string;
   initialContent?: string;
+  initialSlateValue?: Descendant[];
+  initialContentFormat?: 'markdown' | 'slate_json';
   initialTags?: string[];
-  onSubmit: (data: { title: string; content: string; tags?: string[] }) => Promise<void>;
+  onSubmit: (data: {
+    title: string;
+    content: string;
+    contentFormat: 'markdown' | 'slate_json';
+    tags?: string[];
+  }) => Promise<void>;
   onCancel: () => void;
   submitLabel?: string;
 }
@@ -13,20 +28,39 @@ interface NoteFormProps {
 export default function NoteForm({
   initialTitle = '',
   initialContent = '',
+  initialSlateValue,
+  initialContentFormat = 'slate_json',
   initialTags = [],
   onSubmit,
   onCancel,
   submitLabel = 'Save Note',
 }: NoteFormProps) {
   const [title, setTitle] = useState(initialTitle);
-  const [content, setContent] = useState(initialContent);
   const [tags, setTags] = useState<string[]>(initialTags);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Resolve initial editor value:
+  // 1. If a parsed Slate document was provided, use it directly
+  // 2. If existing content is slate_json, deserialize it
+  // 3. If existing content is markdown (or plain text), wrap in a paragraph
+  // 4. Otherwise, start empty
+  const [editorValue, setEditorValue] = useState<Descendant[]>(() => {
+    if (initialSlateValue) return initialSlateValue;
+    if (initialContentFormat === 'slate_json' && initialContent) {
+      return deserializeFromString(initialContent);
+    }
+    if (initialContent) {
+      // Markdown note being opened for editing — load as plain paragraph
+      return [{ type: 'paragraph', children: [{ text: initialContent }] }];
+    }
+    return EMPTY_SLATE_DOCUMENT;
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !content.trim()) return;
+    const plainText = slateToPlainText(editorValue).trim();
+    if (!title.trim() || !plainText) return;
 
     setIsSubmitting(true);
     setError(null);
@@ -34,7 +68,8 @@ export default function NoteForm({
     try {
       await onSubmit({
         title: title.trim(),
-        content: content.trim(),
+        content: serializeToString(editorValue),
+        contentFormat: 'slate_json',
         tags: tags.length > 0 ? tags : undefined,
       });
     } catch (err) {
@@ -42,6 +77,8 @@ export default function NoteForm({
       setIsSubmitting(false);
     }
   };
+
+  const isEmpty = slateToPlainText(editorValue).trim().length === 0;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
@@ -67,16 +104,11 @@ export default function NoteForm({
       </div>
 
       <div>
-        <label htmlFor="content" className="block text-sm font-medium text-gray-300 mb-2">
-          Content
-        </label>
-        <textarea
-          id="content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
+        <label className="block text-sm font-medium text-gray-300 mb-2">Content</label>
+        <SlateEditor
+          value={editorValue}
+          onChange={setEditorValue}
           placeholder="Write your note..."
-          rows={12}
-          className="input-accent w-full px-4 py-3 resize-y"
         />
       </div>
 
@@ -90,7 +122,7 @@ export default function NoteForm({
       <div className="flex gap-3">
         <button
           type="submit"
-          disabled={isSubmitting || !title.trim() || !content.trim()}
+          disabled={isSubmitting || !title.trim() || isEmpty}
           className="btn-accent px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? 'Saving...' : submitLabel}

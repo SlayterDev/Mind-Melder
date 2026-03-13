@@ -1,4 +1,6 @@
-import { pgTable, uuid, text, timestamp, index, jsonb } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, index, jsonb, pgEnum } from 'drizzle-orm/pg-core';
+
+export const contentFormatEnum = pgEnum('content_format', ['markdown', 'slate_json']);
 
 export const organizedNotes = pgTable(
   'organized_notes',
@@ -9,6 +11,8 @@ export const organizedNotes = pgTable(
     tags: jsonb('tags').$type<string[]>().default([]),
     date: timestamp('date', { withTimezone: true }).notNull().defaultNow(),
     userId: text('user_id').notNull(),
+    contentFormat: contentFormatEnum('content_format').default('markdown').notNull(),
+    contentPlain: text('content_plain'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
